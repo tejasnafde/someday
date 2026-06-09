@@ -1,0 +1,85 @@
+from app_util.log_util import infologger, errorlogger
+from modules.circles import circles_queries as q
+
+
+def get_my_circles(db, user_id: str) -> list[dict]:
+    infologger.info(f"circles_helper.get_my_circles | user_id={user_id}")
+    return db.execute_query_with_value(q.GET_MY_CIRCLES, {"user_id": user_id})
+
+
+def get_circle_with_members(db, circle_id: str, user_id: str) -> dict | None:
+    infologger.info(f"circles_helper.get_circle_with_members | circle_id={circle_id} user_id={user_id}")
+    rows = db.execute_query_with_value(q.GET_CIRCLE_BY_ID, {"circle_id": circle_id, "user_id": user_id})
+    if not rows:
+        infologger.warning(f"circles_helper.get_circle_with_members | not found or not a member | circle_id={circle_id}")
+        return None
+    circle = rows[0]
+    circle["members"] = db.execute_query_with_value(q.GET_CIRCLE_MEMBERS, {"circle_id": circle_id})
+    return circle
+
+
+def create_circle(db, name: str, emoji: str | None, owner_id: str) -> dict:
+    infologger.info(f"circles_helper.create_circle | owner_id={owner_id} name={name!r}")
+    circle = db.execute_query_with_value_returning(
+        q.INSERT_CIRCLE,
+        {"name": name, "emoji": emoji, "owner_id": owner_id},
+    )
+    db.execute_query_with_value_without_output(
+        q.INSERT_CIRCLE_MEMBER,
+        {"circle_id": circle["id"], "user_id": owner_id, "role": "owner"},
+    )
+    circle["member_count"] = 1
+    circle["open_intent_count"] = 0
+    infologger.info(f"circles_helper.create_circle | created circle_id={circle['id']}")
+    return circle
+
+
+def update_circle(db, circle_id: str, user_id: str, name: str | None, emoji: str | None) -> dict | None:
+    infologger.info(f"circles_helper.update_circle | circle_id={circle_id} user_id={user_id}")
+    row = db.execute_query_with_value_returning(
+        q.UPDATE_CIRCLE,
+        {"circle_id": circle_id, "user_id": user_id, "name": name, "emoji": emoji},
+    )
+    if not row:
+        infologger.warning(f"circles_helper.update_circle | not found or not owner | circle_id={circle_id}")
+    return row or None
+
+
+def delete_circle(db, circle_id: str, user_id: str) -> bool:
+    infologger.info(f"circles_helper.delete_circle | circle_id={circle_id} user_id={user_id}")
+    db.execute_query_with_value_without_output(
+        q.SOFT_DELETE_CIRCLE,
+        {"circle_id": circle_id, "user_id": user_id},
+    )
+    return True
+
+
+def join_circle_by_token(db, token: str, user_id: str) -> dict | None:
+    infologger.info(f"circles_helper.join_circle_by_token | user_id={user_id} token={token[:8]}…")
+    rows = db.execute_query_with_value(q.GET_CIRCLE_BY_INVITE_TOKEN, {"token": token})
+    if not rows:
+        infologger.warning(f"circles_helper.join_circle_by_token | invalid token")
+        return None
+    circle = rows[0]
+    db.execute_query_with_value_without_output(
+        q.INSERT_CIRCLE_MEMBER,
+        {"circle_id": circle["id"], "user_id": user_id, "role": "member"},
+    )
+    infologger.info(f"circles_helper.join_circle_by_token | joined circle_id={circle['id']}")
+    return circle
+
+
+def leave_circle(db, circle_id: str, user_id: str) -> None:
+    infologger.info(f"circles_helper.leave_circle | circle_id={circle_id} user_id={user_id}")
+    db.execute_query_with_value_without_output(
+        q.LEAVE_CIRCLE,
+        {"circle_id": circle_id, "user_id": user_id},
+    )
+
+
+def assert_member(db, circle_id: str, user_id: str) -> bool:
+    """Returns True if user is an active member; raises ValueError otherwise."""
+    rows = db.execute_query_with_value(q.IS_MEMBER, {"circle_id": circle_id, "user_id": user_id})
+    if not rows:
+        raise ValueError(f"user {user_id} is not a member of circle {circle_id}")
+    return True
