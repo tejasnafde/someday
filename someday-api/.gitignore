@@ -1,5 +1,7 @@
 .env.*
 !.env.example
+supabase/.branches
+supabase/.temp
 __pycache__/
 *.py[cod]
 *.egg-info/
