@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Someday — Dark Premium</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0B0B12;--card:#141420;--card2:#1C1C2E;--accent:#FF6B35;--accent-l:rgba(255,107,53,.12);--accent-m:#FF9A6C;
+  --txt:#F0EEF8;--txt-m:#8B879E;--txt-l:#4A4660;--brd:#252535;
+  --green:#2ECC8E;--gold:#F4C542;--r:18px;--rs:11px
+}
+body{background:#050508;font-family:'Outfit',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:48px 20px 60px}
+.style-tag{text-align:center;margin-bottom:8px}
+.style-tag p{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#444;font-weight:500}
+.style-tag h2{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--txt);margin-top:2px;font-style:italic}
+.style-tag small{font-size:12px;color:#444;display:block;margin-top:3px}
+.screen-lbl{text-align:center;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:#444;margin:16px 0 10px}
+.phone{width:390px;height:844px;background:var(--bg);border-radius:44px;overflow:hidden;
+  box-shadow:0 0 0 1px #1E1E2E,0 0 0 2px #0B0B12,0 48px 100px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.04)}
+.sbar{height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:transparent}
+.sbar-t{font-size:15px;font-weight:500;color:var(--txt)}
+.sbar-r{font-size:12px;color:var(--txt-m);display:flex;gap:6px}
+.sc{display:none;height:794px;overflow-y:auto;scrollbar-width:none}
+.sc::-webkit-scrollbar{display:none}
+.sc.on{display:block}
+/* NAV */
+.nbar{padding:10px 24px 14px;display:flex;align-items:center;gap:12px;background:var(--bg);position:sticky;top:0;z-index:9;border-bottom:1px solid var(--brd)}
+.nbk{width:34px;height:34px;border-radius:50%;background:var(--card);border:1px solid var(--brd);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--txt-m);font-size:15px}
+.ntit{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:500;color:var(--txt);flex:1;font-style:italic}
+.nsub{font-size:11px;color:var(--txt-l);margin-top:1px}
+/* HOME */
+.hdr{padding:22px 24px 28px;position:relative;overflow:hidden}
+.hdr::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(255,107,53,.08) 0%,transparent 70%);pointer-events:none}
+.wordmark{font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:400}
+.greet{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--txt);margin-top:16px;line-height:1.2;font-style:italic}
+.greet-sub{font-size:13px;color:var(--txt-m);margin-top:6px;font-weight:300}
+.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#FF6B35,#FF9A6C);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600}
+.cgrid{padding:0 24px;display:flex;flex-direction:column;gap:12px}
+.ccard{background:var(--card);border-radius:var(--r);padding:18px 20px;border:1px solid var(--brd);cursor:pointer;display:flex;align-items:center;gap:15px;position:relative;overflow:hidden}
+.ccard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--card);transition:.2s}
+.ccard:nth-child(1)::before{background:var(--accent)}
+.ccard:nth-child(2)::before{background:var(--gold)}
+.ccard:nth-child(3)::before{background:var(--green)}
+.cemoji{width:48px;height:48px;border-radius:12px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;border:1px solid var(--brd)}
+.cname{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:var(--txt)}
+.cmeta{font-size:11px;color:var(--txt-l);margin-top:2px;font-weight:300}
+.mdots{display:flex;margin-top:7px}
+.mdot{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--card);margin-right:-4px;font-size:8px;font-weight:600;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.cbadge{background:var(--accent-l);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid rgba(255,107,53,.2);white-space:nowrap}
+.newcircle-wrap{padding:20px 24px 36px}
+.newcircle{width:100%;padding:14px;border-radius:var(--r);background:transparent;color:var(--txt-m);border:1px solid var(--brd);font-size:13px;font-weight:400;cursor:pointer;font-family:'Outfit',sans-serif;letter-spacing:.02em}
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--brd);padding:0 24px}
+.tab{padding:11px 14px;font-size:13px;font-weight:400;color:var(--txt-l);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+/* CHIPS */
+.chips{display:flex;gap:7px;padding:14px 24px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{padding:5px 12px;border-radius:20px;font-size:12px;white-space:nowrap;cursor:pointer;border:1px solid var(--brd);background:transparent;color:var(--txt-m);font-weight:400}
+.chip.on{background:var(--accent-l);border-color:rgba(255,107,53,.3);color:var(--accent)}
+/* INTENT CARDS */
+.ilist{padding:0 24px;display:flex;flex-direction:column;gap:10px}
+.icard{background:var(--card);border-radius:var(--r);overflow:hidden;border:1px solid var(--brd)}
+.iimg{width:100%;height:100px;display:flex;align-items:center;justify-content:center;font-size:32px;position:relative}
+.iimg-inner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:32px}
+.ibody{padding:12px 14px}
+.isite{font-size:10px;color:var(--txt-l);text-transform:uppercase;letter-spacing:.08em;font-weight:500;margin-bottom:3px}
+.itit{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:500;color:var(--txt);line-height:1.3}
+.ifoot{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.sbadge{font-size:10px;font-weight:500;padding:3px 9px;border-radius:20px}
+.s-saved{background:rgba(255,107,53,.08);color:var(--accent-m);border:1px solid rgba(255,107,53,.15)}
+.s-interested{background:rgba(244,197,66,.08);color:var(--gold);border:1px solid rgba(244,197,66,.15)}
+.s-planned{background:rgba(46,204,142,.08);color:var(--green);border:1px solid rgba(46,204,142,.15)}
+.irow{display:flex;align-items:center;gap:5px}
+.idot{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--card);margin-right:-3px;font-size:8px;font-weight:600;display:flex;align-items:center;justify-content:center;color:#fff}
+.boostbtn{width:28px;height:28px;border-radius:50%;background:var(--card2);border:1px solid var(--brd);display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer}
+.payoff-trigger{margin:18px 24px 40px}
+.ptbtn{width:100%;padding:15px;background:linear-gradient(135deg,#FF6B35,#FF9A6C);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;letter-spacing:.02em}
+/* ADD */
+.aform{padding:16px 24px;display:flex;flex-direction:column;gap:18px}
+.flbl{display:block;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.1em;color:var(--txt-l);margin-bottom:7px}
+.urow{display:flex;gap:7px}
+.uinp{flex:1;padding:11px 13px;border:1px solid var(--brd);border-radius:var(--rs);font-size:12px;font-family:'Outfit',sans-serif;background:var(--card);color:var(--txt);outline:none}
+.uinp:focus{border-color:rgba(255,107,53,.4)}
+.pastebtn{padding:11px 13px;border-radius:var(--rs);background:var(--accent-l);color:var(--accent);border:1px solid rgba(255,107,53,.2);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap}
+.unfurl{border-radius:var(--r);overflow:hidden;border:1px solid var(--brd)}
+.uimg{width:100%;height:120px;background:linear-gradient(135deg,#0f0c29,#3d2c8d);display:flex;align-items:center;justify-content:center;font-size:40px}
+.uinfo{padding:12px 13px;background:var(--card)}
+.usite{font-size:10px;color:var(--txt-l);font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+.utit{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--txt);margin-top:3px}
+.catrow{display:flex;gap:6px;flex-wrap:wrap}
+.catbtn{padding:7px 11px;border-radius:var(--rs);border:1px solid var(--brd);background:transparent;font-size:11px;cursor:pointer;color:var(--txt-m);font-family:'Outfit',sans-serif}
+.catbtn.on{background:var(--accent-l);border-color:rgba(255,107,53,.3);color:var(--accent);font-weight:600}
+.noteinp{width:100%;padding:11px 13px;border:1px solid var(--brd);border-radius:var(--rs);font-size:12px;font-family:'Outfit',sans-serif;background:var(--card);color:var(--txt);outline:none;resize:none;height:68px}
+.savebtn{width:100%;padding:14px;background:linear-gradient(135deg,#FF6B35,#FF9A6C);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;margin-bottom:40px}
+/* DETAIL */
+.dbody{padding:0 24px}
+.dimg{width:100%;height:160px;background:linear-gradient(135deg,#0f0c29,#302b63,#1a0533);display:flex;align-items:center;justify-content:center;font-size:50px;border-radius:var(--r) var(--r) 0 0}
+.dmeta{background:var(--card);padding:13px 15px;border:1px solid var(--brd);border-top:none;border-radius:0 0 var(--r) var(--r);margin-bottom:13px}
+.dsite{font-size:10px;color:var(--txt-l);font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+.dtit{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:var(--txt);margin-top:3px}
+.isect{background:var(--card);border-radius:var(--r);padding:14px;margin-bottom:11px;display:flex;align-items:center;gap:11px;border:1px solid var(--brd)}
+.icnt{font-size:24px;font-weight:600;color:var(--accent);font-family:'Cormorant Garamond',serif}
+.ilbl{font-size:11px;color:var(--txt-m);font-weight:300}
+.mrow{background:var(--card);border-radius:var(--rs);padding:11px 13px;display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;border:1px solid var(--brd)}
+.mname{font-size:13px;font-weight:400;color:var(--txt)}
+.sswitch{background:var(--card);border-radius:var(--r);padding:13px;margin-bottom:11px;border:1px solid var(--brd)}
+.slbl{font-size:10px;color:var(--txt-l);font-weight:500;text-transform:uppercase;letter-spacing:.08em;margin-bottom:9px}
+.ssteps{display:flex;align-items:center}
+.sstep{flex:1;text-align:center;font-size:10px;padding:7px 3px;border-radius:8px;color:var(--txt-l);font-weight:400}
+.sstep.cur{background:var(--accent-l);color:var(--accent);font-weight:600}
+.sline{flex:0;width:12px;height:1px;background:var(--brd)}
+.arow{display:flex;gap:9px;margin-bottom:40px}
+.reactbtn{flex:1;padding:12px;border-radius:var(--r);background:linear-gradient(135deg,#FF6B35,#FF9A6C);color:#fff;border:none;font-size:13px;font-weight:500;cursor:pointer}
+.boostabtn{padding:12px 15px;border-radius:var(--r);background:var(--card);border:1px solid var(--brd);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;color:var(--txt-m)}
+/* PAYOFF */
+.pbody{padding:0 24px}
+.phead{text-align:center;padding:20px 0 24px;position:relative}
+.phead::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:300px;height:200px;background:radial-gradient(ellipse,rgba(255,107,53,.06) 0%,transparent 70%);pointer-events:none}
+.ptit{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--txt);line-height:1.25;font-style:italic}
+.psub{font-size:12px;color:var(--txt-m);margin-top:6px;font-weight:300}
+.pcount{display:inline-block;background:var(--accent-l);color:var(--accent);padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;margin-top:7px;border:1px solid rgba(255,107,53,.2)}
+.boost-nudge{background:var(--card);border-radius:var(--r);padding:12px 14px;margin-bottom:18px;display:flex;gap:10px;align-items:center;border:1px solid var(--brd)}
+.pbtns{display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+.pbbtn{padding:16px;background:linear-gradient(135deg,#FF6B35,#FF9A6C);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 20px rgba(255,107,53,.25)}
+.psbtn{padding:16px;background:transparent;color:var(--txt-m);border:1px solid var(--brd);border-radius:var(--r);font-size:14px;font-weight:400;font-family:'Outfit',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.rdiv{text-align:center;font-size:10px;color:var(--txt-l);text-transform:uppercase;letter-spacing:.1em;font-weight:500;margin-bottom:13px;display:flex;align-items:center;gap:10px}
+.rdiv::before,.rdiv::after{content:'';flex:1;height:1px;background:var(--brd)}
+.rcard{background:var(--card);border-radius:var(--r);overflow:hidden;border:1px solid rgba(255,107,53,.2);box-shadow:0 0 40px rgba(255,107,53,.06);margin-bottom:48px}
+.rimg{width:100%;height:120px;background:linear-gradient(135deg,#0f0c29,#302b63);display:flex;align-items:center;justify-content:center;font-size:40px}
+.rbody{padding:14px}
+.rtit{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:var(--txt);margin-bottom:10px;font-style:italic}
+.schips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:13px}
+.schip{background:var(--accent-l);color:var(--accent-m);font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid rgba(255,107,53,.15)}
+.planbtn{width:100%;padding:12px;background:linear-gradient(135deg,#2ECC8E,#2ECC8E);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-weight:500;cursor:pointer}
+/* CONTROLS */
+.controls{display:flex;justify-content:space-between;align-items:center;width:390px;margin-top:18px}
+.arrbtn{padding:8px 18px;background:var(--card);border:1px solid var(--brd);border-radius:24px;font-size:12px;font-weight:500;color:var(--txt-m);cursor:pointer}
+.arrbtn:disabled{opacity:.3;cursor:default}
+.dots{display:flex;gap:7px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--brd);cursor:pointer;transition:all .2s}
+.dot.on{background:var(--accent);width:22px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="style-tag">
+  <p>Design Style 02 / 05</p>
+  <h2>Dark Premium</h2>
+  <small>Cormorant Garamond · near-black · amber/coral accent · intimate & refined</small>
+</div>
+<div class="screen-lbl" id="lbl">Screen 1 of 5 — Home</div>
+<div class="phone">
+  <div class="sbar"><span class="sbar-t">9:41</span><div class="sbar-r"><span>●●●</span><span>🔋</span></div></div>
+
+  <div class="sc on" id="s1">
+    <div class="hdr">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="wordmark">Someday</div>
+        <div class="avatar">T</div>
+      </div>
+      <div class="greet">Good evening,<br>Tejas.</div>
+      <div class="greet-sub">3 circles · 17 ideas waiting</div>
+    </div>
+    <div class="cgrid">
+      <div class="ccard" onclick="go(2)">
+        <div class="cemoji">👁️</div>
+        <div style="flex:1">
+          <div class="cname">Tejas + Harsh</div>
+          <div class="cmeta">2 members</div>
+          <div class="mdots">
+            <div class="mdot" style="background:#FF6B35">T</div>
+            <div class="mdot" style="background:#8B6FFF">H</div>
+          </div>
+        </div>
+        <div class="cbadge">5 ideas</div>
+      </div>
+      <div class="ccard">
+        <div class="cemoji">🎓</div>
+        <div style="flex:1">
+          <div class="cname">College Gang</div>
+          <div class="cmeta">5 members</div>
+          <div class="mdots">
+            <div class="mdot" style="background:#FF6B35">T</div>
+            <div class="mdot" style="background:#2ECC8E">A</div>
+            <div class="mdot" style="background:#F4C542">R</div>
+            <div class="mdot" style="background:#EF4444">P</div>
+            <div class="mdot" style="background:#3B82F6">S</div>
+          </div>
+        </div>
+        <div class="cbadge" style="background:rgba(244,197,66,.1);color:var(--gold);border-color:rgba(244,197,66,.2)">8 ideas</div>
+      </div>
+      <div class="ccard">
+        <div class="cemoji">✈️</div>
+        <div style="flex:1">
+          <div class="cname">Europe 2027</div>
+          <div class="cmeta">3 members</div>
+          <div class="mdots">
+            <div class="mdot" style="background:#FF6B35">T</div>
+            <div class="mdot" style="background:#8B6FFF">H</div>
+            <div class="mdot" style="background:#2ECC8E">A</div>
+          </div>
+        </div>
+        <div class="cbadge" style="background:rgba(46,204,142,.1);color:var(--green);border-color:rgba(46,204,142,.2)">4 ideas</div>
+      </div>
+    </div>
+    <div class="newcircle-wrap"><button class="newcircle">+ New Circle</button></div>
+  </div>
+
+  <div class="sc" id="s2">
+    <div class="nbar">
+      <button class="nbk" onclick="go(1)">←</button>
+      <div style="flex:1"><div class="ntit">Tejas + Harsh</div><div class="nsub">2 members · 5 ideas</div></div>
+      <div style="display:flex"><div class="mdot" style="background:#FF6B35;border-color:var(--bg)">T</div><div class="mdot" style="background:#8B6FFF;border-color:var(--bg)">H</div></div>
+    </div>
+    <div class="tabs"><div class="tab on">All</div><div class="tab">Shortlist ⭐ 2</div><div class="tab">Done ✓</div></div>
+    <div class="chips"><div class="chip on">All</div><div class="chip">🎬 Watch</div><div class="chip">🍜 Eat</div><div class="chip">📚 Read</div><div class="chip">✈️ Trip</div></div>
+    <div class="ilist">
+      <div class="icard" onclick="go(4)">
+        <div class="iimg" style="background:linear-gradient(135deg,#0f0c29,#3d2c8d)"><div class="iimg-inner">🎬</div></div>
+        <div class="ibody">
+          <div class="isite">YouTube</div>
+          <div class="itit">Dune: Part Two — Official Trailer</div>
+          <div class="ifoot"><span class="sbadge s-interested">Interested</span><div class="irow"><div class="idot" style="background:#FF6B35">T</div><div class="idot" style="background:#8B6FFF">H</div><div style="width:5px"></div><div class="boostbtn">⚡</div></div></div>
+        </div>
+      </div>
+      <div class="icard">
+        <div class="iimg" style="background:linear-gradient(135deg,#1a0a00,#4a1500)"><div class="iimg-inner">🍜</div></div>
+        <div class="ibody">
+          <div class="isite">Zomato</div>
+          <div class="itit">Busan Olle Korean BBQ</div>
+          <div class="ifoot"><span class="sbadge s-saved">Saved</span><div class="irow"><div class="idot" style="background:#FF6B35">T</div><div style="width:5px"></div><div class="boostbtn">⚡</div></div></div>
+        </div>
+      </div>
+      <div class="icard">
+        <div class="iimg" style="background:linear-gradient(135deg,#001a0a,#004a20)"><div class="iimg-inner">📚</div></div>
+        <div class="ibody">
+          <div class="isite">Goodreads</div>
+          <div class="itit">The Dispossessed — Ursula K. Le Guin</div>
+          <div class="ifoot"><span class="sbadge s-interested">Interested</span><div class="irow"><div class="idot" style="background:#8B6FFF">H</div><div style="width:5px"></div><div class="boostbtn">⚡</div></div></div>
+        </div>
+      </div>
+      <div class="icard">
+        <div class="iimg" style="background:linear-gradient(135deg,#0a1a00,#204a00)"><div class="iimg-inner">🎬</div></div>
+        <div class="ibody">
+          <div class="isite">IMDb</div>
+          <div class="itit">Poor Things (2023)</div>
+          <div class="ifoot"><span class="sbadge s-planned">Planned</span><div class="irow"><div class="idot" style="background:#FF6B35">T</div><div class="idot" style="background:#8B6FFF">H</div><div style="width:5px"></div><div class="boostbtn">⚡</div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="payoff-trigger"><button class="ptbtn" onclick="go(5)">🎯 What are we doing today?</button></div>
+  </div>
+
+  <div class="sc" id="s3">
+    <div class="nbar"><button class="nbk" onclick="go(2)">←</button><div class="ntit">Add to Tejas + Harsh</div></div>
+    <div class="aform">
+      <div><label class="flbl">URL</label><div class="urow"><input class="uinp" value="https://youtube.com/watch?v=Way9Dexny3w" readonly><button class="pastebtn">Paste</button></div></div>
+      <div class="unfurl"><div class="uimg">🎬</div><div class="uinfo"><div class="usite">YouTube · 4:22</div><div class="utit">Dune: Part Two — Official Trailer (2024)</div></div></div>
+      <div><label class="flbl">Category</label><div class="catrow"><button class="catbtn on">🎬 Watch</button><button class="catbtn">🍜 Eat</button><button class="catbtn">🗺 Visit</button><button class="catbtn">📚 Read</button><button class="catbtn">🎮 Play</button><button class="catbtn">✈️ Trip</button></div></div>
+      <div><label class="flbl">Note</label><textarea class="noteinp">Heard this is incredible on IMAX — we should see it together</textarea></div>
+      <div><label class="flbl">Tags</label><input class="uinp" value="film, sci-fi, imax" style="width:100%" readonly></div>
+      <button class="savebtn">Save to Circle</button>
+    </div>
+  </div>
+
+  <div class="sc" id="s4">
+    <div class="nbar"><button class="nbk" onclick="go(2)">←</button><div class="ntit">Intent Detail</div></div>
+    <div class="dbody">
+      <div class="dimg">🎬</div>
+      <div class="dmeta"><div class="dsite">YouTube · Added by Tejas · 2 weeks ago</div><div class="dtit">Dune: Part Two — Official Trailer (2024)</div></div>
+      <div class="isect"><div><div class="icnt">2 / 2</div><div class="ilbl">members interested</div></div><div style="flex:1"></div><div style="display:flex"><div class="idot" style="width:28px;height:28px;font-size:11px;background:#FF6B35;border:1.5px solid var(--card);margin-right:-4px">T</div><div class="idot" style="width:28px;height:28px;font-size:11px;background:#8B6FFF;border:1.5px solid var(--card)">H</div></div></div>
+      <div class="mrow"><div style="display:flex;align-items:center;gap:9px"><div class="idot" style="width:26px;height:26px;font-size:10px;background:#FF6B35">T</div><div class="mname">Tejas</div></div><div style="font-size:12px;color:var(--green)">❤️ Interested</div></div>
+      <div class="mrow" style="margin-bottom:11px"><div style="display:flex;align-items:center;gap:9px"><div class="idot" style="width:26px;height:26px;font-size:10px;background:#8B6FFF">H</div><div class="mname">Harsh</div></div><div style="font-size:12px;color:var(--green)">❤️ Interested</div></div>
+      <div class="sswitch"><div class="slbl">Status</div><div class="ssteps"><div class="sstep">Saved</div><div class="sline"></div><div class="sstep cur">Interested</div><div class="sline"></div><div class="sstep">Planned</div><div class="sline"></div><div class="sstep">Done</div></div></div>
+      <div class="arow"><button class="reactbtn">❤️ Interested</button><button class="boostabtn">⚡ Boost</button></div>
+      <div style="background:var(--card);border-radius:var(--r);padding:13px;margin-bottom:48px;border:1px solid var(--brd)"><div style="font-size:10px;color:var(--txt-l);font-weight:500;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Note</div><div style="font-size:13px;color:var(--txt-m);font-style:italic;font-family:'Cormorant Garamond',serif;font-size:15px">"Heard this is incredible on IMAX"</div></div>
+    </div>
+  </div>
+
+  <div class="sc" id="s5">
+    <div class="nbar"><button class="nbk" onclick="go(2)">←</button><div class="ntit">Payoff</div></div>
+    <div class="pbody">
+      <div class="phead">
+        <div class="ptit">What are you<br>doing today?</div>
+        <div class="psub">You're meeting Harsh. Time to pick.</div>
+        <div class="pcount">4 things you both want</div>
+      </div>
+      <div class="boost-nudge">
+        <div style="font-size:18px">⚡</div>
+        <div><div style="font-size:13px;font-weight:500;color:var(--txt)">Feeling anything in particular?</div><div style="font-size:11px;color:var(--txt-m);margin-top:1px;font-weight:300">Boost what you're in the mood for</div></div>
+      </div>
+      <div class="pbtns">
+        <button class="pbbtn">🎯 Best Pick</button>
+        <button class="psbtn">🎡 Spin the Wheel</button>
+      </div>
+      <div class="rdiv">Best Pick Reveal</div>
+      <div class="rcard">
+        <div class="rimg">🎬</div>
+        <div class="rbody">
+          <div class="rtit">Dune: Part Two</div>
+          <div class="schips"><div class="schip">❤️ 2 of 2 interested</div><div class="schip">⏱ Saved 6 weeks ago</div><div class="schip">⚡ 2 boosts</div></div>
+          <button class="planbtn">✓ Mark as Planned</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="arrbtn" id="pb" onclick="prev()" disabled>← Prev</button>
+  <div class="dots"><div class="dot on" onclick="go(1)"></div><div class="dot" onclick="go(2)"></div><div class="dot" onclick="go(3)"></div><div class="dot" onclick="go(4)"></div><div class="dot" onclick="go(5)"></div></div>
+  <button class="arrbtn" id="nb" onclick="next()">Next →</button>
+</div>
+<script>
+let c=1;
+const LBLS=['Screen 1 of 5 — Home','Screen 2 of 5 — Circle Detail','Screen 3 of 5 — Add Intent','Screen 4 of 5 — Intent Detail','Screen 5 of 5 — Payoff'];
+function go(n){document.getElementById('s'+c).classList.remove('on');document.querySelectorAll('.dot')[c-1].classList.remove('on');c=n;document.getElementById('s'+c).classList.add('on');document.querySelectorAll('.dot')[c-1].classList.add('on');document.getElementById('lbl').textContent=LBLS[c-1];document.getElementById('pb').disabled=c===1;document.getElementById('nb').disabled=c===5;}
+function prev(){if(c>1)go(c-1);}
+function next(){if(c<5)go(c+1);}
+</script>
+</body>
+</html>

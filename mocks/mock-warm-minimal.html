@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Someday — Warm Minimal</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#FAF8F5;--card:#FFFFFF;--accent:#5B4B8A;--accent-l:#EDE8F8;--accent-m:#9B8DC4;
+  --txt:#1C1525;--txt-m:#5A5169;--txt-l:#9B96A8;--brd:#EDE9E3;
+  --green:#4CAF7D;--amber:#F59E0B;--r:16px;--rs:10px
+}
+body{background:#DDD9D2;font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:48px 20px 60px}
+.style-tag{text-align:center;margin-bottom:8px}
+.style-tag p{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#888;font-weight:500}
+.style-tag h2{font-family:'Lora',serif;font-size:30px;color:#1C1525;margin-top:2px}
+.style-tag small{font-size:13px;color:#888;display:block;margin-top:4px}
+.screen-lbl{text-align:center;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#888;margin:16px 0 10px}
+.phone{width:390px;height:844px;background:var(--bg);border-radius:44px;overflow:hidden;
+  box-shadow:0 0 0 2px #C4C0B9,0 48px 96px rgba(0,0,0,.22),0 12px 24px rgba(0,0,0,.1)}
+.sbar{height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:var(--bg)}
+.sbar-t{font-size:15px;font-weight:600;color:var(--txt)}
+.sbar-r{font-size:12px;color:var(--txt);display:flex;gap:6px}
+.sc{display:none;height:794px;overflow-y:auto;scrollbar-width:none}
+.sc::-webkit-scrollbar{display:none}
+.sc.on{display:block}
+/* NAV */
+.nbar{padding:8px 24px 14px;display:flex;align-items:center;gap:12px;background:var(--bg);position:sticky;top:0;z-index:9;border-bottom:1px solid var(--brd)}
+.nbk{width:34px;height:34px;border-radius:50%;background:var(--accent-l);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:16px;flex-shrink:0}
+.ntit{font-family:'Lora',serif;font-size:17px;font-weight:600;color:var(--txt);flex:1}
+.nsub{font-size:11px;color:var(--txt-m);margin-top:1px}
+/* HOME */
+.hdr{padding:20px 24px 28px}
+.wordmark{font-family:'Lora',serif;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:500}
+.greet{font-family:'Lora',serif;font-size:28px;color:var(--txt);margin-top:14px;line-height:1.2}
+.greet-sub{font-size:13px;color:var(--txt-m);margin-top:6px}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700}
+.cgrid{padding:0 24px;display:flex;flex-direction:column;gap:13px}
+.ccard{background:var(--card);border-radius:var(--r);padding:18px 20px;box-shadow:0 2px 14px rgba(91,75,138,.07);cursor:pointer;display:flex;align-items:center;gap:16px}
+.cemoji{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.cname{font-family:'Lora',serif;font-size:16px;font-weight:600;color:var(--txt)}
+.cmeta{font-size:12px;color:var(--txt-m);margin-top:2px}
+.mdots{display:flex;margin-top:8px}
+.mdot{width:22px;height:22px;border-radius:50%;border:2px solid var(--card);margin-right:-5px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.cbadge{background:var(--accent-l);color:var(--accent);font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap}
+.newcircle-wrap{padding:20px 24px 36px}
+.newcircle{width:100%;padding:14px;border-radius:var(--r);background:var(--accent-l);color:var(--accent);border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--brd);padding:0 24px}
+.tab{padding:11px 14px;font-size:13px;font-weight:500;color:var(--txt-l);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+/* CHIPS */
+.chips{display:flex;gap:8px;padding:14px 24px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{padding:6px 13px;border-radius:20px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;border:1.5px solid var(--brd);background:transparent;color:var(--txt-m)}
+.chip.on{background:var(--accent-l);border-color:var(--accent-l);color:var(--accent)}
+/* INTENT CARDS */
+.ilist{padding:0 24px;display:flex;flex-direction:column;gap:12px}
+.icard{background:var(--card);border-radius:var(--r);overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.iimg{width:100%;height:110px;display:flex;align-items:center;justify-content:center;font-size:34px}
+.ibody{padding:13px 15px}
+.isite{font-size:10px;color:var(--txt-l);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:3px}
+.itit{font-family:'Lora',serif;font-size:14px;font-weight:600;color:var(--txt);line-height:1.3}
+.ifoot{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.sbadge{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;text-transform:capitalize}
+.s-saved{background:#F3F0FF;color:var(--accent-m)}
+.s-interested{background:#FFF3CD;color:#B45309}
+.s-planned{background:#D1FAE5;color:#047857}
+.irow{display:flex;align-items:center;gap:6px}
+.idot{width:20px;height:20px;border-radius:50%;border:2px solid #fff;margin-right:-4px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;color:#fff}
+.boostbtn{width:30px;height:30px;border-radius:50%;background:#FFFBEB;border:1.5px solid #FDE68A;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;flex-shrink:0}
+.payoff-trigger{margin:20px 24px 40px}
+.ptbtn{width:100%;padding:15px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+/* ADD FORM */
+.aform{padding:16px 24px;display:flex;flex-direction:column;gap:18px}
+.flbl{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--txt-l);margin-bottom:7px}
+.urow{display:flex;gap:8px}
+.uinp{flex:1;padding:11px 14px;border:1.5px solid var(--brd);border-radius:var(--rs);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--card);color:var(--txt);outline:none}
+.uinp:focus{border-color:var(--accent)}
+.pastebtn{padding:11px 14px;border-radius:var(--rs);background:var(--accent-l);color:var(--accent);border:none;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.unfurl{border-radius:var(--r);overflow:hidden;border:1.5px solid var(--brd)}
+.uimg{width:100%;height:130px;background:linear-gradient(135deg,#1a1a2e,#3d2c8d);display:flex;align-items:center;justify-content:center;font-size:44px}
+.uinfo{padding:12px 14px;background:var(--card)}
+.usite{font-size:11px;color:var(--txt-l);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.utit{font-family:'Lora',serif;font-size:14px;color:var(--txt);margin-top:3px}
+.catrow{display:flex;gap:7px;flex-wrap:wrap}
+.catbtn{padding:8px 12px;border-radius:var(--rs);border:1.5px solid var(--brd);background:transparent;font-size:12px;cursor:pointer;color:var(--txt-m)}
+.catbtn.on{background:var(--accent-l);border-color:var(--accent);color:var(--accent);font-weight:600}
+.noteinp{width:100%;padding:11px 14px;border:1.5px solid var(--brd);border-radius:var(--rs);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--card);color:var(--txt);outline:none;resize:none;height:72px}
+.savebtn{width:100%;padding:15px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;margin-bottom:48px}
+/* DETAIL */
+.dbody{padding:0 24px}
+.dimg{width:100%;height:170px;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);display:flex;align-items:center;justify-content:center;font-size:52px;border-radius:var(--r) var(--r) 0 0}
+.dmeta{background:var(--card);padding:14px 16px;border:1.5px solid var(--brd);border-top:none;border-radius:0 0 var(--r) var(--r);margin-bottom:14px}
+.dsite{font-size:11px;color:var(--txt-l);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.dtit{font-family:'Lora',serif;font-size:17px;font-weight:600;color:var(--txt);margin-top:3px}
+.isect{background:var(--card);border-radius:var(--r);padding:15px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.icnt{font-size:22px;font-weight:700;color:var(--accent);font-family:'Lora',serif}
+.ilbl{font-size:12px;color:var(--txt-m)}
+.mrow{background:var(--card);border-radius:var(--rs);padding:11px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.mname{font-size:13px;font-weight:500;color:var(--txt)}
+.sswitch{background:var(--card);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.slbl{font-size:11px;color:var(--txt-l);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:9px}
+.ssteps{display:flex;align-items:center}
+.sstep{flex:1;text-align:center;font-size:10px;padding:7px 3px;border-radius:8px;color:var(--txt-l);font-weight:500}
+.sstep.cur{background:var(--accent-l);color:var(--accent);font-weight:700}
+.sline{flex:0;width:14px;height:1px;background:var(--brd)}
+.arow{display:flex;gap:10px;margin-bottom:40px}
+.reactbtn{flex:1;padding:13px;border-radius:var(--r);background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer}
+.boostabtn{padding:13px 16px;border-radius:var(--r);background:var(--card);border:1.5px solid var(--brd);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px}
+/* PAYOFF */
+.pbody{padding:0 24px}
+.phead{text-align:center;padding:18px 0 22px}
+.ptit{font-family:'Lora',serif;font-size:27px;color:var(--txt);line-height:1.25}
+.psub{font-size:13px;color:var(--txt-m);margin-top:6px}
+.pcount{display:inline-block;background:var(--accent-l);color:var(--accent);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-top:7px}
+.boost-nudge{background:var(--accent-l);border-radius:var(--r);padding:13px 15px;margin-bottom:18px;display:flex;gap:10px;align-items:center}
+.pbtns{display:flex;flex-direction:column;gap:11px;margin-bottom:28px}
+.pbbtn{padding:17px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 4px 20px rgba(91,75,138,.28)}
+.psbtn{padding:17px;background:transparent;color:var(--accent);border:2px solid var(--accent);border-radius:var(--r);font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px}
+.rdiv{text-align:center;font-size:10px;color:var(--txt-l);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.rdiv::before,.rdiv::after{content:'';flex:1;height:1px;background:var(--brd)}
+.rcard{background:var(--card);border-radius:var(--r);overflow:hidden;box-shadow:0 4px 24px rgba(91,75,138,.1);margin-bottom:48px}
+.rimg{width:100%;height:130px;background:linear-gradient(135deg,#0f0c29,#302b63);display:flex;align-items:center;justify-content:center;font-size:44px}
+.rbody{padding:15px}
+.rtit{font-family:'Lora',serif;font-size:17px;font-weight:600;color:var(--txt);margin-bottom:11px}
+.schips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.schip{background:var(--accent-l);color:var(--accent);font-size:11px;font-weight:500;padding:4px 9px;border-radius:20px}
+.planbtn{width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer}
+/* CONTROLS */
+.controls{display:flex;justify-content:space-between;align-items:center;width:390px;margin-top:18px}
+.arrbtn{padding:8px 18px;background:#fff;border:1.5px solid #C4C0B9;border-radius:24px;font-size:12px;font-weight:600;color:#666;cursor:pointer}
+.arrbtn:disabled{opacity:.3;cursor:default}
+.dots{display:flex;gap:7px}
+.dot{width:7px;height:7px;border-radius:50%;background:#C4C0B9;cursor:pointer;transition:all .2s}
+.dot.on{background:var(--accent);width:22px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="style-tag">
+  <p>Design Style 01 / 05</p>
+  <h2>Warm Minimalist</h2>
+  <small>Lora serif · off-white · violet #5B4B8A · scrapbook feel</small>
+</div>
+<div class="screen-lbl" id="lbl">Screen 1 of 5 — Home</div>
+<div class="phone">
+  <div class="sbar"><span class="sbar-t">9:41</span><div class="sbar-r"><span>●●●</span><span>🔋</span></div></div>
+
+  <!-- S1: HOME -->
+  <div class="sc on" id="s1">
+    <div class="hdr">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="wordmark">Someday</div>
+        <div class="avatar">T</div>
+      </div>
+      <div class="greet">Good evening,<br>Tejas 👋</div>
+      <div class="greet-sub">3 circles · 17 ideas waiting</div>
+    </div>
+    <div class="cgrid">
+      <div class="ccard" onclick="go(2)">
+        <div class="cemoji" style="background:#EDE8F8">👁️</div>
+        <div style="flex:1">
+          <div class="cname">Tejas + Harsh</div>
+          <div class="cmeta">2 members</div>
+          <div class="mdots">
+            <div class="mdot" style="background:#5B4B8A">T</div>
+            <div class="mdot" style="background:#9B8DC4">H</div>
+          </div>
+        </div>
+        <div class="cbadge">5 ideas</div>
+      </div>
+      <div class="ccard">
+        <div class="cemoji" style="background:#FEF3C7">🎓</div>
+        <div style="flex:1">
+          <div class="cname">College Gang</div>
+          <div class="cmeta">5 members</div>
+          <div class="mdots">
+            <div class="mdot" style="background:#5B4B8A">T</div>
+            <div class="mdot" style="background:#4CAF7D">A</div>
+            <div class="mdot" style="background:#F59E0B">R</div>
+            <div class="mdot" style="background:#EF4444">P</div>
+            <div class="mdot" style="background:#3B82F6">S</div>
+          </div>
+        </div>
+        <div class="cbadge">8 ideas</div>
+      </div>
+      <div class="ccard">
+        <div class="cemoji" style="background:#DBEAFE">✈️</div>
+        <div style="flex:1">
+          <div class="cname">Europe 2027</div>
+          <div class="cmeta">3 members</div>
+          <div class="mdots">
+            <div class="mdot" style="background:#5B4B8A">T</div>
+            <div class="mdot" style="background:#9B8DC4">H</div>
+            <div class="mdot" style="background:#4CAF7D">A</div>
+          </div>
+        </div>
+        <div class="cbadge">4 ideas</div>
+      </div>
+    </div>
+    <div class="newcircle-wrap"><button class="newcircle">+ New Circle</button></div>
+  </div>
+
+  <!-- S2: CIRCLE DETAIL -->
+  <div class="sc" id="s2">
+    <div class="nbar">
+      <button class="nbk" onclick="go(1)">←</button>
+      <div style="flex:1">
+        <div class="ntit">Tejas + Harsh</div>
+        <div class="nsub">2 members · 5 ideas</div>
+      </div>
+      <div style="display:flex">
+        <div class="mdot" style="background:#5B4B8A;border-color:var(--bg)">T</div>
+        <div class="mdot" style="background:#9B8DC4;border-color:var(--bg)">H</div>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab on">All</div>
+      <div class="tab">Shortlist ⭐ 2</div>
+      <div class="tab">Done ✓</div>
+    </div>
+    <div class="chips">
+      <div class="chip on">All</div>
+      <div class="chip">🎬 Watch</div>
+      <div class="chip">🍜 Eat</div>
+      <div class="chip">📚 Read</div>
+      <div class="chip">✈️ Trip</div>
+    </div>
+    <div class="ilist">
+      <div class="icard" onclick="go(4)">
+        <div class="iimg" style="background:linear-gradient(135deg,#1a1a2e,#3d2c8d)">🎬</div>
+        <div class="ibody">
+          <div class="isite">YouTube</div>
+          <div class="itit">Dune: Part Two — Official Trailer</div>
+          <div class="ifoot">
+            <span class="sbadge s-interested">Interested</span>
+            <div class="irow">
+              <div class="idot" style="background:#5B4B8A">T</div>
+              <div class="idot" style="background:#9B8DC4">H</div>
+              <div style="width:6px"></div>
+              <div class="boostbtn">⚡</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="icard">
+        <div class="iimg" style="background:linear-gradient(135deg,#FFF3CD,#FDE68A)">🍜</div>
+        <div class="ibody">
+          <div class="isite">Zomato</div>
+          <div class="itit">Busan Olle Korean BBQ</div>
+          <div class="ifoot">
+            <span class="sbadge s-saved">Saved</span>
+            <div class="irow">
+              <div class="idot" style="background:#5B4B8A">T</div>
+              <div style="width:6px"></div>
+              <div class="boostbtn">⚡</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="icard">
+        <div class="iimg" style="background:linear-gradient(135deg,#D1FAE5,#A7F3D0)">📚</div>
+        <div class="ibody">
+          <div class="isite">Goodreads</div>
+          <div class="itit">The Dispossessed — Ursula K. Le Guin</div>
+          <div class="ifoot">
+            <span class="sbadge s-interested">Interested</span>
+            <div class="irow">
+              <div class="idot" style="background:#9B8DC4">H</div>
+              <div style="width:6px"></div>
+              <div class="boostbtn">⚡</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="icard">
+        <div class="iimg" style="background:linear-gradient(135deg,#DBEAFE,#BFDBFE)">🎬</div>
+        <div class="ibody">
+          <div class="isite">IMDb</div>
+          <div class="itit">Poor Things (2023)</div>
+          <div class="ifoot">
+            <span class="sbadge s-planned">Planned</span>
+            <div class="irow">
+              <div class="idot" style="background:#5B4B8A">T</div>
+              <div class="idot" style="background:#9B8DC4">H</div>
+              <div style="width:6px"></div>
+              <div class="boostbtn">⚡</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="payoff-trigger"><button class="ptbtn" onclick="go(5)">🎯 What are we doing today?</button></div>
+  </div>
+
+  <!-- S3: ADD INTENT -->
+  <div class="sc" id="s3">
+    <div class="nbar">
+      <button class="nbk" onclick="go(2)">←</button>
+      <div class="ntit">Add to Tejas + Harsh</div>
+    </div>
+    <div class="aform">
+      <div>
+        <label class="flbl">URL</label>
+        <div class="urow">
+          <input class="uinp" value="https://youtube.com/watch?v=Way9Dexny3w" readonly>
+          <button class="pastebtn">Paste</button>
+        </div>
+      </div>
+      <div class="unfurl">
+        <div class="uimg">🎬</div>
+        <div class="uinfo">
+          <div class="usite">YouTube · 4:22</div>
+          <div class="utit">Dune: Part Two — Official Trailer (2024)</div>
+        </div>
+      </div>
+      <div>
+        <label class="flbl">Category</label>
+        <div class="catrow">
+          <button class="catbtn on">🎬 Watch</button>
+          <button class="catbtn">🍜 Eat</button>
+          <button class="catbtn">🗺 Visit</button>
+          <button class="catbtn">📚 Read</button>
+          <button class="catbtn">🎮 Play</button>
+          <button class="catbtn">✈️ Trip</button>
+        </div>
+      </div>
+      <div>
+        <label class="flbl">Note</label>
+        <textarea class="noteinp">Heard this is incredible on IMAX — we should see it together</textarea>
+      </div>
+      <div>
+        <label class="flbl">Tags</label>
+        <input class="uinp" value="film, sci-fi, imax" style="width:100%" readonly>
+      </div>
+      <button class="savebtn">Save to Circle</button>
+    </div>
+  </div>
+
+  <!-- S4: INTENT DETAIL -->
+  <div class="sc" id="s4">
+    <div class="nbar">
+      <button class="nbk" onclick="go(2)">←</button>
+      <div class="ntit">Intent Detail</div>
+    </div>
+    <div class="dbody">
+      <div class="dimg">🎬</div>
+      <div class="dmeta">
+        <div class="dsite">YouTube · Added by Tejas · 2 weeks ago</div>
+        <div class="dtit">Dune: Part Two — Official Trailer (2024)</div>
+      </div>
+      <div class="isect">
+        <div><div class="icnt">2 / 2</div><div class="ilbl">members interested</div></div>
+        <div style="flex:1"></div>
+        <div style="display:flex">
+          <div class="idot" style="width:30px;height:30px;font-size:12px;background:#5B4B8A;border:2px solid #fff;margin-right:-5px">T</div>
+          <div class="idot" style="width:30px;height:30px;font-size:12px;background:#9B8DC4;border:2px solid #fff">H</div>
+        </div>
+      </div>
+      <div class="mrow"><div style="display:flex;align-items:center;gap:9px"><div class="idot" style="width:28px;height:28px;font-size:11px;background:#5B4B8A">T</div><div class="mname">Tejas</div></div><div style="font-size:12px;color:var(--green)">❤️ Interested</div></div>
+      <div class="mrow" style="margin-bottom:12px"><div style="display:flex;align-items:center;gap:9px"><div class="idot" style="width:28px;height:28px;font-size:11px;background:#9B8DC4">H</div><div class="mname">Harsh</div></div><div style="font-size:12px;color:var(--green)">❤️ Interested</div></div>
+      <div class="sswitch">
+        <div class="slbl">Status</div>
+        <div class="ssteps">
+          <div class="sstep">Saved</div><div class="sline"></div>
+          <div class="sstep cur">Interested</div><div class="sline"></div>
+          <div class="sstep">Planned</div><div class="sline"></div>
+          <div class="sstep">Done</div>
+        </div>
+      </div>
+      <div class="arow">
+        <button class="reactbtn">❤️ Interested</button>
+        <button class="boostabtn">⚡ Boost</button>
+      </div>
+      <div style="background:var(--card);border-radius:var(--r);padding:13px 15px;margin-bottom:48px">
+        <div style="font-size:11px;color:var(--txt-l);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Note</div>
+        <div style="font-size:13px;color:var(--txt-m);font-style:italic">"Heard this is incredible on IMAX — we should see it together"</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S5: PAYOFF -->
+  <div class="sc" id="s5">
+    <div class="nbar">
+      <button class="nbk" onclick="go(2)">←</button>
+      <div class="ntit">Payoff</div>
+    </div>
+    <div class="pbody">
+      <div class="phead">
+        <div class="ptit">What are you doing<br><em>today?</em></div>
+        <div class="psub">You're meeting Harsh. Time to pick.</div>
+        <div class="pcount">4 things you both want</div>
+      </div>
+      <div class="boost-nudge">
+        <div style="font-size:20px">⚡</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--accent)">Feeling anything in particular?</div>
+          <div style="font-size:12px;color:var(--accent-m);margin-top:2px">Boost the ones you're in the mood for today</div>
+        </div>
+      </div>
+      <div class="pbtns">
+        <button class="pbbtn">🎯 Best Pick</button>
+        <button class="psbtn">🎡 Spin the Wheel</button>
+      </div>
+      <div class="rdiv">Best Pick Reveal</div>
+      <div class="rcard">
+        <div class="rimg">🎬</div>
+        <div class="rbody">
+          <div class="rtit">Dune: Part Two</div>
+          <div class="schips">
+            <div class="schip">❤️ 2 of 2 interested</div>
+            <div class="schip">⏱ Saved 6 weeks ago</div>
+            <div class="schip">⚡ 2 boosts</div>
+          </div>
+          <button class="planbtn">✓ Mark as Planned</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="arrbtn" id="pb" onclick="prev()" disabled>← Prev</button>
+  <div class="dots">
+    <div class="dot on" onclick="go(1)"></div>
+    <div class="dot" onclick="go(2)"></div>
+    <div class="dot" onclick="go(3)"></div>
+    <div class="dot" onclick="go(4)"></div>
+    <div class="dot" onclick="go(5)"></div>
+  </div>
+  <button class="arrbtn" id="nb" onclick="next()">Next →</button>
+</div>
+
+<script>
+let c=1;
+const LBLS=['Screen 1 of 5 — Home','Screen 2 of 5 — Circle Detail','Screen 3 of 5 — Add Intent','Screen 4 of 5 — Intent Detail','Screen 5 of 5 — Payoff'];
+function go(n){
+  document.getElementById('s'+c).classList.remove('on');
+  document.querySelectorAll('.dot')[c-1].classList.remove('on');
+  c=n;
+  document.getElementById('s'+c).classList.add('on');
+  document.querySelectorAll('.dot')[c-1].classList.add('on');
+  document.getElementById('lbl').textContent=LBLS[c-1];
+  document.getElementById('pb').disabled=c===1;
+  document.getElementById('nb').disabled=c===5;
+}
+function prev(){if(c>1)go(c-1);}
+function next(){if(c<5)go(c+1);}
+</script>
+</body>
+</html>
