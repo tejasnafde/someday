@@ -8,7 +8,8 @@ class Settings(BaseSettings):
     # Supabase
     SUPABASE_URL: str
     SUPABASE_ANON_KEY: str
-    SUPABASE_JWT_SECRET: str
+    # No JWT secret — project uses RS256 JWKS verification.
+    # JWKS URL is derived from SUPABASE_URL at runtime in auth_helper.py.
 
     # Database
     DATABASE_URL: str
