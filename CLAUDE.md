@@ -1,0 +1,88 @@
+# Someday — Agent Instructions
+
+## Design System
+
+**Before writing any UI code, read `docs/style-guide.md` in full.**
+
+The style guide is the single source of truth for colours, typography, spacing, buttons, icons, and glass surfaces. Violating it produces visual inconsistency that requires a full review pass to fix. It is faster to check first.
+
+### Hard UI rules (no exceptions)
+
+- **Colours via tokens only.** Never hardcode a hex value in a component. Use `var(--acc)`, `var(--cp)`, etc.
+- **One button gradient.** Every filled CTA uses `linear-gradient(135deg, var(--acc), var(--acc-m))`. No green "success" buttons, no red "danger" buttons, no one-off colours.
+- **No emoji in UI chrome.** Icons, buttons, labels, badges, tabs, and navigation must use the SVG sprite system (`<svg class="icon"><use href="#i-name"/></svg>`). Emoji are user content only.
+- **Dark mode = charcoal only.** Dark backgrounds and glass surfaces must be neutral grey. Zero blue, purple, or colour tints in `--bg-*`, `--glass*`, or `--brd*` dark tokens.
+- **Circle identity colours (`--cp`, `--cg`, `--cb`) in three places only:** left-border stripe, icon background, count badge. Nowhere else.
+- **`--r` and `--rs` for all border-radius.** No custom values.
+
+---
+
+## Backend (FastAPI)
+
+### Project structure
+
+Mirrors `geoiq_broker_app_v2`. Every new module follows this exact layering:
+
+```
+routers/<module>_router.py      ← HTTP only: Pydantic validation, Depends(jwt_required), calls create_response()
+handler/<module>_handler.py     ← Extends DBUtil, returns (status_code, result) tuples
+modules/<module>/
+  <module>_helper.py            ← Business logic, orchestration
+  <module>_queries.py           ← Raw SQL strings only (sqlalchemy.text + :named params)
+schemas/<module>_schema.py      ← Pydantic BaseModels for request/response
+```
+
+### Hard backend rules
+
+- **No `SELECT *`.** Always name every column.
+- **`status = 1` filter on every query.** All tables have a `status` integer column. Active = 1, soft-deleted = 0, user-deleted = -1. Never `DELETE` rows.
+- **Intent workflow state is `task_status`.** The column `status` is the soft-delete flag on every table. The workflow (saved/interested/planned/done/archived) is `task_status` on the `intents` table.
+- **Raw SQL via `sqlalchemy.text()`.** No ORM queries. SQL lives in `_queries.py` files.
+- **Named params only.** Use `:param_name` syntax. No f-strings or string interpolation in SQL.
+- **No `os.environ`.** Always `from config.settings import settings`.
+- **No `print()`.** Always `infologger` or `errorlogger` from `app_util/log_util.py`.
+- **Handlers return `(status_code, result)` tuples.** Routers wrap with `create_response()`.
+- **No `_` prefix** on any method or attribute (no private convention). Dunder methods are fine.
+
+---
+
+## Logging — non-negotiable
+
+Set up `log_util.py` and decorators **before any feature code**. Every endpoint, always.
+
+- `@log_timing("ENDPOINT_NAME")` on every router function — logs request start with payload, end with duration.
+- `@log_payload` logs the Pydantic-validated body at INFO before calling the handler.
+- `DBUtil` logs every query + params (DEBUG) and result row count (DEBUG) automatically.
+- Every handler method logs its entry point with key identifiers (`user_id`, `circle_id`, etc.).
+- `WARNING` for every fallback or degraded path (unfurl failed, invite token not found, etc.).
+- `ERROR` + full exception in every `except` block.
+- Never remove logs to silence noise — tune `LOG_LEVEL` env var instead (DEBUG in dev, INFO in prod).
+- Abundant logs are correct. The rule is: if you're testing a new endpoint, you should never need to go back and add logs after the fact.
+
+---
+
+## Database
+
+- **Supabase Postgres** for both dev and prod. Two separate Supabase projects.
+- Load connection string from `settings.py` via `APP_ENV` → `.env.dev` or `.env.production`.
+- All migrations are plain SQL files in `migrations/`. No ORM migration tooling.
+- Soft deletes only. `status = 0` hides from UI. `status = -1` for user-initiated removal.
+
+---
+
+## Environments
+
+| Env | Backend | DB |
+|---|---|---|
+| dev | Railway dev service | Supabase dev project |
+| production | Railway prod service | Supabase prod project |
+
+`APP_ENV` env var selects the environment. Default is `dev`.
+
+---
+
+## Git
+
+- **Always merge, never rebase.** If a push is rejected for being behind, `git pull` (merge) then push.
+- Commit messages: short imperative subject line + body explaining the *why*, not the *what*.
+- Co-author line: `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>`
