@@ -10,8 +10,10 @@ and prints a pass/fail summary. Paste the full output back to Claude
 if anything fails.
 """
 
+import base64
 import json
 import sys
+import time
 
 import httpx
 
@@ -23,6 +25,30 @@ BASE  = "http://localhost:8000"
 if not TOKEN:
     print("Usage: python3 smoke_test.py <access_token>")
     sys.exit(1)
+
+# ── Token expiry check ────────────────────────────────────────────────────────
+
+def _decode_jwt_payload(token: str) -> dict:
+    try:
+        part = token.split(".")[1]
+        part += "=" * (-len(part) % 4)
+        return json.loads(base64.urlsafe_b64decode(part))
+    except Exception:
+        return {}
+
+_payload = _decode_jwt_payload(TOKEN)
+_exp = _payload.get("exp", 0)
+_now = int(time.time())
+
+if _exp and _exp < _now:
+    ago = _now - _exp
+    print(f"\033[0;31m✗ Token expired {ago}s ago ({ago//60} mins). Get a fresh magic link.\033[0m")
+    print(f"  sub:   {_payload.get('sub')}")
+    print(f"  email: {_payload.get('email')}")
+    sys.exit(1)
+
+_ttl = _exp - _now if _exp else "?"
+print(f"\033[0;32m✓ Token valid — expires in {_ttl}s\033[0m")
 
 HEADERS = {
     "Authorization": f"Bearer {TOKEN}",
@@ -103,6 +129,10 @@ me = req("POST /auth/verify", "POST", "/auth/verify", expect=200,
 
 user_id = (me.get("user") or {}).get("id", "")
 print(f"\n  {YEL}→ user_id = {user_id}{RST}")
+
+if not user_id:
+    print(f"\n{RED}Auth failed — aborting. Check token and server logs.{RST}")
+    sys.exit(1)
 
 # 3. Get current user + circles
 req("GET /auth/me", "GET", "/auth/me",
