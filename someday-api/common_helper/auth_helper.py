@@ -47,7 +47,7 @@ def verify_supabase_jwt(
         payload = jwt.decode(
             token,
             signing_key.key,
-            algorithms=["RS256"],
+            algorithms=["ES256"],
             audience="authenticated",
         )
         infologger.debug(f"JWT_VERIFIED | user_id={payload.get('sub')}")
