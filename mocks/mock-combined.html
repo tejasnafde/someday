@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<title>Someday — Combined (v1)</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────
+   TOKENS — LIGHT
+───────────────────────────────────────────── */
+:root {
+  --bg-start: #F5F0FA;
+  --bg-mid:   #EAF7F0;
+  --bg-end:   #FDF0F5;
+
+  --glass:        rgba(255,255,255,0.62);
+  --glass-strong: rgba(255,255,255,0.80);
+  --glass-subtle: rgba(255,255,255,0.38);
+  --glass-nav:    rgba(250,248,252,0.82);
+
+  --brd:      rgba(255,255,255,0.75);
+  --brd-soft: rgba(200,190,220,0.25);
+  --brd-hard: rgba(150,130,180,0.18);
+
+  --txt:   #1C1525;
+  --txt-m: #5A4E72;
+  --txt-l: #9B90B4;
+
+  --accent:   #5B4B8A;
+  --accent-l: rgba(91,75,138,0.10);
+  --accent-m: #8B78C0;
+  --accent-glow: rgba(91,75,138,0.22);
+
+  /* per-circle bold colors */
+  --c-pink:    #FF4B6E;
+  --c-pink-l:  rgba(255,75,110,0.12);
+  --c-green:   #00C48C;
+  --c-green-l: rgba(0,196,140,0.12);
+  --c-blue:    #4E6EF5;
+  --c-blue-l:  rgba(78,110,245,0.12);
+
+  /* status */
+  --s-saved:        rgba(91,75,138,0.10);  --s-saved-t:    #7A6AAA;
+  --s-interested:   rgba(245,158,11,0.12); --s-interested-t:#B45309;
+  --s-planned:      rgba(0,196,140,0.12);  --s-planned-t:  #047857;
+
+  --shadow-card: 0 4px 24px rgba(91,75,138,0.10), 0 1px 4px rgba(91,75,138,0.06);
+  --shadow-btn:  0 6px 24px rgba(91,75,138,0.28);
+
+  --r: 20px; --rs: 12px; --blur: blur(18px) saturate(160%);
+}
+
+/* ─────────────────────────────────────────────
+   TOKENS — DARK
+───────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg-start: #0E0B1A;
+  --bg-mid:   #0A1420;
+  --bg-end:   #150A20;
+
+  --glass:        rgba(22,16,40,0.65);
+  --glass-strong: rgba(28,20,48,0.88);
+  --glass-subtle: rgba(22,16,40,0.38);
+  --glass-nav:    rgba(14,11,26,0.82);
+
+  --brd:      rgba(120,100,180,0.22);
+  --brd-soft: rgba(120,100,180,0.12);
+  --brd-hard: rgba(120,100,180,0.30);
+
+  --txt:   #EDE8F8;
+  --txt-m: #9B8FC4;
+  --txt-l: #5A5080;
+
+  --accent:   #A78BFA;
+  --accent-l: rgba(167,139,250,0.12);
+  --accent-m: #C4B5FD;
+  --accent-glow: rgba(167,139,250,0.25);
+
+  --c-pink:    #FF6B8A;
+  --c-pink-l:  rgba(255,107,138,0.15);
+  --c-green:   #34D399;
+  --c-green-l: rgba(52,211,153,0.15);
+  --c-blue:    #7B9FFF;
+  --c-blue-l:  rgba(123,159,255,0.15);
+
+  --s-saved:        rgba(167,139,250,0.12); --s-saved-t:    #C4B5FD;
+  --s-interested:   rgba(251,191,36,0.12);  --s-interested-t:#FCD34D;
+  --s-planned:      rgba(52,211,153,0.12);  --s-planned-t:  #34D399;
+
+  --shadow-card: 0 4px 32px rgba(0,0,0,0.3), 0 1px 4px rgba(0,0,0,0.2);
+  --shadow-btn:  0 6px 28px rgba(167,139,250,0.30);
+}
+
+/* ─────────────────────────────────────────────
+   BASE
+───────────────────────────────────────────── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box }
+
+html { color-scheme: light dark }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px 64px;
+  transition: background .4s;
+  position: relative;
+  background: linear-gradient(145deg, var(--bg-start), var(--bg-mid) 50%, var(--bg-end));
+}
+
+/* Ambient orbs */
+.orb {
+  position: fixed; border-radius: 50%;
+  pointer-events: none; z-index: 0;
+  transition: opacity .5s;
+}
+.orb1 { width:420px;height:420px;top:-100px;left:-120px;
+  background:radial-gradient(circle,rgba(196,181,253,.28) 0%,transparent 70%);
+  animation:fl1 10s ease-in-out infinite }
+.orb2 { width:300px;height:300px;bottom:80px;right:-80px;
+  background:radial-gradient(circle,rgba(167,243,208,.22) 0%,transparent 70%);
+  animation:fl2 13s ease-in-out infinite }
+.orb3 { width:260px;height:260px;bottom:-40px;left:60px;
+  background:radial-gradient(circle,rgba(251,213,229,.22) 0%,transparent 70%);
+  animation:fl3 9s ease-in-out infinite }
+[data-theme="dark"] .orb1 { background:radial-gradient(circle,rgba(124,92,191,.20) 0%,transparent 70%) }
+[data-theme="dark"] .orb2 { background:radial-gradient(circle,rgba(52,211,153,.10) 0%,transparent 70%) }
+[data-theme="dark"] .orb3 { background:radial-gradient(circle,rgba(167,139,250,.12) 0%,transparent 70%) }
+@keyframes fl1{0%,100%{transform:translate(0,0)}50%{transform:translate(24px,32px)}}
+@keyframes fl2{0%,100%{transform:translate(0,0)}50%{transform:translate(-18px,-24px)}}
+@keyframes fl3{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-18px)}}
+
+/* ─────────────────────────────────────────────
+   HEADER + CONTROLS
+───────────────────────────────────────────── */
+.page-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 8px;
+  position: relative; z-index: 2;
+  width: 390px;
+}
+.style-info { text-align: center; flex: 1 }
+.style-info p {
+  font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--txt-l); font-weight: 500;
+}
+.style-info h2 {
+  font-family: 'Lora', serif;
+  font-size: 26px; color: var(--txt);
+  margin-top: 2px; font-style: italic;
+}
+
+.theme-toggle {
+  width: 52px; height: 28px;
+  border-radius: 20px;
+  background: var(--glass);
+  border: 1px solid var(--brd);
+  cursor: pointer;
+  display: flex; align-items: center; padding: 3px;
+  position: relative; z-index: 2;
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  transition: background .3s;
+  flex-shrink: 0;
+}
+.theme-toggle-knob {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 2px 8px var(--accent-glow);
+  transition: transform .3s, background .3s;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+}
+[data-theme="dark"] .theme-toggle-knob { transform: translateX(24px) }
+
+.screen-lbl {
+  text-align: center;
+  font-size: 10px; font-weight: 500; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--txt-l);
+  margin: 12px 0 8px; position: relative; z-index: 2;
+}
+
+/* ─────────────────────────────────────────────
+   PHONE SHELL
+───────────────────────────────────────────── */
+.phone {
+  width: 390px; height: 844px;
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  border-radius: 44px; overflow: hidden;
+  position: relative; z-index: 1;
+  border: 1px solid var(--brd);
+  box-shadow:
+    0 0 0 1px var(--brd-soft),
+    0 48px 100px rgba(0,0,0,.14),
+    0 12px 32px rgba(0,0,0,.08),
+    inset 0 1px 0 var(--brd),
+    inset 0 -1px 0 var(--brd-soft);
+  transition: background .4s, box-shadow .4s;
+}
+
+/* Graceful fallback for no backdrop-filter support */
+@supports not (backdrop-filter: blur(1px)) {
+  .phone { background: var(--glass-strong) }
+  .gcrd  { background: var(--glass-strong) !important }
+  .nbar  { background: var(--glass-strong) !important }
+}
+
+.sbar {
+  height: 50px; display: flex; align-items: center;
+  justify-content: space-between; padding: 0 28px;
+  background: transparent;
+}
+.sbar-t { font-size: 15px; font-weight: 600; color: var(--txt) }
+.sbar-r { font-size: 12px; color: var(--txt-m); display: flex; gap: 6px }
+
+/* Screens */
+.sc { display: none; height: 794px; overflow-y: auto; scrollbar-width: none }
+.sc::-webkit-scrollbar { display: none }
+.sc.on { display: block }
+
+/* ─────────────────────────────────────────────
+   GLASS CARD UTILITY
+───────────────────────────────────────────── */
+.gcrd {
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  border: 1px solid var(--brd);
+}
+.gcrd-strong {
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  border: 1px solid var(--brd);
+}
+
+/* ─────────────────────────────────────────────
+   NAV BAR
+───────────────────────────────────────────── */
+.nbar {
+  padding: 10px 22px 13px;
+  display: flex; align-items: center; gap: 12px;
+  background: var(--glass-nav);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  position: sticky; top: 0; z-index: 9;
+  border-bottom: 1px solid var(--brd-soft);
+}
+.nbk {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--glass); border: 1px solid var(--brd);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; color: var(--txt-m); font-size: 16px;
+}
+.ntit {
+  font-family: 'Lora', serif; font-size: 18px;
+  font-weight: 600; color: var(--txt); flex: 1;
+}
+.nsub { font-size: 11px; color: var(--txt-l); margin-top: 1px; font-weight: 400 }
+
+/* ─────────────────────────────────────────────
+   SHARED: MEMBER DOTS
+───────────────────────────────────────────── */
+.mdots { display: flex; margin-top: 8px }
+.mdot {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid var(--brd); margin-right: -5px;
+  font-size: 9px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,.12);
+}
+.idot {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid var(--brd); margin-right: -4px;
+  font-size: 8px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; flex-shrink: 0;
+}
+
+/* ─────────────────────────────────────────────
+   SCREEN 1 — HOME
+───────────────────────────────────────────── */
+.hdr { padding: 18px 22px 22px }
+.wordmark {
+  font-family: 'Lora', serif; font-size: 12px;
+  letter-spacing: .18em; text-transform: uppercase;
+  color: var(--accent); font-weight: 500;
+}
+.avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 3px 10px var(--accent-glow);
+  border: 2px solid var(--brd);
+}
+.greet {
+  font-family: 'Lora', serif; font-size: 28px;
+  color: var(--txt); margin-top: 16px; line-height: 1.2;
+  font-weight: 500;
+}
+.greet-sub { font-size: 13px; color: var(--txt-m); margin-top: 6px; font-weight: 400 }
+
+.cgrid { padding: 0 22px; display: flex; flex-direction: column; gap: 13px }
+
+/* Per-circle color accent bar on left + bold color chips */
+.ccard {
+  border-radius: var(--r); padding: 17px 18px 17px 20px;
+  cursor: pointer; display: flex; align-items: center; gap: 15px;
+  position: relative; overflow: hidden;
+  box-shadow: var(--shadow-card);
+  transition: transform .15s, box-shadow .15s;
+}
+.ccard:active { transform: scale(.98) }
+.ccard::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  border-radius: 4px 0 0 4px;
+}
+.ccard.pink::before  { background: var(--c-pink) }
+.ccard.green::before { background: var(--c-green) }
+.ccard.blue::before  { background: var(--c-blue) }
+
+.cemoji {
+  width: 50px; height: 50px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+  border: 1px solid var(--brd);
+}
+.cemoji.pink  { background: var(--c-pink-l) }
+.cemoji.green { background: var(--c-green-l) }
+.cemoji.blue  { background: var(--c-blue-l) }
+
+.cname {
+  font-family: 'Lora', serif; font-size: 16px;
+  font-weight: 600; color: var(--txt);
+}
+.cmeta { font-size: 12px; color: var(--txt-m); margin-top: 2px; font-weight: 400 }
+
+.cbadge {
+  font-size: 11px; font-weight: 600; padding: 5px 12px;
+  border-radius: 20px; white-space: nowrap;
+  border: 1.5px solid;
+}
+.cbadge.pink  { background: var(--c-pink-l);  color: var(--c-pink);  border-color: rgba(255,75,110,.2) }
+.cbadge.green { background: var(--c-green-l); color: var(--c-green); border-color: rgba(0,196,140,.2) }
+.cbadge.blue  { background: var(--c-blue-l);  color: var(--c-blue);  border-color: rgba(78,110,245,.2) }
+
+.newcircle-wrap { padding: 18px 22px 36px }
+.newcircle {
+  width: 100%; padding: 14px; border-radius: var(--r);
+  background: var(--glass); border: 1px solid var(--brd-hard);
+  color: var(--txt-m); font-size: 14px; font-weight: 500;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  transition: background .15s, color .15s;
+}
+.newcircle:hover { color: var(--accent); background: var(--accent-l) }
+
+/* ─────────────────────────────────────────────
+   TABS
+───────────────────────────────────────────── */
+.tabs {
+  display: flex; border-bottom: 1px solid var(--brd-soft); padding: 0 22px;
+}
+.tab {
+  padding: 11px 14px; font-size: 13px; font-weight: 500; color: var(--txt-l);
+  cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: all .15s;
+}
+.tab.on { color: var(--accent); border-bottom-color: var(--accent) }
+
+/* ─────────────────────────────────────────────
+   FILTER CHIPS
+───────────────────────────────────────────── */
+.chips {
+  display: flex; gap: 8px; padding: 13px 22px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.chips::-webkit-scrollbar { display: none }
+.chip {
+  padding: 6px 14px; border-radius: 20px; font-size: 12px;
+  font-weight: 500; white-space: nowrap; cursor: pointer;
+  background: var(--glass-subtle); border: 1px solid var(--brd-soft);
+  color: var(--txt-m);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  transition: all .15s;
+}
+.chip.on {
+  background: var(--accent-l); border-color: rgba(91,75,138,.25);
+  color: var(--accent); font-weight: 600;
+}
+
+/* ─────────────────────────────────────────────
+   INTENT CARDS
+───────────────────────────────────────────── */
+.ilist { padding: 0 22px; display: flex; flex-direction: column; gap: 12px }
+
+.icard {
+  border-radius: var(--r); overflow: hidden;
+  box-shadow: var(--shadow-card); cursor: pointer;
+  transition: transform .15s;
+}
+.icard:active { transform: scale(.99) }
+
+.iimg {
+  width: 100%; height: 108px;
+  display: flex; align-items: center; justify-content: center; font-size: 32px;
+}
+.ibody {
+  padding: 13px 15px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+}
+.isite {
+  font-size: 10px; color: var(--txt-l);
+  text-transform: uppercase; letter-spacing: .08em; font-weight: 600; margin-bottom: 3px;
+}
+.itit {
+  font-family: 'Lora', serif; font-size: 14px;
+  font-weight: 600; color: var(--txt); line-height: 1.3;
+}
+.ifoot { display: flex; align-items: center; justify-content: space-between; margin-top: 10px }
+
+.sbadge {
+  font-size: 10px; font-weight: 600; padding: 4px 10px;
+  border-radius: 20px; border: 1.5px solid; text-transform: capitalize;
+}
+.s-saved      { background: var(--s-saved);      color: var(--s-saved-t);      border-color: rgba(91,75,138,.18) }
+.s-interested { background: var(--s-interested);  color: var(--s-interested-t); border-color: rgba(245,158,11,.22) }
+.s-planned    { background: var(--s-planned);     color: var(--s-planned-t);    border-color: rgba(0,196,140,.22) }
+
+.irow { display: flex; align-items: center; gap: 5px }
+.boostbtn {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(245,158,11,.12); border: 1.5px solid rgba(245,158,11,.28);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; cursor: pointer;
+}
+
+.payoff-trigger { margin: 18px 22px 40px }
+.ptbtn {
+  width: 100%; padding: 16px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-m));
+  color: #fff; border: none; border-radius: var(--r);
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  box-shadow: var(--shadow-btn);
+  letter-spacing: .01em;
+}
+
+/* ─────────────────────────────────────────────
+   ADD INTENT
+───────────────────────────────────────────── */
+.aform { padding: 16px 22px; display: flex; flex-direction: column; gap: 18px }
+.flbl {
+  display: block; font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .09em;
+  color: var(--txt-l); margin-bottom: 7px;
+}
+.urow { display: flex; gap: 8px }
+.uinp {
+  flex: 1; padding: 11px 14px;
+  border: 1px solid var(--brd-hard); border-radius: var(--rs);
+  font-size: 13px; font-family: 'DM Sans', sans-serif;
+  background: var(--glass); color: var(--txt); outline: none;
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  transition: border-color .15s;
+}
+.uinp:focus { border-color: var(--accent) }
+.pastebtn {
+  padding: 11px 14px; border-radius: var(--rs);
+  background: var(--accent-l); color: var(--accent);
+  border: 1.5px solid rgba(91,75,138,.22); font-size: 12px;
+  font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.unfurl { border-radius: var(--r); overflow: hidden; border: 1px solid var(--brd-hard) }
+.uimg  {
+  width: 100%; height: 128px;
+  background: linear-gradient(135deg,#1a1a2e,#3d2c8d);
+  display: flex; align-items: center; justify-content: center; font-size: 40px;
+}
+.uinfo {
+  padding: 12px 14px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+.usite { font-size: 10px; color: var(--txt-l); font-weight: 600; text-transform: uppercase; letter-spacing: .06em }
+.utit  { font-family: 'Lora', serif; font-size: 14px; color: var(--txt); margin-top: 3px; font-weight: 500 }
+
+.catrow { display: flex; gap: 7px; flex-wrap: wrap }
+.catbtn {
+  padding: 8px 12px; border-radius: var(--rs);
+  background: var(--glass-subtle); border: 1px solid var(--brd-soft);
+  font-size: 12px; cursor: pointer; color: var(--txt-m);
+  font-family: 'DM Sans', sans-serif; font-weight: 500;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  transition: all .15s;
+}
+.catbtn.on {
+  background: var(--accent-l); border-color: rgba(91,75,138,.28);
+  color: var(--accent); font-weight: 600;
+}
+.noteinp {
+  width: 100%; padding: 11px 14px;
+  border: 1px solid var(--brd-hard); border-radius: var(--rs);
+  font-size: 13px; font-family: 'Lora', serif; font-style: italic;
+  background: var(--glass); color: var(--txt); outline: none;
+  resize: none; height: 72px;
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+.savebtn {
+  width: 100%; padding: 15px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-m));
+  color: #fff; border: none; border-radius: var(--r);
+  font-size: 15px; font-weight: 600;
+  font-family: 'DM Sans', sans-serif; cursor: pointer;
+  box-shadow: var(--shadow-btn); margin-bottom: 40px;
+}
+
+/* ─────────────────────────────────────────────
+   INTENT DETAIL
+───────────────────────────────────────────── */
+.dbody { padding: 0 22px }
+.dimg-top {
+  width: 100%; height: 164px;
+  background: linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+  display: flex; align-items: center; justify-content: center; font-size: 52px;
+  border-radius: var(--r) var(--r) 0 0;
+}
+.dmeta {
+  padding: 13px 15px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border: 1px solid var(--brd-hard); border-top: none;
+  border-radius: 0 0 var(--r) var(--r); margin-bottom: 13px;
+}
+.dsite { font-size: 10px; color: var(--txt-l); font-weight: 600; text-transform: uppercase; letter-spacing: .06em }
+.dtit  { font-family: 'Lora', serif; font-size: 17px; font-weight: 600; color: var(--txt); margin-top: 3px }
+
+.isect {
+  border-radius: var(--r); padding: 14px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: var(--shadow-card);
+}
+.icnt { font-family: 'Lora', serif; font-size: 26px; font-weight: 600; color: var(--accent) }
+.ilbl { font-size: 12px; color: var(--txt-m); font-weight: 400 }
+
+.mrow {
+  border-radius: var(--rs); padding: 11px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid var(--brd-soft);
+}
+.mname { font-size: 13px; font-weight: 500; color: var(--txt) }
+
+.sswitch {
+  border-radius: var(--r); padding: 13px; margin-bottom: 12px;
+  box-shadow: var(--shadow-card);
+}
+.slbl {
+  font-size: 10px; color: var(--txt-l); font-weight: 600;
+  text-transform: uppercase; letter-spacing: .09em; margin-bottom: 9px;
+}
+.ssteps { display: flex; align-items: center }
+.sstep {
+  flex: 1; text-align: center; font-size: 10px; padding: 7px 3px;
+  border-radius: 8px; color: var(--txt-l); font-weight: 500;
+}
+.sstep.cur { background: var(--accent-l); color: var(--accent); font-weight: 700 }
+.sline { flex: 0; width: 12px; height: 1px; background: var(--brd-soft) }
+
+.arow { display: flex; gap: 10px; margin-bottom: 40px }
+.reactbtn {
+  flex: 1; padding: 13px; border-radius: var(--r);
+  background: linear-gradient(135deg, var(--accent), var(--accent-m));
+  color: #fff; border: none; font-size: 13px; font-weight: 600; cursor: pointer;
+  box-shadow: var(--shadow-btn);
+}
+.boostabtn {
+  padding: 13px 16px; border-radius: var(--r);
+  background: var(--glass); border: 1px solid var(--brd-hard);
+  font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; gap: 5px; color: var(--txt-m);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+
+/* ─────────────────────────────────────────────
+   PAYOFF
+───────────────────────────────────────────── */
+.pbody { padding: 0 22px }
+.phead { text-align: center; padding: 20px 0 22px }
+.ptit {
+  font-family: 'Lora', serif; font-size: 30px;
+  color: var(--txt); line-height: 1.2; font-weight: 500;
+}
+.ptit em { color: var(--accent); font-style: italic }
+.psub { font-size: 13px; color: var(--txt-m); margin-top: 6px; font-weight: 400 }
+.pcount {
+  display: inline-block; background: var(--accent-l); color: var(--accent);
+  padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  margin-top: 8px; border: 1.5px solid rgba(91,75,138,.18);
+}
+
+.boost-nudge {
+  border-radius: var(--r); padding: 13px 15px; margin-bottom: 18px;
+  display: flex; gap: 11px; align-items: center;
+  background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.20);
+}
+
+.pbtns { display: flex; flex-direction: column; gap: 12px; margin-bottom: 26px }
+.pbbtn {
+  padding: 18px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-m));
+  color: #fff; border: none; border-radius: var(--r);
+  font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+  box-shadow: var(--shadow-btn); letter-spacing: .01em;
+}
+.psbtn {
+  padding: 18px;
+  background: var(--glass); border: 1.5px solid var(--brd-hard);
+  border-radius: var(--r); font-size: 15px; font-weight: 500;
+  font-family: 'DM Sans', sans-serif; color: var(--txt);
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+
+.rdiv {
+  text-align: center; font-size: 10px; color: var(--txt-l);
+  text-transform: uppercase; letter-spacing: .12em; font-weight: 600;
+  margin-bottom: 13px; display: flex; align-items: center; gap: 10px;
+}
+.rdiv::before, .rdiv::after { content: ''; flex: 1; height: 1px; background: var(--brd-soft) }
+
+.rcard {
+  border-radius: var(--r); overflow: hidden;
+  box-shadow: 0 8px 40px var(--accent-glow), var(--shadow-card);
+  margin-bottom: 48px;
+  border: 1px solid rgba(91,75,138,.20);
+}
+.rimg {
+  width: 100%; height: 130px;
+  background: linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+  display: flex; align-items: center; justify-content: center; font-size: 44px;
+}
+.rbody {
+  padding: 15px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+.rtit {
+  font-family: 'Lora', serif; font-size: 18px; font-weight: 600;
+  color: var(--txt); margin-bottom: 12px;
+}
+.schips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px }
+.schip {
+  background: var(--accent-l); color: var(--accent);
+  font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 20px;
+  border: 1px solid rgba(91,75,138,.15);
+}
+.planbtn {
+  width: 100%; padding: 13px;
+  background: linear-gradient(135deg,#00C48C,#34D399);
+  color: #fff; border: none; border-radius: var(--rs);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,196,140,.28);
+}
+
+/* ─────────────────────────────────────────────
+   BOTTOM CONTROLS
+───────────────────────────────────────────── */
+.controls {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 390px; margin-top: 16px; position: relative; z-index: 2;
+}
+.arrbtn {
+  padding: 8px 18px;
+  background: var(--glass); border: 1px solid var(--brd);
+  border-radius: 24px; font-size: 12px; font-weight: 500;
+  color: var(--txt-m); cursor: pointer;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  transition: color .15s;
+}
+.arrbtn:hover { color: var(--accent) }
+.arrbtn:disabled { opacity: .3; cursor: default }
+.dots { display: flex; gap: 7px }
+.dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--brd-hard); cursor: pointer; transition: all .2s;
+}
+.dot.on { background: var(--accent); width: 22px; border-radius: 4px }
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<div class="page-header">
+  <div class="style-info">
+    <p>Combined · Lora + DM Sans · Glass + Bold Colors</p>
+    <h2>Someday</h2>
+  </div>
+  <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">
+    <div class="theme-toggle-knob" id="themeKnob">🌙</div>
+  </button>
+</div>
+
+<div class="screen-lbl" id="lbl">Screen 1 of 5 — Home</div>
+
+<div class="phone">
+  <div class="sbar">
+    <span class="sbar-t">9:41</span>
+    <div class="sbar-r"><span>●●●</span><span>🔋</span></div>
+  </div>
+
+  <!-- ── S1: HOME ────────────────────────── -->
+  <div class="sc on" id="s1">
+    <div class="hdr">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="wordmark">Someday</div>
+        <div class="avatar">T</div>
+      </div>
+      <div class="greet">Good evening,<br>Tejas 👋</div>
+      <div class="greet-sub">3 circles · 17 ideas waiting</div>
+    </div>
+
+    <div class="cgrid">
+      <div class="ccard gcrd pink" onclick="go(2)">
+        <div class="cemoji pink">👁️</div>
+        <div style="flex:1">
+          <div class="cname">Tejas + Harsh</div>
+          <div class="cmeta">2 members</div>
+          <div class="mdots">
+            <div class="mdot" style="background:var(--c-pink)">T</div>
+            <div class="mdot" style="background:#8B78C0">H</div>
+          </div>
+        </div>
+        <div class="cbadge pink">5 ideas</div>
+      </div>
+
+      <div class="ccard gcrd green">
+        <div class="cemoji green">🎓</div>
+        <div style="flex:1">
+          <div class="cname">College Gang</div>
+          <div class="cmeta">5 members</div>
+          <div class="mdots">
+            <div class="mdot" style="background:var(--c-pink)">T</div>
+            <div class="mdot" style="background:var(--c-green)">A</div>
+            <div class="mdot" style="background:#F59E0B">R</div>
+            <div class="mdot" style="background:#EF4444">P</div>
+            <div class="mdot" style="background:var(--c-blue)">S</div>
+          </div>
+        </div>
+        <div class="cbadge green">8 ideas</div>
+      </div>
+
+      <div class="ccard gcrd blue">
+        <div class="cemoji blue">✈️</div>
+        <div style="flex:1">
+          <div class="cname">Europe 2027</div>
+          <div class="cmeta">3 members</div>
+          <div class="mdots">
+            <div class="mdot" style="background:var(--c-pink)">T</div>
+            <div class="mdot" style="background:#8B78C0">H</div>
+            <div class="mdot" style="background:var(--c-green)">A</div>
+          </div>
+        </div>
+        <div class="cbadge blue">4 ideas</div>
+      </div>
+    </div>
+
+    <div class="newcircle-wrap">
+      <button class="newcircle">+ New Circle</button>
+    </div>
+  </div>
+
+  <!-- ── S2: CIRCLE DETAIL ──────────────── -->
+  <div class="sc" id="s2">
+    <div class="nbar">
+      <button class="nbk" onclick="go(1)">←</button>
+      <div style="flex:1">
+        <div class="ntit">Tejas + Harsh</div>
+        <div class="nsub">2 members · 5 ideas</div>
+      </div>
+      <div style="display:flex">
+        <div class="mdot" style="background:var(--c-pink);border-color:var(--glass-nav)">T</div>
+        <div class="mdot" style="background:#8B78C0;border-color:var(--glass-nav)">H</div>
+      </div>
+    </div>
+
+    <!-- Circle color stripe -->
+    <div style="height:3px;background:linear-gradient(90deg,var(--c-pink),transparent)"></div>
+
+    <div class="tabs">
+      <div class="tab on">All</div>
+      <div class="tab">Shortlist ⭐ 2</div>
+      <div class="tab">Done ✓</div>
+    </div>
+    <div class="chips">
+      <div class="chip on">All</div>
+      <div class="chip">🎬 Watch</div>
+      <div class="chip">🍜 Eat</div>
+      <div class="chip">📚 Read</div>
+      <div class="chip">✈️ Trip</div>
+    </div>
+
+    <div class="ilist">
+      <div class="icard" onclick="go(4)">
+        <div class="iimg" style="background:linear-gradient(135deg,#1a1a2e,#3d2c8d)">🎬</div>
+        <div class="ibody">
+          <div class="isite">YouTube</div>
+          <div class="itit">Dune: Part Two — Official Trailer</div>
+          <div class="ifoot">
+            <span class="sbadge s-interested">Interested</span>
+            <div class="irow">
+              <div class="idot" style="background:var(--c-pink)">T</div>
+              <div class="idot" style="background:#8B78C0">H</div>
+              <div style="width:5px"></div>
+              <div class="boostbtn">⚡</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="icard">
+        <div class="iimg" style="background:linear-gradient(135deg,#2c1810,#7a3010)">🍜</div>
+        <div class="ibody">
+          <div class="isite">Zomato</div>
+          <div class="itit">Busan Olle Korean BBQ</div>
+          <div class="ifoot">
+            <span class="sbadge s-saved">Saved</span>
+            <div class="irow">
+              <div class="idot" style="background:var(--c-pink)">T</div>
+              <div style="width:5px"></div>
+              <div class="boostbtn">⚡</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="icard">
+        <div class="iimg" style="background:linear-gradient(135deg,#0a2c18,#1a6b3a)">📚</div>
+        <div class="ibody">
+          <div class="isite">Goodreads</div>
+          <div class="itit">The Dispossessed — Ursula K. Le Guin</div>
+          <div class="ifoot">
+            <span class="sbadge s-interested">Interested</span>
+            <div class="irow">
+              <div class="idot" style="background:#8B78C0">H</div>
+              <div style="width:5px"></div>
+              <div class="boostbtn">⚡</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="icard">
+        <div class="iimg" style="background:linear-gradient(135deg,#0a1a2c,#1a3a6b)">🎬</div>
+        <div class="ibody">
+          <div class="isite">IMDb</div>
+          <div class="itit">Poor Things (2023)</div>
+          <div class="ifoot">
+            <span class="sbadge s-planned">Planned</span>
+            <div class="irow">
+              <div class="idot" style="background:var(--c-pink)">T</div>
+              <div class="idot" style="background:#8B78C0">H</div>
+              <div style="width:5px"></div>
+              <div class="boostbtn">⚡</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="payoff-trigger">
+      <button class="ptbtn" onclick="go(5)">🎯 What are we doing today?</button>
+    </div>
+  </div>
+
+  <!-- ── S3: ADD INTENT ─────────────────── -->
+  <div class="sc" id="s3">
+    <div class="nbar">
+      <button class="nbk" onclick="go(2)">←</button>
+      <div class="ntit">Add to Tejas + Harsh</div>
+    </div>
+    <div class="aform">
+      <div>
+        <label class="flbl">URL</label>
+        <div class="urow">
+          <input class="uinp" value="https://youtube.com/watch?v=Way9Dexny3w" readonly>
+          <button class="pastebtn">Paste</button>
+        </div>
+      </div>
+      <div class="unfurl">
+        <div class="uimg">🎬</div>
+        <div class="uinfo">
+          <div class="usite">YouTube · 4:22</div>
+          <div class="utit">Dune: Part Two — Official Trailer (2024)</div>
+        </div>
+      </div>
+      <div>
+        <label class="flbl">Category</label>
+        <div class="catrow">
+          <button class="catbtn on">🎬 Watch</button>
+          <button class="catbtn">🍜 Eat</button>
+          <button class="catbtn">🗺 Visit</button>
+          <button class="catbtn">📚 Read</button>
+          <button class="catbtn">🎮 Play</button>
+          <button class="catbtn">✈️ Trip</button>
+        </div>
+      </div>
+      <div>
+        <label class="flbl">Note</label>
+        <textarea class="noteinp">Heard this is incredible on IMAX — we should see it together</textarea>
+      </div>
+      <div>
+        <label class="flbl">Tags</label>
+        <input class="uinp" value="film, sci-fi, imax" style="width:100%" readonly>
+      </div>
+      <button class="savebtn">Save to Circle</button>
+    </div>
+  </div>
+
+  <!-- ── S4: INTENT DETAIL ──────────────── -->
+  <div class="sc" id="s4">
+    <div class="nbar">
+      <button class="nbk" onclick="go(2)">←</button>
+      <div class="ntit">Intent Detail</div>
+    </div>
+    <div class="dbody">
+      <div class="dimg-top">🎬</div>
+      <div class="dmeta">
+        <div class="dsite">YouTube · Added by Tejas · 2 weeks ago</div>
+        <div class="dtit">Dune: Part Two — Official Trailer (2024)</div>
+      </div>
+
+      <div class="isect gcrd">
+        <div>
+          <div class="icnt">2 / 2</div>
+          <div class="ilbl">members interested</div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="display:flex">
+          <div class="idot" style="width:30px;height:30px;font-size:12px;background:var(--c-pink);border:2px solid var(--brd);margin-right:-5px">T</div>
+          <div class="idot" style="width:30px;height:30px;font-size:12px;background:#8B78C0;border:2px solid var(--brd)">H</div>
+        </div>
+      </div>
+
+      <div class="mrow">
+        <div style="display:flex;align-items:center;gap:9px">
+          <div class="idot" style="width:28px;height:28px;font-size:11px;background:var(--c-pink)">T</div>
+          <div class="mname">Tejas</div>
+        </div>
+        <div style="font-size:12px;color:var(--c-green);font-weight:600">❤️ Interested</div>
+      </div>
+      <div class="mrow" style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:9px">
+          <div class="idot" style="width:28px;height:28px;font-size:11px;background:#8B78C0">H</div>
+          <div class="mname">Harsh</div>
+        </div>
+        <div style="font-size:12px;color:var(--c-green);font-weight:600">❤️ Interested</div>
+      </div>
+
+      <div class="sswitch gcrd">
+        <div class="slbl">Status</div>
+        <div class="ssteps">
+          <div class="sstep">Saved</div><div class="sline"></div>
+          <div class="sstep cur">Interested</div><div class="sline"></div>
+          <div class="sstep">Planned</div><div class="sline"></div>
+          <div class="sstep">Done</div>
+        </div>
+      </div>
+
+      <div class="arow">
+        <button class="reactbtn">❤️ Interested</button>
+        <button class="boostabtn">⚡ Boost</button>
+      </div>
+
+      <div class="gcrd" style="border-radius:var(--r);padding:13px 15px;margin-bottom:48px">
+        <div style="font-size:10px;color:var(--txt-l);font-weight:600;text-transform:uppercase;letter-spacing:.09em;margin-bottom:5px">Note</div>
+        <div style="font-size:14px;color:var(--txt-m);font-style:italic;font-family:'Lora',serif">"Heard this is incredible on IMAX — we should see it together"</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── S5: PAYOFF ─────────────────────── -->
+  <div class="sc" id="s5">
+    <div class="nbar">
+      <button class="nbk" onclick="go(2)">←</button>
+      <div class="ntit">Payoff</div>
+    </div>
+    <div class="pbody">
+      <div class="phead">
+        <div class="ptit">What are you doing<br><em>today?</em></div>
+        <div class="psub">You're meeting Harsh. Time to pick.</div>
+        <div class="pcount">4 things you both want</div>
+      </div>
+
+      <div class="boost-nudge gcrd">
+        <div style="font-size:20px">⚡</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--txt)">Feeling anything in particular?</div>
+          <div style="font-size:12px;color:var(--txt-m);margin-top:2px">Boost what you're in the mood for today</div>
+        </div>
+      </div>
+
+      <div class="pbtns">
+        <button class="pbbtn">🎯 Best Pick</button>
+        <button class="psbtn">🎡 Spin the Wheel</button>
+      </div>
+
+      <div class="rdiv">Best Pick Reveal</div>
+
+      <div class="rcard">
+        <div class="rimg">🎬</div>
+        <div class="rbody">
+          <div class="rtit">Dune: Part Two</div>
+          <div class="schips">
+            <div class="schip">❤️ 2 of 2 interested</div>
+            <div class="schip">⏱ Saved 6 weeks ago</div>
+            <div class="schip">⚡ 2 boosts</div>
+          </div>
+          <button class="planbtn">✓ Mark as Planned</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── NAVIGATION ──────────────────────── -->
+<div class="controls">
+  <button class="arrbtn" id="pb" onclick="prev()" disabled>← Prev</button>
+  <div class="dots">
+    <div class="dot on" onclick="go(1)"></div>
+    <div class="dot" onclick="go(2)"></div>
+    <div class="dot" onclick="go(3)"></div>
+    <div class="dot" onclick="go(4)"></div>
+    <div class="dot" onclick="go(5)"></div>
+  </div>
+  <button class="arrbtn" id="nb" onclick="next()">Next →</button>
+</div>
+
+<script>
+let c = 1;
+const LBLS = [
+  'Screen 1 of 5 — Home',
+  'Screen 2 of 5 — Circle Detail',
+  'Screen 3 of 5 — Add Intent',
+  'Screen 4 of 5 — Intent Detail',
+  'Screen 5 of 5 — Payoff'
+];
+
+function go(n) {
+  document.getElementById('s'+c).classList.remove('on');
+  document.querySelectorAll('.dot')[c-1].classList.remove('on');
+  c = n;
+  document.getElementById('s'+c).classList.add('on');
+  document.querySelectorAll('.dot')[c-1].classList.add('on');
+  document.getElementById('lbl').textContent = LBLS[c-1];
+  document.getElementById('pb').disabled = c === 1;
+  document.getElementById('nb').disabled = c === 5;
+}
+function prev() { if (c > 1) go(c-1) }
+function next() { if (c < 5) go(c+1) }
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('themeKnob').textContent = isDark ? '🌙' : '☀️';
+}
+
+// Respect system preference on load
+if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  document.documentElement.setAttribute('data-theme', 'dark');
+  document.getElementById('themeKnob').textContent = '☀️';
+}
+</script>
+</body>
+</html>
