@@ -9,7 +9,7 @@ const sessionJson = authIdx >= 0 ? args[authIdx + 1] : null;
 const routesIdx = args.indexOf("--routes");
 const routes = routesIdx >= 0 ? args[routesIdx + 1].split(",") : ["/login"];
 
-const BASE = "http://localhost:3000";
+const BASE = process.env.UI_BASE ?? "http://localhost:3000";
 mkdirSync("screenshots", { recursive: true });
 
 const browser = await chromium.launch();
