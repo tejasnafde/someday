@@ -1,12 +1,32 @@
 """DBUtil — base class for all handlers."""
 
 import time
+import uuid
+from datetime import datetime
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.pool import QueuePool
 
 from app_util.log_util import errorlogger, infologger
 from config.settings import settings
+
+
+def serialize_row(row) -> dict:
+    """Convert a SQLAlchemy row to a JSON-safe dict.
+
+    SQLAlchemy returns uuid.UUID and datetime objects for Postgres uuid/timestamptz
+    columns. JSONResponse can't serialize those — convert them to str here once
+    rather than in every handler.
+    """
+    result = {}
+    for k, v in row._mapping.items():
+        if isinstance(v, uuid.UUID):
+            result[k] = str(v)
+        elif isinstance(v, datetime):
+            result[k] = v.isoformat()
+        else:
+            result[k] = v
+    return result
 
 
 class DBUtil:
@@ -43,7 +63,7 @@ class DBUtil:
         try:
             with self.get_connection() as conn:
                 result = conn.execute(text(query), params)
-                rows = [dict(row._mapping) for row in result]
+                rows = [serialize_row(row) for row in result]
             ms = (time.perf_counter() - t0) * 1000
             infologger.debug(f"DB_RESULT | {len(rows)} rows | {ms:.1f}ms")
             return rows
@@ -82,7 +102,7 @@ class DBUtil:
                 row = result.fetchone()
             ms = (time.perf_counter() - t0) * 1000
             infologger.debug(f"DB_RESULT | {'1 row' if row else '0 rows'} returned | {ms:.1f}ms")
-            return dict(row._mapping) if row else {}
+            return serialize_row(row) if row else {}
         except Exception as exc:
             errorlogger.error(
                 f"DB_ERROR | {exc} | query={query.strip()[:200]}",

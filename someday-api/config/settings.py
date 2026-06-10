@@ -24,6 +24,7 @@ class Settings(BaseSettings):
         env_file=f".env.{os.getenv('APP_ENV', 'dev')}",
         env_file_encoding="utf-8",
         case_sensitive=True,
+        extra="ignore",
     )
 
     def allowed_origins_list(self) -> list[str]:

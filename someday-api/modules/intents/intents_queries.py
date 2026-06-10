@@ -85,7 +85,7 @@ INSERT_INTENT = """
     INSERT INTO public.intents
         (circle_id, created_by, title, url, note, category, tags, link_meta, status)
     VALUES
-        (:circle_id, :created_by, :title, :url, :note, :category, :tags::text[], :link_meta::jsonb, 1)
+        (:circle_id, :created_by, :title, :url, :note, :category, :tags, CAST(:link_meta AS jsonb), 1)
     RETURNING
         id, circle_id, created_by, title, url, note, category, tags,
         task_status, link_meta, planned_for, created_at::text, updated_at::text
@@ -97,7 +97,7 @@ UPDATE_INTENT = """
         url         = COALESCE(:url,         url),
         note        = COALESCE(:note,        note),
         category    = COALESCE(:category,    category),
-        tags        = COALESCE(:tags::text[], tags),
+        tags        = COALESCE(:tags, tags),
         task_status = COALESCE(:task_status, task_status),
         planned_for = COALESCE(:planned_for, planned_for)
     WHERE id = :intent_id AND status = 1

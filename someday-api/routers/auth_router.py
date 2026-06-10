@@ -4,7 +4,7 @@ from app_util.log_util import infologger
 from common_helper.auth_helper import jwt_required
 from common_helper.decorators import log_timing
 from common_helper.response_helper import create_response
-from handler.authhandler import AuthHandler
+from handler.auth_handler import AuthHandler
 
 router = APIRouter()
 handler = AuthHandler()
