@@ -1,0 +1,33 @@
+# Production deploy: builds someday-api and rolls it out to Cloud Run.
+# Triggered on push to main when someday-api/** changes.
+# Env vars are NOT set here — they persist on the Cloud Run service;
+# change them with `gcloud run services update someday-api --update-env-vars ...`
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_IMAGE}", "someday-api"]
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: ["push", "${_IMAGE}"]
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - someday-api
+      - --image=${_IMAGE}
+      - --region=asia-south1
+      - --quiet
+
+substitutions:
+  _IMAGE: asia-south1-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/someday-api:${COMMIT_SHA}
+
+images:
+  - ${_IMAGE}
+
+options:
+  logging: CLOUD_LOGGING_ONLY
