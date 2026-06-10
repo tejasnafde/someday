@@ -4,7 +4,8 @@ import time
 import uuid
 from datetime import datetime
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
+from sqlalchemy import text as sql_text
 from sqlalchemy.pool import QueuePool
 
 from app_util.log_util import errorlogger, infologger
@@ -62,7 +63,7 @@ class DBUtil:
         t0 = time.perf_counter()
         try:
             with self.get_connection() as conn:
-                result = conn.execute(text(query), params)
+                result = conn.execute(sql_text(query), params)
                 rows = [serialize_row(row) for row in result]
             ms = (time.perf_counter() - t0) * 1000
             infologger.debug(f"DB_RESULT | {len(rows)} rows | {ms:.1f}ms")
@@ -80,7 +81,7 @@ class DBUtil:
         t0 = time.perf_counter()
         try:
             with self.get_connection() as conn:
-                conn.execute(text(query), params)
+                conn.execute(sql_text(query), params)
                 conn.commit()
             ms = (time.perf_counter() - t0) * 1000
             infologger.debug(f"DB_EXEC_DONE | {ms:.1f}ms")
@@ -97,7 +98,7 @@ class DBUtil:
         t0 = time.perf_counter()
         try:
             with self.get_connection() as conn:
-                result = conn.execute(text(query), params)
+                result = conn.execute(sql_text(query), params)
                 conn.commit()
                 row = result.fetchone()
             ms = (time.perf_counter() - t0) * 1000
