@@ -19,7 +19,12 @@ export default function Login() {
       options: { emailRedirectTo: `${location.origin}/auth/callback` },
     });
     setBusy(false);
-    if (error) setError(error.message);
+    if (error)
+      setError(
+        error.message.includes("rate limit")
+          ? "Too many sign-in emails right now — wait a bit and try again."
+          : error.message,
+      );
     else setSent(true);
   }
 
