@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Someday",
+    "slug": "someday",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "someday",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#101010"
+    },
+    "android": {
+      "package": "app.someday.capture",
+      "adaptiveIcon": {
+        "backgroundColor": "#101010",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 3000
+    },
+    "runtimeVersion": { "policy": "appVersion" },
+    "plugins": ["expo-share-intent"],
+    "extra": {
+      "apiUrl": "https://someday-api-974343814740.asia-south1.run.app",
+      "supabaseUrl": "https://hltpqcmmpddjhijqeeko.supabase.co",
+      "supabaseAnonKey": "sb_publishable_pfDjPQ_rY7xyWk8GVv29lQ_FMOz8iO-",
+      "webUrl": "https://someday-web-gamma.vercel.app"
+    }
+  }
+}
