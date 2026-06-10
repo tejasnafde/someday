@@ -1,9 +1,10 @@
 """DBUtil — base class for all handlers."""
 
+import json
 import time
 import uuid
-from datetime import datetime
 
+import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy import text as sql_text
 from sqlalchemy.pool import QueuePool
@@ -12,28 +13,29 @@ from app_util.log_util import errorlogger, infologger
 from config.settings import settings
 
 
-def serialize_row(row) -> dict:
-    """Convert a SQLAlchemy row to a JSON-safe dict.
+def row_to_dict(row) -> dict:
+    """Convert a SQLAlchemy row to a dict with UUIDs pre-cast to str.
 
-    SQLAlchemy returns uuid.UUID and datetime objects for Postgres uuid/timestamptz
-    columns. JSONResponse can't serialize those — convert them to str here once
-    rather than in every handler.
+    pandas' ujson serialiser can't handle uuid.UUID objects so we convert
+    them before the row enters a DataFrame. datetime and everything else
+    is left as-is for pandas to handle via to_json(date_format='iso').
     """
-    result = {}
-    for k, v in row._mapping.items():
-        if isinstance(v, uuid.UUID):
-            result[k] = str(v)
-        elif isinstance(v, datetime):
-            result[k] = v.isoformat()
-        else:
-            result[k] = v
-    return result
+    return {k: str(v) if isinstance(v, uuid.UUID) else v for k, v in row._mapping.items()}
+
+
+def df_to_records(df: pd.DataFrame) -> list[dict]:
+    """Convert a DataFrame to a JSON-safe list of dicts via pandas serialiser.
+
+    date_format='iso' keeps timestamps as readable ISO strings.
+    NaN → None, numpy scalars → Python primitives — all handled by pandas.
+    """
+    if df.empty:
+        return []
+    return json.loads(df.to_json(orient="records", date_format="iso"))
 
 
 class DBUtil:
     engine = None
-
-    # ── Lifecycle ────────────────────────────────────────────────────────────
 
     @classmethod
     def init_engine(cls) -> None:
@@ -55,8 +57,6 @@ class DBUtil:
             DBUtil.init_engine()
         return DBUtil.engine.connect()
 
-    # ── Query helpers ─────────────────────────────────────────────────────────
-
     def execute_query_with_value(self, query: str, params: dict) -> list[dict]:
         infologger.debug(f"DB_QUERY | {query.strip()}")
         infologger.debug(f"DB_PARAMS | {params}")
@@ -64,10 +64,11 @@ class DBUtil:
         try:
             with self.get_connection() as conn:
                 result = conn.execute(sql_text(query), params)
-                rows = [serialize_row(row) for row in result]
+                rows = [row_to_dict(row) for row in result]
+            df = pd.DataFrame(rows) if rows else pd.DataFrame()
             ms = (time.perf_counter() - t0) * 1000
-            infologger.debug(f"DB_RESULT | {len(rows)} rows | {ms:.1f}ms")
-            return rows
+            infologger.debug(f"DB_RESULT | {len(df)} rows | {ms:.1f}ms")
+            return df_to_records(df)
         except Exception as exc:
             errorlogger.error(
                 f"DB_ERROR | {exc} | query={query.strip()[:200]}",
@@ -102,8 +103,12 @@ class DBUtil:
                 conn.commit()
                 row = result.fetchone()
             ms = (time.perf_counter() - t0) * 1000
-            infologger.debug(f"DB_RESULT | {'1 row' if row else '0 rows'} returned | {ms:.1f}ms")
-            return serialize_row(row) if row else {}
+            if not row:
+                infologger.debug(f"DB_RESULT | 0 rows returned | {ms:.1f}ms")
+                return {}
+            df = pd.DataFrame([row_to_dict(row)])
+            infologger.debug(f"DB_RESULT | 1 row returned | {ms:.1f}ms")
+            return df_to_records(df)[0]
         except Exception as exc:
             errorlogger.error(
                 f"DB_ERROR | {exc} | query={query.strip()[:200]}",
