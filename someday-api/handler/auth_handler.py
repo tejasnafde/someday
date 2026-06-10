@@ -18,6 +18,14 @@ GET_USER = """
     WHERE id = :user_id AND status = 1
 """
 
+UPDATE_USER = """
+    UPDATE public.users
+    SET display_name = COALESCE(:display_name, display_name),
+        avatar_url   = COALESCE(:avatar_url, avatar_url)
+    WHERE id = :user_id AND status = 1
+    RETURNING id, email, display_name, avatar_url
+"""
+
 
 class AuthHandler(DBUtil):
 
@@ -29,6 +37,17 @@ class AuthHandler(DBUtil):
             {"id": user_id, "email": email, "display_name": email.split("@")[0]},
         )
         infologger.info(f"AuthHandler.verify | upserted user_id={user_id}")
+        return 200, {"user": user}
+
+    @log_timing("auth_handler.update_me")
+    def update_me(self, user_id: str, display_name: str | None, avatar_url: str | None) -> tuple[int, dict | str]:
+        infologger.info(f"AuthHandler.update_me | user_id={user_id} display_name={display_name!r}")
+        user = self.execute_query_with_value_returning(
+            UPDATE_USER,
+            {"user_id": user_id, "display_name": display_name, "avatar_url": avatar_url},
+        )
+        if not user:
+            return 404, "User not found"
         return 200, {"user": user}
 
     @log_timing("auth_handler.get_me")

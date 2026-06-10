@@ -1,4 +1,7 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel, field_validator
 
 from app_util.log_util import infologger
 from common_helper.auth_helper import jwt_required
@@ -8,6 +11,19 @@ from handler.auth_handler import AuthHandler
 
 router = APIRouter()
 handler = AuthHandler()
+
+
+class UpdateMeRequest(BaseModel):
+    display_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+
+    @field_validator("display_name")
+    def name_not_blank(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            v = v.strip()
+            if not v:
+                raise ValueError("display_name cannot be blank")
+        return v
 
 
 @router.post("/verify")
@@ -29,4 +45,13 @@ async def get_me(current_user: dict = Depends(jwt_required)):
     """Return current user profile + their circles."""
     infologger.info(f"GET /auth/me | user_id={current_user['sub']}")
     status, result = handler.get_me(current_user["sub"])
+    return create_response(status, result)
+
+
+@router.patch("/me")
+@log_timing("PATCH /auth/me")
+async def update_me(request: UpdateMeRequest, current_user: dict = Depends(jwt_required)):
+    """Update display name / avatar."""
+    infologger.info(f"PATCH /auth/me | user_id={current_user['sub']} payload={request.model_dump(exclude_none=True)}")
+    status, result = handler.update_me(current_user["sub"], request.display_name, request.avatar_url)
     return create_response(status, result)

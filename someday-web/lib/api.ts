@@ -31,6 +31,8 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 export const api = {
   verify: () => request<{ user: User }>("POST", "/auth/verify"),
   me: () => request<{ user: User; circles: Circle[] }>("GET", "/auth/me"),
+  updateMe: (fields: { display_name?: string; avatar_url?: string }) =>
+    request<{ user: User }>("PATCH", "/auth/me", fields),
 
   circles: () => request<Circle[]>("GET", "/circles"),
   circle: (id: string) => request<CircleDetail>("GET", `/circles/${id}`),

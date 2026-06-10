@@ -80,7 +80,7 @@ export default function PayoffPage() {
         {shortlistCount !== null && (
           <span className="mt-2.5 inline-block rounded-full px-3.5 py-1.5 text-xs font-semibold"
             style={{ background: "var(--acc-l)", color: "var(--acc)", border: "1.5px solid var(--acc)33" }}>
-            {shortlistCount} {shortlistCount === 1 ? "thing" : "things"} you both want
+            {shortlistCount} {shortlistCount === 1 ? "thing" : "things"} you {circle.member_count > 2 ? "all" : "both"} want
           </span>
         )}
       </div>
