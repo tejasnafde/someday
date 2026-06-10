@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+:root {
+  --bg-a: #F3EEF9; --bg-b: #EBF6F1; --bg-c: #F9EDF3;
+
+  --glass: rgba(255,255,255,.60);
+  --glass-hi: rgba(255,255,255,.80);
+  --glass-lo: rgba(255,255,255,.34);
+  --glass-nav: rgba(248,244,254,.84);
+
+  --brd: rgba(255,255,255,.72);
+  --brd-s: rgba(200,188,224,.22);
+  --brd-h: rgba(150,128,186,.18);
+
+  --txt: #1C1525; --txt-m: #5A4E72; --txt-l: #9B90B4;
+
+  --acc: #5B4B8A; --acc-l: rgba(91,75,138,.10);
+  --acc-m: #8B78C0; --acc-glow: rgba(91,75,138,.22);
+
+  --cp: #FF4B6E; --cp-l: rgba(255,75,110,.11);
+  --cg: #00B87A; --cg-l: rgba(0,184,122,.11);
+  --cb: #4A68F0; --cb-l: rgba(74,104,240,.11);
+
+  --ss: rgba(91,75,138,.09); --ss-t: #7264AA;
+  --si: rgba(234,147,0,.10); --si-t: #A86600;
+  --sp: rgba(0,184,122,.10); --sp-t: #007A52;
+
+  --shc: 0 4px 24px rgba(91,75,138,.09), 0 1px 4px rgba(91,75,138,.05);
+  --shb: 0 6px 24px rgba(91,75,138,.28);
+  --r: 20px; --rs: 12px;
+  --blur: blur(18px) saturate(155%);
+}
+
+[data-theme="dark"] {
+  --bg-a: #101010; --bg-b: #131313; --bg-c: #0E0E0E;
+
+  --glass: rgba(22,22,22,.80);
+  --glass-hi: rgba(30,30,30,.92);
+  --glass-lo: rgba(18,18,18,.42);
+  --glass-nav: rgba(12,12,12,.90);
+
+  --brd: rgba(255,255,255,.07);
+  --brd-s: rgba(255,255,255,.04);
+  --brd-h: rgba(255,255,255,.11);
+
+  --txt: #EEEEEE; --txt-m: #888888; --txt-l: #444444;
+
+  --acc: #9B8DC4; --acc-l: rgba(155,141,196,.11);
+  --acc-m: #BDB0E0; --acc-glow: rgba(155,141,196,.14);
+
+  --cp: #E8607A; --cp-l: rgba(232,96,122,.13);
+  --cg: #2DBF8A; --cg-l: rgba(45,191,138,.13);
+  --cb: #6B8FFF; --cb-l: rgba(107,143,255,.13);
+
+  --ss: rgba(255,255,255,.05); --ss-t: #666666;
+  --si: rgba(200,150,0,.10); --si-t: #B89000;
+  --sp: rgba(45,191,138,.10); --sp-t: #2DBF8A;
+
+  --shc: 0 4px 24px rgba(0,0,0,.38), 0 1px 4px rgba(0,0,0,.24);
+  --shb: 0 6px 24px rgba(0,0,0,.44);
+}
+
+html { color-scheme: light dark }
+
+body {
+  font-family: var(--font-dm-sans), sans-serif;
+  color: var(--txt);
+  background: linear-gradient(148deg, var(--bg-a), var(--bg-b) 50%, var(--bg-c)) fixed;
+  min-height: 100vh;
+  transition: background .4s;
+}
+
+.font-serif { font-family: var(--font-lora), serif }
+
+.glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  border: 1px solid var(--brd);
+}
+.glass-hi {
+  background: var(--glass-hi);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  border: 1px solid var(--brd);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .glass, .glass-hi { background: var(--glass-hi) }
+}
+
+.icon {
+  display: inline-flex; width: var(--sz, 16px); height: var(--sz, 16px);
+  stroke: currentColor; fill: none;
+  stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+  flex-shrink: 0;
+}
+.icon-sm { --sz: 13px } .icon-lg { --sz: 22px } .icon-xl { --sz: 38px }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--acc), var(--acc-m));
+  color: #fff; border-radius: var(--r); box-shadow: var(--shb);
+  font-weight: 600;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+}
+.btn-ghost {
+  background: var(--glass); border: 1px solid var(--brd-h);
+  border-radius: var(--r); color: var(--txt); font-weight: 500;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+}
+
+.orb { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0 }
+.orb1 { width: 440px; height: 440px; top: -110px; left: -130px;
+  background: radial-gradient(circle, rgba(196,181,253,.26) 0%, transparent 68%);
+  animation: fl1 10s ease-in-out infinite }
+.orb2 { width: 320px; height: 320px; bottom: 60px; right: -90px;
+  background: radial-gradient(circle, rgba(167,243,208,.20) 0%, transparent 68%);
+  animation: fl2 13s ease-in-out infinite }
+.orb3 { width: 280px; height: 280px; bottom: -50px; left: 40px;
+  background: radial-gradient(circle, rgba(251,213,229,.20) 0%, transparent 68%);
+  animation: fl3 9s ease-in-out infinite }
+[data-theme="dark"] .orb { opacity: 0 }
+@keyframes fl1 { 0%,100% { transform: translate(0,0) } 50% { transform: translate(22px,30px) } }
+@keyframes fl2 { 0%,100% { transform: translate(0,0) } 50% { transform: translate(-16px,-22px) } }
+@keyframes fl3 { 0%,100% { transform: translate(0,0) } 50% { transform: translate(20px,-16px) } }
