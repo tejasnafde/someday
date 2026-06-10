@@ -1,7 +1,7 @@
 """
-Smart-pick scoring query.
+Raw SQL for the payoff domain.
 
-Score formula (100 pts max):
+SMART_PICK score formula (100 pts max):
   mutual_ratio  = (interested reactions / member count) × 40
   save_age      = min(days_since_saved / 30, 1.0)       × 20
   boost_bonus   = any active boost exists?               × 40

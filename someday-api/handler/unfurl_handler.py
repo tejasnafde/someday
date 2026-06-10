@@ -1,12 +1,7 @@
-"""
-URL unfurl — fetch Open Graph metadata from any URL.
-Uses httpx (sync) + Python's built-in html.parser.
-No heavy scraping libraries.
-"""
+"""URL unfurl — fetch Open Graph metadata from any URL."""
 
-import re
 from html.parser import HTMLParser
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
 import httpx
 
@@ -14,8 +9,8 @@ from app_util.db_util import DBUtil
 from app_util.log_util import infologger, errorlogger
 from common_helper.decorators import log_timing
 
-_TIMEOUT = 8.0
-_HEADERS = {
+TIMEOUT = 8.0
+HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (compatible; SomedayBot/1.0; +https://someday.app)"
     )
@@ -28,8 +23,8 @@ class OGParser(HTMLParser):
     def __init__(self):
         super().__init__()
         self.og: dict[str, str] = {}
-        self._in_title = False
-        self._title_text: list[str] = []
+        self.in_title = False
+        self.title_text: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple]):
         if tag == "meta":
@@ -37,30 +32,27 @@ class OGParser(HTMLParser):
             prop = a.get("property", "") or a.get("name", "")
             content = a.get("content", "")
             if prop.startswith("og:") and content:
-                self.og[prop[3:]] = content  # strip "og:" prefix
+                self.og[prop[3:]] = content
         elif tag == "title":
-            self._in_title = True
+            self.in_title = True
 
     def handle_data(self, data: str):
-        if self._in_title:
-            self._title_text.append(data)
+        if self.in_title:
+            self.title_text.append(data)
 
     def handle_endtag(self, tag: str):
         if tag == "title":
-            self._in_title = False
+            self.in_title = False
 
     def fallback_title(self) -> str | None:
-        return "".join(self._title_text).strip() or None
+        return "".join(self.title_text).strip() or None
 
 
 def fetch_link_meta(url: str) -> dict | None:
-    """
-    Fetch OG metadata from a URL.
-    Returns {"title": ..., "image": ..., "site": ...} or None on failure.
-    """
+    """Returns {"title": ..., "image": ..., "site": ...} or None on failure."""
     infologger.info(f"unfurl.fetch_link_meta | url={url}")
     try:
-        resp = httpx.get(url, headers=_HEADERS, timeout=_TIMEOUT, follow_redirects=True)
+        resp = httpx.get(url, headers=HEADERS, timeout=TIMEOUT, follow_redirects=True)
         resp.raise_for_status()
     except httpx.HTTPError as exc:
         errorlogger.error(f"unfurl.fetch_link_meta | HTTP error | url={url} | {exc}")
@@ -76,7 +68,7 @@ def fetch_link_meta(url: str) -> dict | None:
 
     parser = OGParser()
     try:
-        parser.feed(resp.text[:40_000])  # parse first 40 KB only — enough for <head>
+        parser.feed(resp.text[:40_000])  # 40 KB is enough to cover <head>
     except Exception as exc:
         errorlogger.error(f"unfurl.fetch_link_meta | parse error | {exc}")
         return None

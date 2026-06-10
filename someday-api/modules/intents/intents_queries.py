@@ -1,7 +1,4 @@
-"""
-Raw SQL for intents domain.
-All SELECT queries filter status = 1.
-"""
+"""Raw SQL for the intents domain."""
 
 LIST_INTENTS = """
     SELECT

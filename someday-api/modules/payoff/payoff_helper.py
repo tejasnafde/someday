@@ -56,8 +56,7 @@ def spin(db, circle_id: str) -> list[dict]:
         infologger.warning(f"payoff_helper.spin | empty shortlist | circle_id={circle_id}")
         return []
 
-    # Shuffle server-side so every client gets the same "random" order per spin request.
-    # Frontend animates the wheel — it just lands on rows[0].
+    # Shuffle server-side so all clients see the same order for a given spin request.
     random.shuffle(rows)
     infologger.info(f"payoff_helper.spin | {len(rows)} items shuffled")
     return [dict(r) for r in rows]

@@ -1,20 +1,4 @@
-"""
-Decorators — apply to every router endpoint and handler method.
-
-Usage:
-    @log_timing("CREATE_CIRCLE")
-    async def create_circle(...):   # router (async)
-        ...
-
-    @log_timing("circles_handler.create")
-    def create(self, ...):          # handler (sync)
-        ...
-
-Rules (see CLAUDE.md):
-  - Every router endpoint must use @log_timing.
-  - log_timing works on both async and sync callables.
-  - On error, duration is still logged before re-raising.
-"""
+"""Decorators — apply to every router endpoint and handler method."""
 
 import asyncio
 import functools
@@ -24,10 +8,6 @@ from app_util.log_util import errorlogger, infologger
 
 
 def log_timing(name: str):
-    """
-    Log entry, exit (with duration ms), and any unhandled exception.
-    Works transparently on both async and sync functions.
-    """
     def decorator(func):
         if asyncio.iscoroutinefunction(func):
             @functools.wraps(func)

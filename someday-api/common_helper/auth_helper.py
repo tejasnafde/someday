@@ -1,24 +1,4 @@
-"""
-Supabase JWT verification — RS256 via JWKS.
-
-Supabase now signs JWTs with RS256 using asymmetric keys.
-The public keys are published at:
-    {SUPABASE_URL}/auth/v1/.well-known/jwks.json
-
-PyJWKClient fetches and caches the key set automatically,
-re-fetching if the token's kid doesn't match any cached key.
-
-Decoded payload contains:
-    sub   — user UUID (maps to users.id)
-    email — user email
-    role  — "authenticated" for valid sessions
-
-Usage (in routers):
-    from common_helper.auth_helper import jwt_required
-    ...
-    async def endpoint(current_user: dict = Depends(jwt_required)):
-        user_id = current_user["sub"]
-"""
+"""Supabase JWT verification — RS256 via JWKS."""
 
 import jwt
 from fastapi import Depends, HTTPException
@@ -28,10 +8,10 @@ from jwt import PyJWKClient, PyJWTError
 from app_util.log_util import errorlogger, infologger
 from config.settings import settings
 
-_security = HTTPBearer()
+security = HTTPBearer()
 
-# Initialised once at import time — caches JWKS, thread-safe.
-_jwks_client = PyJWKClient(
+# Caches JWKS at import time, thread-safe. Re-fetches if kid is unknown.
+jwks_client = PyJWKClient(
     f"{settings.SUPABASE_URL}/auth/v1/.well-known/jwks.json",
     cache_jwk_set=True,
     lifespan=3600,  # re-fetch public keys at most once per hour
@@ -39,11 +19,11 @@ _jwks_client = PyJWKClient(
 
 
 def verify_supabase_jwt(
-    credentials: HTTPAuthorizationCredentials = Depends(_security),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> dict:
     token = credentials.credentials
     try:
-        signing_key = _jwks_client.get_signing_key_from_jwt(token)
+        signing_key = jwks_client.get_signing_key_from_jwt(token)
         payload = jwt.decode(
             token,
             signing_key.key,
