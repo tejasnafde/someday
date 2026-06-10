@@ -5,11 +5,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     APP_ENV: str = "dev"
 
-    # Supabase
+    # Supabase — JWT verification uses ES256 JWKS derived from SUPABASE_URL
     SUPABASE_URL: str
     SUPABASE_ANON_KEY: str
-    # No JWT secret — project uses RS256 JWKS verification.
-    # JWKS URL is derived from SUPABASE_URL at runtime in auth_helper.py.
+    SUPABASE_SERVICE_ROLE_KEY: str = ""  # admin API; used by mint_token.py for testing
 
     # Database
     DATABASE_URL: str
