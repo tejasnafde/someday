@@ -62,10 +62,10 @@ export function SignIn() {
       ) : (
         <TextInput
           style={[input, { textAlign: "center", fontSize: 22, letterSpacing: 6 }]}
-          placeholder="123456"
+          placeholder="12345678"
           placeholderTextColor={t.txtL}
           keyboardType="number-pad"
-          maxLength={6}
+          maxLength={10}
           value={code}
           onChangeText={setCode}
         />
