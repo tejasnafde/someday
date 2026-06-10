@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
       </head>
-      <body className={`${dmSans.variable} ${lora.variable}`}>
+      <body className={`${dmSans.variable} ${lora.variable}`} suppressHydrationWarning>
         <Sprite />
         <div className="orb orb1" />
         <div className="orb orb2" />
