@@ -24,6 +24,8 @@ export default function CirclePage() {
   const [userId, setUserId] = useState("");
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState("");
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(() => {
@@ -74,6 +76,12 @@ export default function CirclePage() {
     if (!confirm("Delete this circle for everyone? This can't be undone.")) return;
     await api.deleteCircle(id);
     router.push("/");
+  }
+
+  async function copyInvite() {
+    await navigator.clipboard.writeText(`${location.origin}/join/${circle!.invite_token}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   if (!ready || !circle) return <Spinner />;
@@ -129,10 +137,10 @@ export default function CirclePage() {
                 <MemberDot key={m.user_id} name={m.display_name} color={memberColor(i)} />
               ))}
             </div>
-            <Link href={`/circles/${id}/invite`} aria-label="Invite"
+            <button onClick={() => setInviteOpen(true)} aria-label="Invite"
               className="glass flex h-9 w-9 items-center justify-center rounded-full" style={{ color: "var(--txt-m)" }}>
               <Icon name="link" size="sm" />
-            </Link>
+            </button>
           </div>
         }
       />
@@ -211,6 +219,42 @@ export default function CirclePage() {
           </button>
         )}
       </div>
+
+      {inviteOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+          style={{ background: "rgba(0,0,0,.4)" }}
+          onClick={() => setInviteOpen(false)}
+        >
+          <div
+            className="glass-hi mx-5 mb-8 w-full max-w-sm rounded-[var(--r)] p-5 sm:mb-0"
+            style={{ boxShadow: "var(--shc)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="font-serif text-lg font-semibold">Invite to {circle.name}</div>
+                <div className="mt-0.5 text-xs" style={{ color: "var(--txt-m)" }}>
+                  Anyone with this link can join.
+                </div>
+              </div>
+              <button onClick={() => setInviteOpen(false)} aria-label="Close"
+                className="glass flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                style={{ color: "var(--txt-m)" }}>
+                <Icon name="x" size="sm" />
+              </button>
+            </div>
+            <div className="mt-4 break-all rounded-[var(--rs)] px-3 py-2.5 text-xs"
+              style={{ background: "var(--glass-lo)", color: "var(--txt-m)", border: "1px solid var(--brd-s)" }}>
+              {`${typeof location !== "undefined" ? location.origin : ""}/join/${circle.invite_token}`}
+            </div>
+            <button onClick={copyInvite} className="btn-primary mt-3 w-full py-3 text-sm">
+              <Icon name={copied ? "check" : "copy"} size="sm" />
+              {copied ? "Copied" : "Copy link"}
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
