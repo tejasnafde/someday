@@ -16,7 +16,8 @@ LIST_INTENTS = """
         i.created_at::text,
         i.updated_at::text,
         COUNT(DISTINCT r.user_id) FILTER (WHERE r.status = 1) AS reaction_count,
-        MAX(CASE WHEN b.user_id = :user_id AND b.status = 1 THEN 1 ELSE 0 END) AS boosted_by_me
+        MAX(CASE WHEN b.user_id = :user_id AND b.status = 1 THEN 1 ELSE 0 END) AS boosted_by_me,
+        MAX(CASE WHEN r.user_id = :user_id AND r.status = 1 THEN 1 ELSE 0 END) AS reacted_by_me
     FROM public.intents i
     LEFT JOIN public.reactions r ON r.intent_id = i.id
     LEFT JOIN public.intent_boosts b ON b.intent_id = i.id
@@ -45,7 +46,8 @@ LIST_INTENTS_SHORTLIST = """
         i.created_at::text,
         i.updated_at::text,
         COUNT(DISTINCT r.user_id) FILTER (WHERE r.status = 1) AS reaction_count,
-        MAX(CASE WHEN b.user_id = :user_id AND b.status = 1 THEN 1 ELSE 0 END) AS boosted_by_me
+        MAX(CASE WHEN b.user_id = :user_id AND b.status = 1 THEN 1 ELSE 0 END) AS boosted_by_me,
+        MAX(CASE WHEN r.user_id = :user_id AND r.status = 1 THEN 1 ELSE 0 END) AS reacted_by_me
     FROM public.intents i
     LEFT JOIN public.reactions r ON r.intent_id = i.id AND r.kind = 'interested' AND r.status = 1
     LEFT JOIN public.intent_boosts b ON b.intent_id = i.id
@@ -73,7 +75,8 @@ GET_INTENT_BY_ID = """
         i.created_at::text,
         i.updated_at::text,
         COUNT(DISTINCT r.user_id) FILTER (WHERE r.status = 1) AS reaction_count,
-        MAX(CASE WHEN b.user_id = :user_id AND b.status = 1 THEN 1 ELSE 0 END) AS boosted_by_me
+        MAX(CASE WHEN b.user_id = :user_id AND b.status = 1 THEN 1 ELSE 0 END) AS boosted_by_me,
+        MAX(CASE WHEN r.user_id = :user_id AND r.status = 1 THEN 1 ELSE 0 END) AS reacted_by_me
     FROM public.intents i
     LEFT JOIN public.reactions r ON r.intent_id = i.id
     LEFT JOIN public.intent_boosts b ON b.intent_id = i.id
@@ -84,8 +87,11 @@ GET_INTENT_BY_ID = """
 INSERT_INTENT = """
     INSERT INTO public.intents
         (circle_id, created_by, title, url, note, category, tags, link_meta, status)
-    VALUES
-        (:circle_id, :created_by, :title, :url, :note, :category, :tags, CAST(:link_meta AS jsonb), 1)
+    SELECT :circle_id, :created_by, :title, :url, :note, :category, :tags, CAST(:link_meta AS jsonb), 1
+    WHERE EXISTS (
+        SELECT 1 FROM public.circle_members cm
+        WHERE cm.circle_id = :circle_id AND cm.user_id = :created_by AND cm.status = 1
+    )
     RETURNING
         id, circle_id, created_by, title, url, note, category, tags,
         task_status, link_meta, planned_for, created_at::text, updated_at::text

@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Sprite";
-import { EmptyState, IntentCard, MemberDot, NavBar, Spinner, memberColor } from "@/components/ui";
+import { EmptyState, IntentCard, MemberDot, NavBar, Skeleton, Spinner, memberColor } from "@/components/ui";
 import { api } from "@/lib/api";
+import { getCached, setCached } from "@/lib/cache";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
 import type { Category, CircleDetail, Intent } from "@/lib/types";
@@ -28,15 +29,28 @@ export default function CirclePage() {
   const [copied, setCopied] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
+  const intentsKey = `intents:${id}:${tab}:${category}`;
+
   const load = useCallback(() => {
-    api.circle(id).then(setCircle);
+    const cachedCircle = getCached<CircleDetail>(`circle:${id}`);
+    if (cachedCircle) setCircle(cachedCircle);
+    api.circle(id).then((c) => {
+      setCached(`circle:${id}`, c);
+      setCircle(c);
+    });
+
+    const cachedIntents = getCached<Intent[]>(intentsKey);
+    if (cachedIntents) setIntents(cachedIntents);
     const params =
       tab === "Shortlist" ? { shortlist: true }
       : tab === "Done" ? { task_status: "done" }
       : category !== "All" ? { category }
       : undefined;
-    api.intents(id, params).then(setIntents);
-  }, [id, tab, category]);
+    api.intents(id, params).then((list) => {
+      setCached(intentsKey, list);
+      setIntents(list);
+    });
+  }, [id, tab, category, intentsKey]);
 
   useEffect(() => {
     if (!ready) return;
@@ -48,14 +62,26 @@ export default function CirclePage() {
     if (renaming) nameRef.current?.focus();
   }, [renaming]);
 
-  async function react(intentId: string) {
-    await api.react(intentId);
-    load();
+  function patchIntent(intentId: string, patch: (i: Intent) => Intent) {
+    setIntents((prev) => {
+      const next = prev?.map((i) => (i.id === intentId ? patch(i) : i)) ?? prev;
+      if (next) setCached(intentsKey, next);
+      return next;
+    });
   }
 
-  async function boost(intentId: string) {
-    await api.boost(intentId);
-    load();
+  function react(intentId: string) {
+    patchIntent(intentId, (i) => ({
+      ...i,
+      reacted_by_me: !i.reacted_by_me,
+      reaction_count: i.reaction_count + (i.reacted_by_me ? -1 : 1),
+    }));
+    api.react(intentId).catch(() => load());
+  }
+
+  function boost(intentId: string) {
+    patchIntent(intentId, (i) => ({ ...i, boosted_by_me: !i.boosted_by_me }));
+    api.boost(intentId).catch(() => load());
   }
 
   async function rename(e: React.FormEvent) {
@@ -178,7 +204,7 @@ export default function CirclePage() {
 
       <div className="mt-2 flex flex-col gap-3">
         {!visible ? (
-          <Spinner />
+          <Skeleton height={180} count={3} />
         ) : visible.length === 0 ? (
           <EmptyState
             message={

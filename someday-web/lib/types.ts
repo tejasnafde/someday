@@ -51,6 +51,7 @@ export interface Intent {
   planned_for: string | null;
   reaction_count: number;
   boosted_by_me: boolean | number;
+  reacted_by_me: boolean | number;
   created_at: string;
   updated_at: string;
 }

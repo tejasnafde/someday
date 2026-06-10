@@ -56,19 +56,27 @@ export default function IntentPage() {
     load();
   }
 
-  async function setStatus(s: TaskStatus) {
-    await api.updateIntent(id, { task_status: s });
-    load();
+  function setStatus(s: TaskStatus) {
+    setIntent((prev) => (prev ? { ...prev, task_status: s } : prev));
+    api.updateIntent(id, { task_status: s }).catch(() => load());
   }
 
-  async function react() {
-    await api.react(id);
-    load();
+  function react() {
+    setIntent((prev) =>
+      prev
+        ? {
+            ...prev,
+            reacted_by_me: !prev.reacted_by_me,
+            reaction_count: prev.reaction_count + (prev.reacted_by_me ? -1 : 1),
+          }
+        : prev,
+    );
+    api.react(id).catch(() => load());
   }
 
-  async function boost() {
-    await api.boost(id);
-    load();
+  function boost() {
+    setIntent((prev) => (prev ? { ...prev, boosted_by_me: !prev.boosted_by_me } : prev));
+    api.boost(id).catch(() => load());
   }
 
   async function remove() {
@@ -213,9 +221,10 @@ export default function IntentPage() {
       </div>
 
       <div className="mt-4 flex gap-2.5">
-        <button onClick={react} className="btn-primary flex-1 py-3 text-sm">
+        <button onClick={react} className="btn-primary flex-1 py-3 text-sm"
+          style={intent.reacted_by_me ? { opacity: 0.85 } : undefined}>
           <Icon name="heart" size="sm" />
-          Interested
+          {intent.reacted_by_me ? "Interested ✓" : "Interested"}
         </button>
         <button onClick={boost} className="btn-ghost px-5 py-3 text-sm"
           style={intent.boosted_by_me ? { color: "#B89000", borderColor: "rgba(234,165,0,.4)" } : undefined}>

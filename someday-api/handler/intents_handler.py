@@ -44,10 +44,6 @@ class IntentsHandler(DBUtil):
             f"IntentsHandler.create_intent | circle_id={circle_id} "
             f"user_id={user_id} title={request.title!r}"
         )
-        try:
-            ch.assert_member(self, circle_id, user_id)
-        except ValueError:
-            return 403, "Not a member of this circle"
         intent = h.create_intent(
             self,
             circle_id=circle_id,
@@ -59,6 +55,8 @@ class IntentsHandler(DBUtil):
             tags=request.tags,
             link_meta=link_meta,
         )
+        if intent is None:
+            return 403, "Not a member of this circle"
         return 201, intent
 
     @log_timing("intents_handler.update_intent")

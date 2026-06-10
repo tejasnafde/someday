@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Icon } from "@/components/Sprite";
-import { EmptyState, MemberDot, Spinner, ThemeToggle, memberColor } from "@/components/ui";
+import { EmptyState, MemberDot, Skeleton, ThemeToggle, memberColor } from "@/components/ui";
+import { getCached, setCached } from "@/lib/cache";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
 import type { Circle, User } from "@/lib/types";
@@ -29,7 +30,13 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(() => {
+    const cached = getCached<{ user: User; circles: Circle[] }>("me");
+    if (cached) {
+      setUser(cached.user);
+      setCircles(cached.circles);
+    }
     api.me().then(({ user, circles }) => {
+      setCached("me", { user, circles });
       setUser(user);
       setCircles(circles);
     });
@@ -49,7 +56,12 @@ export default function Home() {
     load();
   }
 
-  if (!ready || !circles) return <Spinner />;
+  if (!ready || !circles)
+    return (
+      <main className="py-5">
+        <div className="mb-8 mt-16"><Skeleton height={96} count={3} /></div>
+      </main>
+    );
 
   const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
   const totalIdeas = circles.reduce((n, c) => n + c.open_intent_count, 0);
