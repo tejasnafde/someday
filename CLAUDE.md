@@ -84,6 +84,7 @@ Set up `log_util.py` and decorators **before any feature code**. Every endpoint,
 
 ## Git
 
+- **main is protected — no direct pushes, even for admins.** All changes go through a feature branch + PR: `git checkout -b <branch>` → push → `gh pr create` → `gh pr merge --merge`. Zero approvals required, so you can merge your own PR immediately.
 - **Always merge, never rebase.** If a push is rejected for being behind, `git pull` (merge) then push.
 - Commit messages: short imperative subject line + body explaining the *why*, not the *what*.
 - Co-author line: `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>`
