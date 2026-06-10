@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Sprite";
 import { EmptyState, IntentCard, MemberDot, NavBar, Spinner, memberColor } from "@/components/ui";
 import { api } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
 import type { Category, CircleDetail, Intent } from "@/lib/types";
 
@@ -15,10 +16,15 @@ const CATEGORIES: (Category | "All")[] = ["All", "watch", "eat", "visit", "read"
 export default function CirclePage() {
   const ready = useAuth();
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const [circle, setCircle] = useState<CircleDetail | null>(null);
   const [intents, setIntents] = useState<Intent[] | null>(null);
   const [tab, setTab] = useState<(typeof TABS)[number]>("All");
   const [category, setCategory] = useState<Category | "All">("All");
+  const [userId, setUserId] = useState("");
+  const [renaming, setRenaming] = useState(false);
+  const [name, setName] = useState("");
+  const nameRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(() => {
     api.circle(id).then(setCircle);
@@ -31,8 +37,14 @@ export default function CirclePage() {
   }, [id, tab, category]);
 
   useEffect(() => {
-    if (ready) load();
+    if (!ready) return;
+    load();
+    supabase.auth.getSession().then(({ data }) => setUserId(data.session?.user.id ?? ""));
   }, [ready, load]);
+
+  useEffect(() => {
+    if (renaming) nameRef.current?.focus();
+  }, [renaming]);
 
   async function react(intentId: string) {
     await api.react(intentId);
@@ -44,7 +56,29 @@ export default function CirclePage() {
     load();
   }
 
+  async function rename(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = name.trim();
+    if (trimmed && trimmed !== circle?.name) await api.updateCircle(id, { name: trimmed });
+    setRenaming(false);
+    load();
+  }
+
+  async function leave() {
+    if (!confirm("Leave this circle?")) return;
+    await api.leaveCircle(id);
+    router.push("/");
+  }
+
+  async function remove() {
+    if (!confirm("Delete this circle for everyone? This can't be undone.")) return;
+    await api.deleteCircle(id);
+    router.push("/");
+  }
+
   if (!ready || !circle) return <Spinner />;
+
+  const isOwner = userId === circle.owner_id;
 
   const visible = tab === "All" && category === "All"
     ? intents?.filter((i) => i.task_status !== "done" && i.task_status !== "archived")
@@ -53,7 +87,39 @@ export default function CirclePage() {
   return (
     <main>
       <NavBar
-        title={circle.name}
+        title={
+          renaming ? (
+            <form onSubmit={rename} className="flex items-center gap-1.5">
+              <input
+                ref={nameRef}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => e.key === "Escape" && setRenaming(false)}
+                className="min-w-0 flex-1 rounded-[var(--rs)] px-2.5 py-1 font-serif text-lg font-semibold outline-none"
+                style={{ background: "var(--glass-lo)", border: "1px solid var(--acc)", color: "var(--txt)" }}
+              />
+              <button type="submit" aria-label="Save name"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white"
+                style={{ background: "var(--acc)" }}>
+                <Icon name="check" size="sm" />
+              </button>
+            </form>
+          ) : (
+            <span className="flex items-center gap-2">
+              <span className="truncate">{circle.name}</span>
+              {isOwner && (
+                <button
+                  onClick={() => { setName(circle.name); setRenaming(true); }}
+                  aria-label="Rename circle"
+                  className="shrink-0"
+                  style={{ color: "var(--txt-l)" }}
+                >
+                  <Icon name="pencil" size="sm" />
+                </button>
+              )}
+            </span>
+          )
+        }
         subtitle={`${circle.member_count} members · ${circle.open_intent_count} ideas`}
         back="/"
         right={
@@ -131,6 +197,19 @@ export default function CirclePage() {
           <Icon name="plus" size="sm" />
           Add something
         </Link>
+      </div>
+
+      <div className="mb-8 mt-10 flex justify-center gap-6 text-xs font-medium" style={{ color: "var(--txt-l)" }}>
+        <button onClick={leave} className="flex items-center gap-1.5">
+          <Icon name="log-out" size="sm" />
+          Leave circle
+        </button>
+        {isOwner && (
+          <button onClick={remove} className="flex items-center gap-1.5" style={{ color: "var(--cp)" }}>
+            <Icon name="trash" size="sm" />
+            Delete circle
+          </button>
+        )}
       </div>
     </main>
   );
