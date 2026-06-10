@@ -37,8 +37,9 @@ schemas/<module>_schema.py      ← Pydantic BaseModels for request/response
 - **No `SELECT *`.** Always name every column.
 - **`status = 1` filter on every query.** All tables have a `status` integer column. Active = 1, soft-deleted = 0, user-deleted = -1. Never `DELETE` rows.
 - **Intent workflow state is `task_status`.** The column `status` is the soft-delete flag on every table. The workflow (saved/interested/planned/done/archived) is `task_status` on the `intents` table.
-- **Raw SQL via `sqlalchemy.text()`.** No ORM queries. SQL lives in `_queries.py` files.
+- **Raw SQL via `sql_text()`.** Import as `from sqlalchemy import text as sql_text`. Query strings live in `_queries.py` as plain Python strings; `sql_text()` is applied in `db_util.py` at execution time, never in the query files themselves.
 - **Named params only.** Use `:param_name` syntax. No f-strings or string interpolation in SQL.
+- **No `::type` PostgreSQL casts in parameterised queries.** The `::` operator after a named param (e.g. `:tags::text[]`) conflicts with SQLAlchemy's param parser. Use ANSI `CAST(:param AS type)` instead, or rely on psycopg2's automatic Python→Postgres type coercion (lists → `text[]`, JSON strings → `jsonb`).
 - **No `os.environ`.** Always `from config.settings import settings`.
 - **No `print()`.** Always `infologger` or `errorlogger` from `app_util/log_util.py`.
 - **Handlers return `(status_code, result)` tuples.** Routers wrap with `create_response()`.
