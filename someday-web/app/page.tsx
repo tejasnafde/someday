@@ -99,7 +99,7 @@ export default function Home() {
                 </div>
                 <div className="mt-2 flex">
                   {Array.from({ length: Math.min(c.member_count, 5) }).map((_, i) => (
-                    <MemberDot key={i} name={i === 0 ? c.name : String.fromCharCode(65 + i)} color={memberColor(i)} />
+                    <MemberDot key={i} name={null} color={memberColor(i)} />
                   ))}
                 </div>
               </div>
@@ -119,7 +119,7 @@ export default function Home() {
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Tejas + Harsh, College Gang, Europe 2027…"
+            placeholder="Movie nights, school friends, the big trip…"
             className="w-full rounded-[var(--rs)] bg-transparent px-1 py-2 text-sm outline-none"
           />
           <div className="flex gap-2.5">

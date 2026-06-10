@@ -50,7 +50,7 @@ export function MemberDot({ name, color, size = 22 }: { name: string | null; col
         boxShadow: "0 1px 4px rgba(0,0,0,.14)",
       }}
     >
-      {(name ?? "?").charAt(0).toUpperCase()}
+      {name ? name.charAt(0).toUpperCase() : ""}
     </div>
   );
 }
