@@ -72,10 +72,20 @@ def create_intent(
 
 def update_intent(db, intent_id: str, updates: dict) -> dict | None:
     infologger.info(f"intents_helper.update_intent | intent_id={intent_id} fields={list(updates)}")
-    row = db.execute_query_with_value_returning(
-        q.UPDATE_INTENT,
-        {"intent_id": intent_id, **updates},
-    )
+    # SQLAlchemy text() requires every named param to be present even when NULL.
+    # COALESCE(NULL, col) = existing value, so missing fields are preserved.
+    params = {
+        "intent_id":   intent_id,
+        "title":       None,
+        "url":         None,
+        "note":        None,
+        "category":    None,
+        "tags":        None,
+        "task_status": None,
+        "planned_for": None,
+        **updates,
+    }
+    row = db.execute_query_with_value_returning(q.UPDATE_INTENT, params)
     if not row:
         infologger.warning(f"intents_helper.update_intent | not found | intent_id={intent_id}")
     return row or None
