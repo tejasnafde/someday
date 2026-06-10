@@ -30,6 +30,8 @@ export function Home() {
       <TouchableOpacity onPress={() => supabase.auth.signOut()} style={{ alignItems: "center", padding: 8 }}>
         <Text style={{ color: t.txtM, fontSize: 13 }}>Sign out</Text>
       </TouchableOpacity>
+
+      <Text style={{ color: t.txtL, fontSize: 11, textAlign: "center" }}>v1.0.1</Text>
     </View>
   );
 }
