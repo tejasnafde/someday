@@ -161,7 +161,7 @@ export function IntentCard({ intent, onReact, onBoost }: { intent: Intent; onRea
   );
 }
 
-export function NavBar({ title, subtitle, back, right }: { title: string; subtitle?: string; back?: string; right?: React.ReactNode }) {
+export function NavBar({ title, subtitle, back, right }: { title: React.ReactNode; subtitle?: string; back?: string; right?: React.ReactNode }) {
   return (
     <div className="sticky top-0 z-20 -mx-5 mb-4 flex items-center gap-3 px-5 py-3"
       style={{ background: "var(--glass-nav)", backdropFilter: "var(--blur)", WebkitBackdropFilter: "var(--blur)", borderBottom: "1px solid var(--brd-s)" }}>
