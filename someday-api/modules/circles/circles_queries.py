@@ -8,7 +8,7 @@ GET_MY_CIRCLES = """
         c.owner_id,
         c.invite_token,
         c.created_at::text,
-        COUNT(DISTINCT cm.user_id) FILTER (WHERE cm.status = 1)  AS member_count,
+        COUNT(DISTINCT all_cm.user_id)                            AS member_count,
         COUNT(DISTINCT i.id)       FILTER (WHERE i.status = 1
                                            AND i.task_status NOT IN ('done','archived'))
                                                                   AS open_intent_count
