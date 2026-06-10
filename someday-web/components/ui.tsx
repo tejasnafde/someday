@@ -134,9 +134,9 @@ export function IntentCard({ intent, onReact, onBoost }: { intent: Intent; onRea
               aria-label="Toggle interested"
               className="flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-semibold"
               style={{
-                background: intent.reaction_count > 0 ? "var(--cp-l)" : "var(--glass-lo)",
-                color: intent.reaction_count > 0 ? "var(--cp)" : "var(--txt-m)",
-                border: "1px solid var(--brd-s)",
+                background: intent.reacted_by_me ? "var(--cp-l)" : "var(--glass-lo)",
+                color: intent.reacted_by_me ? "var(--cp)" : "var(--txt-m)",
+                border: `1px solid ${intent.reacted_by_me ? "var(--cp)44" : "var(--brd-s)"}`,
               }}
             >
               <Icon name="heart" size="sm" />
@@ -192,6 +192,16 @@ export function EmptyState({ message }: { message: string }) {
   return (
     <div className="glass rounded-[var(--r)] px-6 py-12 text-center text-sm" style={{ color: "var(--txt-m)" }}>
       {message}
+    </div>
+  );
+}
+
+export function Skeleton({ height = 80, count = 3 }: { height?: number; count?: number }) {
+  return (
+    <div className="flex flex-col gap-3">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="glass animate-pulse rounded-[var(--r)]" style={{ height, opacity: 1 - i * 0.25 }} />
+      ))}
     </div>
   );
 }

@@ -46,7 +46,7 @@ def create_intent(
     category: str | None,
     tags: list[str],
     link_meta: dict | None,
-) -> dict:
+) -> dict | None:
     infologger.info(
         f"intents_helper.create_intent | circle_id={circle_id} "
         f"user_id={user_id} title={title!r}"
@@ -64,8 +64,13 @@ def create_intent(
             "link_meta":  json.dumps(link_meta) if link_meta else None,
         },
     )
+    if not row:
+        # Membership gate in INSERT_INTENT returned nothing — caller is not a member
+        infologger.warning(f"intents_helper.create_intent | not a member | circle_id={circle_id} user_id={user_id}")
+        return None
     row["reaction_count"] = 0
     row["boosted_by_me"]  = False
+    row["reacted_by_me"]  = False
     infologger.info(f"intents_helper.create_intent | created intent_id={row['id']}")
     return row
 

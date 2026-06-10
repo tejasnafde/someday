@@ -4,18 +4,13 @@ from app_util.log_util import infologger, errorlogger
 from modules.payoff import payoff_queries as q
 
 
-def smart_pick(db, circle_id: str) -> dict | None:
+def smart_pick(db, circle_id: str, user_id: str) -> dict | None:
     infologger.info(f"payoff_helper.smart_pick | circle_id={circle_id}")
-
-    count_rows = db.execute_query_with_value(q.GET_MEMBER_COUNT, {"circle_id": circle_id})
-    member_count = count_rows[0]["cnt"] if count_rows else 1
-    infologger.info(f"payoff_helper.smart_pick | member_count={member_count}")
-
     rows = db.execute_query_with_value(
-        q.SMART_PICK, {"circle_id": circle_id, "member_count": member_count}
+        q.SMART_PICK, {"circle_id": circle_id, "user_id": user_id}
     )
     if not rows:
-        infologger.warning(f"payoff_helper.smart_pick | no shortlisted intents | circle_id={circle_id}")
+        infologger.warning(f"payoff_helper.smart_pick | empty shortlist or not a member | circle_id={circle_id}")
         return None
 
     row = rows[0]
@@ -49,11 +44,11 @@ def smart_pick(db, circle_id: str) -> dict | None:
     return result
 
 
-def spin(db, circle_id: str) -> list[dict]:
+def spin(db, circle_id: str, user_id: str) -> list[dict]:
     infologger.info(f"payoff_helper.spin | circle_id={circle_id}")
-    rows = db.execute_query_with_value(q.SHORTLIST_FOR_SPIN, {"circle_id": circle_id})
+    rows = db.execute_query_with_value(q.SHORTLIST_FOR_SPIN, {"circle_id": circle_id, "user_id": user_id})
     if not rows:
-        infologger.warning(f"payoff_helper.spin | empty shortlist | circle_id={circle_id}")
+        infologger.warning(f"payoff_helper.spin | empty shortlist or not a member | circle_id={circle_id}")
         return []
 
     # Shuffle server-side so all clients see the same order for a given spin request.
