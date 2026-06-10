@@ -14,9 +14,10 @@ class CreateIntentRequest(BaseModel):
 
     @field_validator("title")
     def title_not_empty(cls, v: str) -> str:
-        if not v.strip():
+        v = v.strip()
+        if not v:
             raise ValueError("title cannot be blank")
-        return v.strip()
+        return v
 
     @field_validator("category")
     def category_valid(cls, v: Optional[str]) -> Optional[str]:

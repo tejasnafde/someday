@@ -1,18 +1,10 @@
-"""
-Test configuration.
-
-Tests use httpx.AsyncClient against the FastAPI app.
-DB calls are mocked at the DBUtil level — no real Supabase connection needed.
-
-Env vars are loaded from .env.test if it exists, otherwise inline defaults below.
-"""
+"""Test configuration — env vars must be set before importing app modules."""
 
 import os
 import pytest
 from httpx import AsyncClient, ASGITransport
 from unittest.mock import MagicMock, patch
 
-# Set test env before importing app modules that read settings
 os.environ.setdefault("APP_ENV", "test")
 os.environ.setdefault("SUPABASE_URL", "https://test.supabase.co")
 os.environ.setdefault("SUPABASE_ANON_KEY", "test-anon-key")

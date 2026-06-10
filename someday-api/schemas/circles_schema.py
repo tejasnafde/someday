@@ -11,9 +11,10 @@ class CreateCircleRequest(BaseModel):
 
     @field_validator("name")
     def name_not_empty(cls, v: str) -> str:
-        if not v.strip():
+        v = v.strip()
+        if not v:
             raise ValueError("name cannot be blank")
-        return v.strip()
+        return v
 
 
 class UpdateCircleRequest(BaseModel):

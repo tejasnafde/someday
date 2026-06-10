@@ -1,17 +1,4 @@
-"""
-Log utility — set up before any feature code.
-
-Two named loggers available everywhere:
-    from app_util.log_util import infologger, errorlogger
-
-Rules (see CLAUDE.md):
-  - Never use print(). Always use infologger / errorlogger.
-  - Abundant logs are correct. Silence with LOG_LEVEL, never by removing.
-  - Level tuned via LOG_LEVEL env var: DEBUG in dev, INFO in prod.
-
-Dev:  coloured human-readable output showing module + line.
-Prod: structured JSON — Railway log viewer can filter/search.
-"""
+"""Log utility — set up before any feature code."""
 
 import json
 import logging
@@ -22,7 +9,7 @@ from datetime import datetime, timezone
 
 # ── Formatters ──────────────────────────────────────────────────────────────
 
-_ANSI = {
+ANSI = {
     "DEBUG":    "\033[36m",   # cyan
     "INFO":     "\033[32m",   # green
     "WARNING":  "\033[33m",   # yellow
@@ -38,8 +25,8 @@ class DevFormatter(logging.Formatter):
     FMT = "{color}[{level}]{reset} {time} {module}:{line} — {msg}"
 
     def format(self, record: logging.LogRecord) -> str:
-        color = _ANSI.get(record.levelname, "")
-        reset = _ANSI["RESET"]
+        color = ANSI.get(record.levelname, "")
+        reset = ANSI["RESET"]
         time  = datetime.now(timezone.utc).strftime("%H:%M:%S.%f")[:-3]
         return self.FMT.format(
             color=color,
@@ -63,7 +50,6 @@ class JSONFormatter(logging.Formatter):
             "line":      record.lineno,
             "message":   record.getMessage(),
         }
-        # Any extra dict fields attached via extra={} are merged in
         for key, val in record.__dict__.items():
             if key not in logging.LogRecord.__dict__ and not key.startswith("_"):
                 payload[key] = val
@@ -74,7 +60,7 @@ class JSONFormatter(logging.Formatter):
 
 # ── Builder ──────────────────────────────────────────────────────────────────
 
-def _build_logger(name: str, level: int) -> logging.Logger:
+def build_logger(name: str, level: int) -> logging.Logger:
     logger = logging.getLogger(name)
     if logger.handlers:
         return logger  # already configured (e.g. re-import)
@@ -92,8 +78,8 @@ def _build_logger(name: str, level: int) -> logging.Logger:
 
 # ── Public loggers ───────────────────────────────────────────────────────────
 
-_raw_level = os.getenv("LOG_LEVEL", "DEBUG").upper()
-_level      = getattr(logging, _raw_level, logging.DEBUG)
+raw_level = os.getenv("LOG_LEVEL", "DEBUG").upper()
+log_level  = getattr(logging, raw_level, logging.DEBUG)
 
-infologger  = _build_logger("someday.info",  _level)
-errorlogger = _build_logger("someday.error", logging.ERROR)
+infologger  = build_logger("someday.info",  log_level)
+errorlogger = build_logger("someday.error", logging.ERROR)

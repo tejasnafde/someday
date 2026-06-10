@@ -42,7 +42,7 @@ schemas/<module>_schema.py      ← Pydantic BaseModels for request/response
 - **No `os.environ`.** Always `from config.settings import settings`.
 - **No `print()`.** Always `infologger` or `errorlogger` from `app_util/log_util.py`.
 - **Handlers return `(status_code, result)` tuples.** Routers wrap with `create_response()`.
-- **No `_` prefix** on any method or attribute (no private convention). Dunder methods are fine.
+- **No `_` prefix on anything.** There is no private convention in this codebase. Never name a function, method, variable, or module-level constant with a leading underscore. Dunder methods (`__init__`, `__str__`, etc.) are fine — single-underscore names are not. If you think something should be "private", just don't expose it — the underscore prefix adds noise without enforcement.
 
 ---
 
@@ -65,7 +65,7 @@ Set up `log_util.py` and decorators **before any feature code**. Every endpoint,
 
 - **Supabase Postgres** for both dev and prod. Two separate Supabase projects.
 - Load connection string from `settings.py` via `APP_ENV` → `.env.dev` or `.env.production`.
-- All migrations are plain SQL files in `migrations/`. No ORM migration tooling.
+- All migrations are plain SQL files in `someday-api/supabase/migrations/` (Supabase CLI format: `YYYYMMDDHHMMSS_name.sql`). Run `supabase db push` to apply. No ORM migration tooling.
 - Soft deletes only. `status = 0` hides from UI. `status = -1` for user-initiated removal.
 
 ---

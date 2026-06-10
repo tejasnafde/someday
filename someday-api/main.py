@@ -1,15 +1,4 @@
-"""
-Someday API — FastAPI entry point.
-
-Startup order:
-    1. Logging configured (log_util imported by handlers before this runs)
-    2. DB engine initialised (pool created once)
-    3. Middleware registered (request/response logging)
-    4. Routers mounted
-
-Every request logs: METHOD PATH user=<id>
-Every response logs: STATUS duration_ms
-"""
+"""Someday API — FastAPI entry point."""
 
 import time
 
@@ -49,11 +38,10 @@ app.add_middleware(
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     t0 = time.perf_counter()
-    # Extract user id from auth header if present (best-effort, no validation here)
     auth = request.headers.get("authorization", "")
     user_hint = "anonymous"
     if auth.startswith("Bearer "):
-        # Log only first 8 chars of token as a trace hint — never log full token
+        # First 8 chars as a trace hint — never log the full token
         user_hint = f"token:{auth[7:15]}…"
 
     infologger.info(

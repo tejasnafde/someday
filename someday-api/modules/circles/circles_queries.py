@@ -1,8 +1,4 @@
-"""
-Raw SQL for circles domain.
-All queries use :named params via sqlalchemy.text().
-All SELECT queries filter status = 1.
-"""
+"""Raw SQL for the circles domain."""
 
 GET_MY_CIRCLES = """
     SELECT
