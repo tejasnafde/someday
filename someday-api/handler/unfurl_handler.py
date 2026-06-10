@@ -68,7 +68,7 @@ def fetch_link_meta(url: str) -> dict | None:
 
     parser = OGParser()
     try:
-        parser.feed(resp.text[:40_000])  # 40 KB is enough to cover <head>
+        parser.feed(resp.text)  # YouTube buries og: tags >600KB deep — parse everything
     except Exception as exc:
         errorlogger.error(f"unfurl.fetch_link_meta | parse error | {exc}")
         return None
