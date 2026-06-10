@@ -3,18 +3,22 @@
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Icon } from "@/components/Sprite";
-import { IntentPreview, NavBar, Spinner } from "@/components/ui";
+import { CATEGORY_ICONS, IntentPreview, NavBar, Spinner } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
-import type { Intent, TaskStatus } from "@/lib/types";
+import type { Category, Intent, TaskStatus } from "@/lib/types";
 
 const STEPS: TaskStatus[] = ["saved", "interested", "planned", "done"];
+const CATEGORIES: Category[] = ["watch", "eat", "visit", "read", "play", "trip"];
 
 export default function IntentPage() {
   const ready = useAuth();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [intent, setIntent] = useState<Intent | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ title: "", note: "", tags: "", category: null as Category | null, planned_for: "" });
+  const [saving, setSaving] = useState(false);
 
   const load = useCallback(() => {
     api.intent(id).then(setIntent);
@@ -25,6 +29,32 @@ export default function IntentPage() {
   }, [ready, load]);
 
   if (!ready || !intent) return <Spinner />;
+
+  function startEdit() {
+    setForm({
+      title: intent!.title,
+      note: intent!.note ?? "",
+      tags: intent!.tags.join(", "),
+      category: intent!.category,
+      planned_for: intent!.planned_for ?? "",
+    });
+    setEditing(true);
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    await api.updateIntent(id, {
+      title: form.title.trim(),
+      note: form.note.trim() || undefined,
+      category: form.category ?? undefined,
+      tags: form.tags ? form.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
+      planned_for: form.planned_for.trim() || undefined,
+    });
+    setSaving(false);
+    setEditing(false);
+    load();
+  }
 
   async function setStatus(s: TaskStatus) {
     await api.updateIntent(id, { task_status: s });
@@ -42,18 +72,83 @@ export default function IntentPage() {
   }
 
   async function remove() {
+    if (!confirm("Delete this from the circle?")) return;
     await api.deleteIntent(id);
     router.push(`/circles/${intent!.circle_id}`);
+  }
+
+  const label = "mb-2 block text-[11px] font-semibold uppercase tracking-wider";
+  const input = "glass w-full rounded-[var(--rs)] px-3.5 py-3 text-sm outline-none";
+
+  if (editing) {
+    return (
+      <main>
+        <NavBar title="Edit" back={`/circles/${intent.circle_id}`} />
+        <form onSubmit={saveEdit} className="flex flex-col gap-5">
+          <div>
+            <label className={label} style={{ color: "var(--txt-l)" }}>Title</label>
+            <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={input} />
+          </div>
+          <div>
+            <label className={label} style={{ color: "var(--txt-l)" }}>Category</label>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIES.map((c) => (
+                <button key={c} type="button"
+                  onClick={() => setForm({ ...form, category: form.category === c ? null : c })}
+                  className="flex items-center gap-1.5 rounded-[var(--rs)] px-3 py-2 text-xs font-medium capitalize"
+                  style={{
+                    background: form.category === c ? "var(--acc-l)" : "var(--glass-lo)",
+                    border: `1px solid ${form.category === c ? "var(--acc)44" : "var(--brd-s)"}`,
+                    color: form.category === c ? "var(--acc)" : "var(--txt-m)",
+                  }}>
+                  <Icon name={CATEGORY_ICONS[c]} size="sm" />
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className={label} style={{ color: "var(--txt-l)" }}>Note</label>
+            <textarea value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })}
+              className={`${input} h-20 resize-none font-serif italic`} />
+          </div>
+          <div>
+            <label className={label} style={{ color: "var(--txt-l)" }}>Tags</label>
+            <input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })}
+              placeholder="comma, separated" className={input} />
+          </div>
+          <div>
+            <label className={label} style={{ color: "var(--txt-l)" }}>When</label>
+            <input value={form.planned_for} onChange={(e) => setForm({ ...form, planned_for: e.target.value })}
+              placeholder="next weekend, after exams, someday…" className={input} />
+          </div>
+          <div className="mb-8 flex gap-2.5">
+            <button type="submit" disabled={saving || !form.title.trim()} className="btn-primary flex-1 py-3 text-sm disabled:opacity-60">
+              {saving ? "Saving…" : "Save changes"}
+            </button>
+            <button type="button" onClick={() => setEditing(false)} className="btn-ghost px-5 py-3 text-sm">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </main>
+    );
   }
 
   return (
     <main>
       <NavBar title="Intent" back={`/circles/${intent.circle_id}`}
         right={
-          <button onClick={remove} aria-label="Delete"
-            className="glass flex h-9 w-9 items-center justify-center rounded-full" style={{ color: "var(--cp)" }}>
-            <Icon name="trash" size="sm" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={startEdit} aria-label="Edit"
+              className="glass flex h-9 w-9 items-center justify-center rounded-full" style={{ color: "var(--txt-m)" }}>
+              <Icon name="pencil" size="sm" />
+            </button>
+            <button onClick={remove} aria-label="Delete"
+              className="glass flex h-9 w-9 items-center justify-center rounded-full" style={{ color: "var(--cp)" }}>
+              <Icon name="trash" size="sm" />
+            </button>
+          </div>
         }
       />
 
@@ -66,13 +161,21 @@ export default function IntentPage() {
             </div>
           )}
           <h1 className="mt-0.5 font-serif text-lg font-semibold leading-snug">{intent.title}</h1>
-          {intent.url && (
-            <a href={intent.url} target="_blank" rel="noreferrer"
-              className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: "var(--acc)" }}>
-              <Icon name="link" size="sm" />
-              Open link
-            </a>
-          )}
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            {intent.url && (
+              <a href={intent.url} target="_blank" rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: "var(--acc)" }}>
+                <Icon name="link" size="sm" />
+                Open link
+              </a>
+            )}
+            {intent.planned_for && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: "var(--sp-t)" }}>
+                <Icon name="clock" size="sm" />
+                {intent.planned_for}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -133,7 +236,7 @@ export default function IntentPage() {
       )}
 
       {intent.tags.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-1.5">
+        <div className="mb-8 mt-4 flex flex-wrap gap-1.5">
           {intent.tags.map((t) => (
             <span key={t} className="rounded-full px-2.5 py-1 text-[11px]"
               style={{ background: "var(--acc-l)", color: "var(--acc)" }}>
