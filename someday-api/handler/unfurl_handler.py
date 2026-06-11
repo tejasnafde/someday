@@ -48,9 +48,34 @@ class OGParser(HTMLParser):
         return "".join(self.title_text).strip() or None
 
 
+YOUTUBE_HOSTS = {"youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"}
+
+
+def fetch_youtube_meta(url: str) -> dict | None:
+    """YouTube serves stripped pages to datacenter IPs — oEmbed is reliable and keyless."""
+    try:
+        resp = httpx.get(
+            "https://www.youtube.com/oembed",
+            params={"url": url, "format": "json"},
+            timeout=TIMEOUT,
+        )
+        resp.raise_for_status()
+        d = resp.json()
+        meta = {"title": d.get("title"), "image": d.get("thumbnail_url"), "site": "YouTube"}
+        infologger.info(f"unfurl.fetch_youtube_meta | success | title={meta['title']!r}")
+        return meta
+    except Exception as exc:
+        infologger.warning(f"unfurl.fetch_youtube_meta | oEmbed failed, falling back to OG | {exc}")
+        return None
+
+
 def fetch_link_meta(url: str) -> dict | None:
     """Returns {"title": ..., "image": ..., "site": ...} or None on failure."""
     infologger.info(f"unfurl.fetch_link_meta | url={url}")
+    if urlparse(url).netloc.lower() in YOUTUBE_HOSTS:
+        meta = fetch_youtube_meta(url)
+        if meta:
+            return meta
     try:
         resp = httpx.get(url, headers=HEADERS, timeout=TIMEOUT, follow_redirects=True)
         resp.raise_for_status()
