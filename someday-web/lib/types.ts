@@ -1,5 +1,5 @@
 export type TaskStatus = "saved" | "interested" | "planned" | "done" | "archived";
-export type Category = "watch" | "eat" | "visit" | "read" | "play" | "trip" | "other";
+export type Category = "watch" | "eat" | "visit" | "read" | "play" | "trip" | "talk" | "other";
 
 export interface User {
   id: string;

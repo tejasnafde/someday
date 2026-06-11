@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/useAuth";
 import type { Category, Intent, TaskStatus } from "@/lib/types";
 
 const STEPS: TaskStatus[] = ["saved", "interested", "planned", "done"];
-const CATEGORIES: Category[] = ["watch", "eat", "visit", "read", "play", "trip"];
+const CATEGORIES: Category[] = ["watch", "eat", "visit", "read", "play", "trip", "talk"];
 
 export default function IntentPage() {
   const ready = useAuth();

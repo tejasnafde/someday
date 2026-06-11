@@ -1,7 +1,7 @@
 from pydantic import BaseModel, field_validator
 from typing import Optional
 
-VALID_CATEGORIES = {"watch", "eat", "visit", "read", "play", "trip", "other"}
+VALID_CATEGORIES = {"watch", "eat", "visit", "read", "play", "trip", "talk", "other"}
 VALID_TASK_STATUSES = {"saved", "interested", "planned", "done", "archived"}
 
 
