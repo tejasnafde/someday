@@ -13,7 +13,7 @@ UPSERT_USER = """
 """
 
 GET_USER = """
-    SELECT id, email, display_name, avatar_url
+    SELECT id, email, display_name, avatar_url, tour_state
     FROM public.users
     WHERE id = :user_id AND status = 1
 """
