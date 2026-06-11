@@ -2,6 +2,7 @@ import { useShareIntent } from "expo-share-intent";
 import * as Updates from "expo-updates";
 import { useEffect, useState } from "react";
 import { SafeAreaView, StatusBar } from "react-native";
+import { UpdateBanner } from "./components/UpdateBanner";
 import { Home } from "./screens/Home";
 import { ShareFlow } from "./screens/ShareFlow";
 import { SignIn } from "./screens/SignIn";
@@ -40,6 +41,7 @@ export default function App() {
       ) : (
         <Home />
       )}
+      <UpdateBanner />
     </SafeAreaView>
   );
 }
