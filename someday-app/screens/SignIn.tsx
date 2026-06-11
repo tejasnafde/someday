@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Keyboard, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { api } from "../lib/api";
 import { supabase } from "../lib/supabase";
 import { useTheme } from "../lib/theme";
@@ -13,6 +13,7 @@ export function SignIn() {
   const [error, setError] = useState("");
 
   async function sendCode() {
+    Keyboard.dismiss();
     setBusy(true);
     setError("");
     const { error } = await supabase.auth.signInWithOtp({ email: email.trim() });
@@ -22,6 +23,7 @@ export function SignIn() {
   }
 
   async function verifyCode() {
+    Keyboard.dismiss();
     setBusy(true);
     setError("");
     const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "email" });
