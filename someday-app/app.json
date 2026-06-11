@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "Someday",
+    "slug": "someday",
+    "version": "1.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "someday",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#101010"
+    },
+    "ios": {
+      "bundleIdentifier": "app.someday.capture"
+    },
+    "android": {
+      "package": "app.someday.capture",
+      "adaptiveIcon": {
+        "backgroundColor": "#101010",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 3000,
+      "url": "https://u.expo.dev/5be6e9f4-89a9-4c66-98d1-6578ef5b1681"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "plugins": [
+      "expo-share-intent"
+    ],
+    "extra": {
+      "apiUrl": "https://someday-api-974343814740.asia-south1.run.app",
+      "supabaseUrl": "https://hltpqcmmpddjhijqeeko.supabase.co",
+      "supabaseAnonKey": "sb_publishable_pfDjPQ_rY7xyWk8GVv29lQ_FMOz8iO-",
+      "webUrl": "https://someday-web-gamma.vercel.app",
+      "eas": {
+        "projectId": "5be6e9f4-89a9-4c66-98d1-6578ef5b1681"
+      }
+    }
+  }
+}
