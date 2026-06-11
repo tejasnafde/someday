@@ -12,7 +12,7 @@ import { useAuth } from "@/lib/useAuth";
 import type { Category, CircleDetail, Intent } from "@/lib/types";
 
 const TABS = ["All", "Shortlist", "Done"] as const;
-const CATEGORIES: (Category | "All")[] = ["All", "watch", "eat", "visit", "read", "play", "trip"];
+const CATEGORIES: (Category | "All")[] = ["All", "watch", "eat", "visit", "read", "play", "trip", "talk"];
 
 export default function CirclePage() {
   const ready = useAuth();
