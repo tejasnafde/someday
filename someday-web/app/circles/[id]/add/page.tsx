@@ -8,7 +8,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
 import type { Category, LinkMeta } from "@/lib/types";
 
-const CATEGORIES: Category[] = ["watch", "eat", "visit", "read", "play", "trip"];
+const CATEGORIES: Category[] = ["watch", "eat", "visit", "read", "play", "trip", "talk"];
 
 export default function AddIntent() {
   const ready = useAuth();
