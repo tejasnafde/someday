@@ -82,6 +82,7 @@ export const CATEGORY_ICONS: Record<string, string> = {
   read: "book-open",
   play: "gamepad",
   trip: "plane",
+  talk: "message-circle",
   other: "star",
 };
 
@@ -92,6 +93,7 @@ const CATEGORY_GRADIENTS: Record<string, string> = {
   read: "linear-gradient(135deg,#0a2c18,#1a6b3a)",
   play: "linear-gradient(135deg,#2c0a2c,#6b1a5a)",
   trip: "linear-gradient(135deg,#0a2c2c,#1a5a6b)",
+  talk: "linear-gradient(135deg,#2c0a1a,#6b1a3a)",
   other: "linear-gradient(135deg,#1c1c1c,#3a3a3a)",
 };
 
