@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ActivityIndicator, Keyboard, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Keyboard, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from "react-native";
 import { api } from "../lib/api";
 import { supabase } from "../lib/supabase";
 import { useTheme } from "../lib/theme";
@@ -26,7 +26,19 @@ export function SignIn() {
     Keyboard.dismiss();
     setBusy(true);
     setError("");
-    const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "email" });
+    let { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "email" });
+    
+    // Fallback for magiclink or signup types if the project is configured differently
+    if (error && error.message.includes("Token has expired or is invalid")) {
+      const retry = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "magiclink" });
+      if (retry.error) {
+        const retry2 = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "signup" });
+        error = retry2.error || retry.error;
+      } else {
+        error = null;
+      }
+    }
+
     if (!error) await api.verify().catch(() => {});
     setBusy(false);
     if (error) setError("That code didn't work — check it and try again.");
@@ -43,7 +55,7 @@ export function SignIn() {
   } as const;
 
   return (
-    <View style={{ flex: 1, justifyContent: "center", padding: 28, gap: 14 }}>
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1, justifyContent: "center", padding: 28, gap: 14 }}>
       <Text style={{ fontSize: 12, letterSpacing: 3, textTransform: "uppercase", color: t.acc, textAlign: "center", fontWeight: "600" }}>
         Someday
       </Text>
@@ -63,7 +75,7 @@ export function SignIn() {
         />
       ) : (
         <TextInput
-          style={[input, { textAlign: "center", fontSize: 22, letterSpacing: 6 }]}
+          style={[input, { textAlign: "center", fontSize: 22, letterSpacing: 6, marginLeft: 6 }]}
           placeholder="12345678"
           placeholderTextColor={t.txtL}
           keyboardType="number-pad"
@@ -92,6 +104,6 @@ export function SignIn() {
           <Text style={{ color: t.txtM, textAlign: "center", fontSize: 13 }}>Different email</Text>
         </TouchableOpacity>
       )}
-    </View>
+    </KeyboardAvoidingView>
   );
 }

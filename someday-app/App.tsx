@@ -1,7 +1,8 @@
 import { useShareIntent } from "expo-share-intent";
 import * as Updates from "expo-updates";
-import { useEffect, useState } from "react";
-import { SafeAreaView, StatusBar } from "react-native";
+import { useEffect, useState, useRef } from "react";
+import { SafeAreaView, StatusBar, AppState } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { Home } from "./screens/Home";
 import { ShareFlow } from "./screens/ShareFlow";
@@ -9,21 +10,66 @@ import { SignIn } from "./screens/SignIn";
 import { supabase } from "./lib/supabase";
 import { useTheme } from "./lib/theme";
 
+const INACTIVITY_LIMIT_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
 export default function App() {
   const t = useTheme();
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntent();
+  const appState = useRef(AppState.currentState);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setSignedIn(!!session));
+    const checkInactivityAndSession = async () => {
+      const lastActive = await AsyncStorage.getItem("last_active_timestamp");
+      const now = Date.now();
+      
+      if (lastActive && now - parseInt(lastActive, 10) > INACTIVITY_LIMIT_MS) {
+        await supabase.auth.signOut();
+        setSignedIn(false);
+      } else {
+        const { data } = await supabase.auth.getSession();
+        setSignedIn(!!data.session);
+        if (data.session) {
+          await AsyncStorage.setItem("last_active_timestamp", now.toString());
+        }
+      }
+    };
+
+    checkInactivityAndSession();
+
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_e, session) => {
+      setSignedIn(!!session);
+      if (session) {
+        await AsyncStorage.setItem("last_active_timestamp", Date.now().toString());
+      }
+    });
+
+    const appStateSub = AppState.addEventListener("change", async (nextAppState) => {
+      if (appState.current.match(/inactive|background/) && nextAppState === "active") {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const lastActive = await AsyncStorage.getItem("last_active_timestamp");
+          const now = Date.now();
+          if (lastActive && now - parseInt(lastActive, 10) > INACTIVITY_LIMIT_MS) {
+            await supabase.auth.signOut();
+            setSignedIn(false);
+          } else {
+            await AsyncStorage.setItem("last_active_timestamp", now.toString());
+          }
+        }
+      }
+      appState.current = nextAppState;
+    });
 
     // OTA: fetch any pending update now; it applies on next launch
     Updates.checkForUpdateAsync()
       .then((u) => (u.isAvailable ? Updates.fetchUpdateAsync() : null))
       .catch(() => {});
 
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      sub.subscription.unsubscribe();
+      appStateSub.remove();
+    };
   }, []);
 
   const sharedUrl = hasShareIntent
