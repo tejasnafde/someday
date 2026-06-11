@@ -7,7 +7,8 @@ export function ShareFlow({ url, text, onDone }: { url: string | null; text: str
   const t = useTheme();
   const [circles, setCircles] = useState<Circle[] | null>(null);
   const [meta, setMeta] = useState<LinkMeta | null>(null);
-  const [title, setTitle] = useState(url ? "" : text.slice(0, 120));
+  const textTitle = url ? text.replace(url, "").trim().slice(0, 120) : text.slice(0, 120);
+  const [title, setTitle] = useState(url ? textTitle : textTitle);
   const [selected, setSelected] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -21,7 +22,8 @@ export function ShareFlow({ url, text, onDone }: { url: string | null; text: str
     if (url) {
       api.unfurl(url).then((m) => {
         setMeta(m);
-        if (m.title) setTitle((prev) => prev || m.title!);
+        // Prefer a real unfurl title over share-sheet text, but never over user edits
+        if (m.title) setTitle((prev) => (!prev || prev === textTitle ? m.title! : prev));
       }).catch(() => {});
     }
   }, [url]);
