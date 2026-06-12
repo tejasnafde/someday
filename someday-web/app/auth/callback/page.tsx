@@ -23,7 +23,9 @@ export default function AuthCallback() {
         if (data.session) {
           try {
             await api.verify();
-            const next = sessionStorage.getItem("next") ?? "/";
+            const param = new URLSearchParams(location.search).get("next");
+            const next =
+              (param?.startsWith("/") ? param : null) ?? sessionStorage.getItem("next") ?? "/";
             sessionStorage.removeItem("next");
             router.replace(next);
           } catch {
