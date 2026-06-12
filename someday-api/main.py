@@ -10,6 +10,7 @@ from app_util.log_util import errorlogger, infologger
 from config.settings import settings
 from routers import (
     auth_router,
+    webhooks_router,
     circles_router,
     intents_router,
     payoff_router,
@@ -81,3 +82,4 @@ app.include_router(intents_router.router, prefix="",         tags=["intents"])
 app.include_router(payoff_router.router,  prefix="",         tags=["payoff"])
 app.include_router(tour_router.router,    prefix="/tour",    tags=["tour"])
 app.include_router(unfurl_router.router,  prefix="/unfurl",  tags=["unfurl"])
+app.include_router(webhooks_router.router, prefix="/webhooks", tags=["webhooks"])
