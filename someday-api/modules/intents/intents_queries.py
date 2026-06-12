@@ -153,3 +153,15 @@ REMOVE_BOOST = """
     SET status = 0
     WHERE intent_id = :intent_id AND user_id = :user_id AND status = 1
 """
+
+GET_INTENT_URL = """
+    SELECT id, url FROM public.intents
+    WHERE id = :intent_id AND status = 1
+"""
+
+UPDATE_INTENT_META = """
+    UPDATE public.intents
+    SET link_meta = CAST(:link_meta AS jsonb)
+    WHERE id = :intent_id AND status = 1
+    RETURNING id, link_meta
+"""
