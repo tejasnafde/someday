@@ -225,16 +225,21 @@ export default function CirclePage() {
         )}
       </div>
 
-      <div className="mt-6 flex flex-col gap-3">
-        <Link href={`/circles/${id}/payoff`} data-tour="payoff" className="btn-primary w-full py-4 text-sm">
-          <Icon name="target" />
-          What are we doing today?
-        </Link>
-        <Link href={`/circles/${id}/add`} data-tour="add-intent" className="btn-ghost w-full py-3.5 text-sm">
-          <Icon name="plus" size="sm" />
-          Add something
-        </Link>
+      <div className="fixed inset-x-0 bottom-0 z-30">
+        <div className="mx-auto flex max-w-md items-center gap-2.5 px-5 pb-5 pt-4"
+          style={{ background: "linear-gradient(to top, var(--bg-a) 55%, transparent)" }}>
+          <Link href={`/circles/${id}/payoff`} data-tour="payoff" className="btn-primary flex-1 py-4 text-sm">
+            <Icon name="target" />
+            What are we doing today?
+          </Link>
+          <Link href={`/circles/${id}/add`} data-tour="add-intent" aria-label="Add something"
+            className="glass-hi flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full"
+            style={{ color: "var(--acc)", boxShadow: "var(--shc)" }}>
+            <Icon name="plus" size="lg" />
+          </Link>
+        </div>
       </div>
+      <div className="h-20" />
 
       <div className="mb-8 mt-10 flex justify-center gap-6 text-xs font-medium" style={{ color: "var(--txt-l)" }}>
         <button onClick={leave} className="flex items-center gap-1.5">
