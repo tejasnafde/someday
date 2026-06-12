@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ActivityIndicator, Keyboard, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from "react-native";
+import Constants from "expo-constants";
 import { api } from "../lib/api";
 import { supabase } from "../lib/supabase";
 import { useTheme } from "../lib/theme";
@@ -16,7 +17,11 @@ export function SignIn() {
     Keyboard.dismiss();
     setBusy(true);
     setError("");
-    const { error } = await supabase.auth.signInWithOtp({ email: email.trim() });
+    const webUrl = (Constants.expoConfig?.extra as Record<string, string>).webUrl;
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: { emailRedirectTo: `${webUrl}/auth/callback` },
+    });
     setBusy(false);
     if (error) setError(error.message.includes("rate limit") ? "Too many emails right now — try again in a bit." : error.message);
     else setStage("code");
