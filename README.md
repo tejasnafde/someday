@@ -41,7 +41,7 @@ graph LR
 
 | Directory | What | Stack | Runs on |
 |---|---|---|---|
-| [`someday-api/`](someday-api) | REST API | FastAPI · SQLAlchemy (raw SQL) · Supabase Postgres | Railway |
+| [`someday-api/`](someday-api) | REST API | FastAPI · SQLAlchemy (raw SQL) · Supabase Postgres | Cloud Run |
 | [`someday-web/`](someday-web) | The app UI | Next.js 16 · React 19 · Tailwind 4 | Vercel |
 | [`someday-app/`](someday-app) | Android wrapper | Expo · React Native WebView | APK via GitHub Releases |
 
@@ -112,7 +112,8 @@ node tour-test.mjs
 
 ## Deploying
 
-- **API** → Railway, deployed from `main` (`Dockerfile` at the repo root).
+- **API** → GCP Cloud Run (`asia-south1`), auto-deployed by Cloud Build on
+  pushes to `main` that touch `someday-api/**` (`cloudbuild-production.yaml`).
 - **Web** → Vercel, deployed from `main`.
 - **Android** → `eas build -p android`, attach the APK to a GitHub Release
   tagged `vX.Y.Z`; installed apps discover the release and self-update.
