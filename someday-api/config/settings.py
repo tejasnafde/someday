@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     SUPABASE_ANON_KEY: str
     SUPABASE_SERVICE_ROLE_KEY: str = ""  # admin API; used by mint_token.py for testing
 
+    # Release pipeline (EAS build webhook → GitHub release)
+    EAS_WEBHOOK_SECRET: str = ""
+    GITHUB_TOKEN: str = ""
+
     # Database
     DATABASE_URL: str
 
