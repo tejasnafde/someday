@@ -165,3 +165,16 @@ UPDATE_INTENT_META = """
     WHERE id = :intent_id AND status = 1
     RETURNING id, link_meta
 """
+
+# In two-person circles the adder auto-hearts their own save —
+# the other member's single heart is then enough to shortlist it.
+AUTO_REACT_IF_COUPLE = """
+    INSERT INTO public.reactions (intent_id, user_id, kind, status)
+    SELECT :intent_id, :user_id, 'interested', 1
+    WHERE (
+        SELECT COUNT(*) FROM public.circle_members
+        WHERE circle_id = :circle_id AND status = 1
+    ) <= 2
+    ON CONFLICT DO NOTHING
+    RETURNING id
+"""
