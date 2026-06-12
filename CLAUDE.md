@@ -75,8 +75,8 @@ Set up `log_util.py` and decorators **before any feature code**. Every endpoint,
 
 | Env | Backend | DB |
 |---|---|---|
-| dev | Railway dev service | Supabase dev project |
-| production | Railway prod service | Supabase prod project |
+| dev | local `uvicorn` (`python run.py`) | Supabase project `someday-dev` (ydjqonpciulspgzzxepw) |
+| production | GCP Cloud Run `someday-api` (project `teejayproject`, asia-south1), auto-deployed by Cloud Build on push to main touching `someday-api/**` | Supabase project `someday` (hltpqcmmpddjhijqeeko) |
 
 `APP_ENV` env var selects the environment. Default is `dev`.
 
