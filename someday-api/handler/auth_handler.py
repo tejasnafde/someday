@@ -1,6 +1,9 @@
+import httpx
+
 from app_util.db_util import DBUtil
 from app_util.log_util import infologger, errorlogger
 from common_helper.decorators import log_timing
+from config.settings import settings
 from modules.circles import circles_helper as ch
 
 
@@ -49,6 +52,49 @@ class AuthHandler(DBUtil):
         if not user:
             return 404, "User not found"
         return 200, {"user": user}
+
+    @log_timing("auth_handler.webview_session")
+    def webview_session(self, email: str) -> tuple[int, dict | str]:
+        """
+        Mint an independent Supabase session for the mobile WebView.
+
+        Supabase rotates refresh tokens: if the native app and the WebView
+        share one session, the first refresh invalidates the other and
+        reuse-detection revokes the whole family — both get signed out.
+        A separately minted session has its own refresh-token family.
+        """
+        infologger.info(f"AuthHandler.webview_session | email={email}")
+        if not settings.SUPABASE_SERVICE_ROLE_KEY:
+            errorlogger.error("AuthHandler.webview_session | SUPABASE_SERVICE_ROLE_KEY not configured")
+            return 500, "Server is not configured for webview sessions"
+        try:
+            admin_headers = {
+                "apikey": settings.SUPABASE_SERVICE_ROLE_KEY,
+                "Authorization": f"Bearer {settings.SUPABASE_SERVICE_ROLE_KEY}",
+            }
+            link = httpx.post(
+                f"{settings.SUPABASE_URL}/auth/v1/admin/generate_link",
+                headers=admin_headers,
+                json={"type": "magiclink", "email": email},
+                timeout=15,
+            )
+            link.raise_for_status()
+            session = httpx.post(
+                f"{settings.SUPABASE_URL}/auth/v1/verify",
+                headers={"apikey": settings.SUPABASE_ANON_KEY},
+                json={"type": "magiclink", "token_hash": link.json()["hashed_token"]},
+                timeout=15,
+            )
+            session.raise_for_status()
+            data = session.json()
+            infologger.info(f"AuthHandler.webview_session | minted independent session | email={email}")
+            return 200, {
+                "access_token": data["access_token"],
+                "refresh_token": data["refresh_token"],
+            }
+        except httpx.HTTPError as exc:
+            errorlogger.error(f"AuthHandler.webview_session | supabase error | {exc}", exc_info=True)
+            return 502, "Could not mint webview session"
 
     @log_timing("auth_handler.get_me")
     def get_me(self, user_id: str) -> tuple[int, dict | str]:

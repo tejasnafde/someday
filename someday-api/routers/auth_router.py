@@ -55,3 +55,12 @@ async def update_me(request: UpdateMeRequest, current_user: dict = Depends(jwt_r
     infologger.info(f"PATCH /auth/me | user_id={current_user['sub']} payload={request.model_dump(exclude_none=True)}")
     status, result = handler.update_me(current_user["sub"], request.display_name, request.avatar_url)
     return create_response(status, result)
+
+
+@router.post("/webview-session")
+@log_timing("POST /auth/webview-session")
+async def webview_session(current_user: dict = Depends(jwt_required)):
+    """Mint an independent session for the mobile WebView (separate refresh-token family)."""
+    infologger.info(f"POST /auth/webview-session | user_id={current_user['sub']}")
+    status, result = handler.webview_session(current_user.get("email", ""))
+    return create_response(status, result)
