@@ -24,11 +24,20 @@ export default function Home() {
       setUser(cached.user);
       setCircles(cached.circles);
     }
-    api.me().then(({ user, circles }) => {
-      setCached("me", { user, circles });
-      setUser(user);
-      setCircles(circles);
-    });
+    api
+      .me()
+      .catch(async () => {
+        // Session exists but no account row yet (e.g. signup link landed on
+        // the root instead of /auth/callback) — register, then retry.
+        await api.verify();
+        return api.me();
+      })
+      .then(({ user, circles }) => {
+        setCached("me", { user, circles });
+        setUser(user);
+        setCircles(circles);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
