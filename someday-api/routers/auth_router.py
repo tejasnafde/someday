@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile
 from pydantic import BaseModel, field_validator
 
 from app_util.log_util import infologger
@@ -54,6 +54,16 @@ async def update_me(request: UpdateMeRequest, current_user: dict = Depends(jwt_r
     """Update display name / avatar."""
     infologger.info(f"PATCH /auth/me | user_id={current_user['sub']} payload={request.model_dump(exclude_none=True)}")
     status, result = handler.update_me(current_user["sub"], request.display_name, request.avatar_url)
+    return create_response(status, result)
+
+
+@router.post("/me/avatar")
+@log_timing("POST /auth/me/avatar")
+async def upload_avatar(file: UploadFile = File(...), current_user: dict = Depends(jwt_required)):
+    """Upload a profile photo (client sends a pre-resized webp/jpeg/png ≤2MB)."""
+    infologger.info(f"POST /auth/me/avatar | user_id={current_user['sub']} type={file.content_type}")
+    content = await file.read()
+    status, result = handler.upload_avatar(current_user["sub"], content, file.content_type or "")
     return create_response(status, result)
 
 

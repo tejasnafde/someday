@@ -3,6 +3,7 @@ import httpx
 from app_util.db_util import DBUtil
 from app_util.log_util import infologger, errorlogger
 from common_helper.decorators import log_timing
+from common_helper.storage_helper import upload_public_image
 from config.settings import settings
 from modules.circles import circles_helper as ch
 
@@ -51,6 +52,22 @@ class AuthHandler(DBUtil):
         )
         if not user:
             return 404, "User not found"
+        return 200, {"user": user}
+
+    @log_timing("auth_handler.upload_avatar")
+    def upload_avatar(self, user_id: str, content: bytes, content_type: str) -> tuple[int, dict | str]:
+        infologger.info(f"AuthHandler.upload_avatar | user_id={user_id} bytes={len(content)}")
+        ext = {"image/webp": "webp", "image/jpeg": "jpg", "image/png": "png"}.get(content_type)
+        if not ext:
+            return 400, "Image must be webp, jpeg, or png"
+        url = upload_public_image("avatars", f"{user_id}.{ext}", content, content_type)
+        if not url:
+            return 502, "Upload failed"
+        import time
+        busted = f"{url}?v={int(time.time())}"
+        user = self.execute_query_with_value_returning(
+            UPDATE_USER, {"user_id": user_id, "display_name": None, "avatar_url": busted}
+        )
         return 200, {"user": user}
 
     @log_timing("auth_handler.webview_session")

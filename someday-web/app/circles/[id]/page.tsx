@@ -5,8 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Sprite";
 import { Tour } from "@/components/Tour";
-import { EmptyState, IntentCard, MemberDot, NavBar, Skeleton, Spinner, memberColor } from "@/components/ui";
+import { CircleAvatar, EmptyState, IntentCard, MemberDot, NavBar, Skeleton, Spinner, circleTheme, memberColor } from "@/components/ui";
 import { api } from "@/lib/api";
+import { resizeImage } from "@/lib/image";
 import { getCached, setCached } from "@/lib/cache";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
@@ -27,6 +28,7 @@ export default function CirclePage() {
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [photoV, setPhotoV] = useState(0);
   const [copied, setCopied] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
@@ -141,16 +143,34 @@ export default function CirclePage() {
             </form>
           ) : (
             <span className="flex items-center gap-2">
+              <CircleAvatar key={photoV} circleId={id} themeKey={circleTheme(id).key} icon={circleTheme(id).icon} size={30} v={photoV || undefined} />
               <span className="truncate">{circle.name}</span>
               {isOwner && (
-                <button
-                  onClick={() => { setName(circle.name); setRenaming(true); }}
-                  aria-label="Rename circle"
-                  className="shrink-0"
-                  style={{ color: "var(--txt-l)" }}
-                >
-                  <Icon name="pencil" size="sm" />
-                </button>
+                <>
+                  <button
+                    onClick={() => { setName(circle.name); setRenaming(true); }}
+                    aria-label="Rename circle"
+                    className="shrink-0"
+                    style={{ color: "var(--txt-l)" }}
+                  >
+                    <Icon name="pencil" size="sm" />
+                  </button>
+                  <label aria-label="Circle photo" className="shrink-0 cursor-pointer" style={{ color: "var(--txt-l)" }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const f = e.target.files?.[0];
+                        if (!f) return;
+                        const blob = await resizeImage(f);
+                        await api.uploadCirclePhoto(id, blob);
+                        setPhotoV(Date.now());
+                      }}
+                    />
+                    <Icon name="film" size="sm" />
+                  </label>
+                </>
               )}
             </span>
           )
@@ -161,7 +181,7 @@ export default function CirclePage() {
           <div className="flex items-center gap-2">
             <div className="flex">
               {circle.members.slice(0, 4).map((m, i) => (
-                <MemberDot key={m.user_id} name={m.display_name} color={memberColor(i)} />
+                <MemberDot key={m.user_id} name={m.display_name} color={memberColor(i)} src={m.avatar_url} />
               ))}
             </div>
             <button onClick={() => setInviteOpen(true)} aria-label="Invite" data-tour="invite"
