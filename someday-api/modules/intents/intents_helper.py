@@ -68,9 +68,15 @@ def create_intent(
         # Membership gate in INSERT_INTENT returned nothing — caller is not a member
         infologger.warning(f"intents_helper.create_intent | not a member | circle_id={circle_id} user_id={user_id}")
         return None
-    row["reaction_count"] = 0
+    reacted = db.execute_query_with_value_returning(
+        q.AUTO_REACT_IF_COUPLE,
+        {"intent_id": row["id"], "user_id": user_id, "circle_id": circle_id},
+    )
+    row["reaction_count"] = 1 if reacted else 0
     row["boosted_by_me"]  = False
-    row["reacted_by_me"]  = False
+    row["reacted_by_me"]  = bool(reacted)
+    if reacted:
+        infologger.info(f"intents_helper.create_intent | auto-hearted (couple circle) | intent_id={row['id']}")
     infologger.info(f"intents_helper.create_intent | created intent_id={row['id']}")
     return row
 
