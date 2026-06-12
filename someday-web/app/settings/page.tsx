@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Sprite";
 import { NavBar, Spinner, ThemeToggle } from "@/components/ui";
 import { api } from "@/lib/api";
+import { resizeImage } from "@/lib/image";
 import { getCached, setCached } from "@/lib/cache";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
@@ -66,10 +67,35 @@ export default function SettingsPage() {
       <NavBar title="Settings" back="/" right={<ThemeToggle />} />
 
       <div className="glass flex items-center gap-4 rounded-[var(--r)] p-4" style={{ boxShadow: "var(--shc)" }}>
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-bold text-white"
-          style={{ background: "var(--acc)", boxShadow: "0 3px 10px var(--acc-glow)" }}>
-          {(user.display_name ?? "?").charAt(0).toUpperCase()}
-        </div>
+        <label className="relative cursor-pointer">
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              if (!f) return;
+              const blob = await resizeImage(f);
+              const { user: updated } = await api.uploadAvatar(blob);
+              setUser(updated);
+              const me = getCached<{ user: User; circles: Circle[] }>("me");
+              if (me) setCached("me", { ...me, user: updated });
+            }}
+          />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full font-bold text-white"
+            style={{ background: "var(--acc)", boxShadow: "0 3px 10px var(--acc-glow)" }}>
+            {user.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.avatar_url} alt="" className="h-full w-full object-cover" />
+            ) : (
+              (user.display_name ?? "?").charAt(0).toUpperCase()
+            )}
+          </div>
+          <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-white"
+            style={{ background: "var(--acc)", border: "2px solid var(--glass-hi)" }}>
+            <Icon name="plus" size="sm" />
+          </span>
+        </label>
 
         {editing ? (
           <form onSubmit={save} className="flex min-w-0 flex-1 items-center gap-2">

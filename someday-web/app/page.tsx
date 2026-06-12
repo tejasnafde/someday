@@ -4,23 +4,11 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Icon } from "@/components/Sprite";
 import { Tour } from "@/components/Tour";
-import { EmptyState, MemberDot, Skeleton, ThemeToggle, memberColor } from "@/components/ui";
+import { CircleAvatar, EmptyState, MemberDot, Skeleton, ThemeToggle, circleTheme, memberColor } from "@/components/ui";
 import { getCached, setCached } from "@/lib/cache";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
 import type { Circle, User } from "@/lib/types";
-
-const CIRCLE_THEMES = [
-  { key: "cp", icon: "eye" },
-  { key: "cg", icon: "users" },
-  { key: "cb", icon: "globe" },
-];
-
-function circleTheme(id: string) {
-  let h = 0;
-  for (const c of id) h = (h * 31 + c.charCodeAt(0)) | 0;
-  return CIRCLE_THEMES[Math.abs(h) % CIRCLE_THEMES.length];
-}
 
 export default function Home() {
   const ready = useAuth();
@@ -101,10 +89,7 @@ export default function Home() {
               className="glass relative flex items-center gap-4 overflow-hidden p-4 pl-5 transition-transform active:scale-[.98]"
               style={{ borderRadius: "var(--r)", boxShadow: "var(--shc)" }}>
               <div className="absolute inset-y-0 left-0 w-1" style={{ background: `var(--${theme.key})` }} />
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl"
-                style={{ background: `var(--${theme.key}-l)`, color: `var(--${theme.key})`, border: "1px solid var(--brd)" }}>
-                <Icon name={theme.icon} size="lg" />
-              </div>
+              <CircleAvatar circleId={c.id} themeKey={theme.key} icon={theme.icon} />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-serif font-semibold">{c.name}</div>
                 <div className="text-xs" style={{ color: "var(--txt-m)" }}>
