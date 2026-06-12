@@ -127,6 +127,21 @@ def fetch_maps_meta(url: str) -> dict | None:
         return None
 
 
+def fetch_search_meta(url: str) -> dict | None:
+    """share.google place links resolve to google.com/search?q=<place name>."""
+    from urllib.parse import parse_qs, unquote_plus
+
+    p = urlparse(url)
+    if p.netloc.lower() not in {"www.google.com", "google.com"} or p.path != "/search":
+        return None
+    q = parse_qs(p.query).get("q", [None])[0]
+    if not q:
+        return None
+    meta = {"title": unquote_plus(q), "image": None, "site": "Google"}
+    infologger.info(f"unfurl.fetch_search_meta | success | title={meta['title']!r}")
+    return meta
+
+
 def fetch_link_meta(url: str) -> dict | None:
     """Returns {"title": ..., "image": ..., "site": ...} or None on failure."""
     infologger.info(f"unfurl.fetch_link_meta | url={url}")
@@ -139,6 +154,9 @@ def fetch_link_meta(url: str) -> dict | None:
         meta = fetch_maps_meta(url)
         if meta:
             return meta
+    meta = fetch_search_meta(url)
+    if meta:
+        return meta
     try:
         resp = httpx.get(url, headers=HEADERS, timeout=TIMEOUT, follow_redirects=True)
         resp.raise_for_status()
