@@ -1,9 +1,9 @@
 """Test configuration — env vars must be set before importing app modules."""
 
 import os
+
 import pytest
-from httpx import AsyncClient, ASGITransport
-from unittest.mock import MagicMock, patch
+from httpx import ASGITransport, AsyncClient
 
 os.environ.setdefault("APP_ENV", "test")
 os.environ.setdefault("SUPABASE_URL", "https://test.supabase.co")
@@ -27,13 +27,19 @@ async def client():
 
 
 @pytest.fixture
-def mock_jwt(monkeypatch):
-    """Bypass JWT verification — returns a synthetic user payload."""
+def mock_jwt():
+    """Bypass JWT verification — returns a synthetic user payload.
+
+    Monkeypatching the module attribute does not work because FastAPI captures
+    the dependency callable at import time; dependency_overrides is the
+    supported seam.
+    """
     test_user = {
         "sub": "00000000-0000-0000-0000-000000000001",
         "email": "test@example.com",
         "role": "authenticated",
     }
-    import common_helper.auth_helper as auth
-    monkeypatch.setattr(auth, "verify_supabase_jwt", lambda credentials: test_user)
-    return test_user
+    from common_helper.auth_helper import verify_supabase_jwt
+    app.dependency_overrides[verify_supabase_jwt] = lambda: test_user
+    yield test_user
+    app.dependency_overrides.pop(verify_supabase_jwt, None)

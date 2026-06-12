@@ -6,13 +6,14 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app_util.db_util import DBUtil
-from app_util.log_util import infologger, errorlogger
+from app_util.log_util import errorlogger, infologger
 from config.settings import settings
 from routers import (
     auth_router,
     circles_router,
     intents_router,
     payoff_router,
+    tour_router,
     unfurl_router,
 )
 
@@ -78,4 +79,5 @@ app.include_router(auth_router.router,    prefix="/auth",    tags=["auth"])
 app.include_router(circles_router.router, prefix="/circles", tags=["circles"])
 app.include_router(intents_router.router, prefix="",         tags=["intents"])
 app.include_router(payoff_router.router,  prefix="",         tags=["payoff"])
+app.include_router(tour_router.router,    prefix="/tour",    tags=["tour"])
 app.include_router(unfurl_router.router,  prefix="/unfurl",  tags=["unfurl"])
