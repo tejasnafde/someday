@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="someday-app/assets/brand/logo.svg" alt="Someday" width="96" height="96">
+
 # Someday
 
 **For all the things you'll do together someday.**
