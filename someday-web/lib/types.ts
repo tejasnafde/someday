@@ -1,11 +1,16 @@
 export type TaskStatus = "saved" | "interested" | "planned" | "done" | "archived";
 export type Category = "watch" | "eat" | "visit" | "read" | "play" | "trip" | "talk" | "other";
 
+export interface TourState {
+  seen: string[];
+}
+
 export interface User {
   id: string;
   email: string;
   display_name: string | null;
   avatar_url: string | null;
+  tour_state?: TourState | null;
 }
 
 export interface Circle {

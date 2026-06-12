@@ -5,9 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Sprite";
 import { NavBar, Spinner, ThemeToggle } from "@/components/ui";
 import { api } from "@/lib/api";
+import { getCached, setCached } from "@/lib/cache";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
-import type { User } from "@/lib/types";
+import type { Circle, User } from "@/lib/types";
 
 export default function SettingsPage() {
   const ready = useAuth();
@@ -48,6 +49,14 @@ export default function SettingsPage() {
   async function signOut() {
     await supabase.auth.signOut();
     router.replace("/login");
+  }
+
+  async function replayTour() {
+    await api.tourReset();
+    localStorage.removeItem("tour:pending");
+    const me = getCached<{ user: User; circles: Circle[] }>("me");
+    if (me?.user) setCached("me", { ...me, user: { ...me.user, tour_state: { seen: [] } } });
+    router.push("/");
   }
 
   if (!ready || !user) return <Spinner />;
@@ -98,7 +107,12 @@ export default function SettingsPage() {
         )}
       </div>
 
-      <button onClick={signOut} className="btn-ghost mt-5 w-full py-3.5 text-sm" style={{ color: "var(--cp)" }}>
+      <button onClick={replayTour} className="btn-ghost mt-5 w-full py-3.5 text-sm" style={{ color: "var(--txt-m)" }}>
+        <Icon name="target" size="sm" />
+        Replay tour
+      </button>
+
+      <button onClick={signOut} className="btn-ghost mt-3 w-full py-3.5 text-sm" style={{ color: "var(--cp)" }}>
         <Icon name="log-out" size="sm" />
         Sign out
       </button>
