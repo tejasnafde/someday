@@ -1,7 +1,7 @@
 import { useShareIntent } from "expo-share-intent";
 import * as Updates from "expo-updates";
 import { useEffect, useState, useRef } from "react";
-import { SafeAreaView, StatusBar, AppState } from "react-native";
+import { Platform, SafeAreaView, StatusBar, AppState } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { Home } from "./screens/Home";
@@ -78,7 +78,7 @@ export default function App() {
   const sharedText = hasShareIntent ? (shareIntent.text ?? "") : "";
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg, paddingTop: Platform.OS === "android" ? StatusBar.currentHeight ?? 0 : 0 }}>
       <StatusBar barStyle="default" />
       {signedIn === null ? null : !signedIn ? (
         <SignIn />
