@@ -1,3 +1,4 @@
+import * as Linking from "expo-linking";
 import { useShareIntent } from "expo-share-intent";
 import * as Updates from "expo-updates";
 import { useEffect, useState, useRef } from "react";
@@ -17,6 +18,17 @@ export default function App() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntent();
   const appState = useRef(AppState.currentState);
+  const [pendingPath, setPendingPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handle = (url: string | null) => {
+      const m = url?.match(/https?:\/\/[^/]+(\/join\/[\w-]+)/);
+      if (m) setPendingPath(m[1]);
+    };
+    Linking.getInitialURL().then(handle);
+    const sub = Linking.addEventListener("url", (e) => handle(e.url));
+    return () => sub.remove();
+  }, []);
 
   useEffect(() => {
     const checkInactivityAndSession = async () => {
@@ -85,7 +97,7 @@ export default function App() {
       ) : hasShareIntent ? (
         <ShareFlow url={sharedUrl} text={sharedText} onDone={resetShareIntent} />
       ) : (
-        <Home />
+        <Home nextPath={pendingPath} />
       )}
       <UpdateBanner />
     </SafeAreaView>
