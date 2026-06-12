@@ -9,6 +9,22 @@ class ApiError extends Error {
   }
 }
 
+async function upload<T>(path: string, blob: Blob, filename: string): Promise<T> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new ApiError(401, "Not signed in");
+  const form = new FormData();
+  form.append("file", blob, filename);
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new ApiError(res.status, json.message ?? json.detail ?? res.statusText);
+  return json as T;
+}
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
@@ -33,6 +49,9 @@ export const api = {
   me: () => request<{ user: User; circles: Circle[] }>("GET", "/auth/me"),
   updateMe: (fields: { display_name?: string; avatar_url?: string }) =>
     request<{ user: User }>("PATCH", "/auth/me", fields),
+  uploadAvatar: (blob: Blob) => upload<{ user: User }>("/auth/me/avatar", blob, "avatar.webp"),
+  uploadCirclePhoto: (circleId: string, blob: Blob) =>
+    upload<{ photo_url: string }>(`/circles/${circleId}/photo`, blob, "photo.webp"),
 
   circles: () => request<Circle[]>("GET", "/circles"),
   circle: (id: string) => request<CircleDetail>("GET", `/circles/${id}`),

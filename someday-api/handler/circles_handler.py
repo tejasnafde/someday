@@ -1,4 +1,5 @@
 from app_util.db_util import DBUtil
+from common_helper.storage_helper import upload_public_image
 from app_util.log_util import infologger, errorlogger
 from common_helper.decorators import log_timing
 from modules.circles import circles_helper as h
@@ -40,6 +41,23 @@ class CirclesHandler(DBUtil):
         infologger.info(f"CirclesHandler.delete_circle | circle_id={circle_id} user_id={user_id}")
         h.delete_circle(self, circle_id, user_id)
         return 200, "Circle deleted"
+
+    @log_timing("circles_handler.upload_photo")
+    def upload_photo(self, circle_id: str, user_id: str, content: bytes, content_type: str) -> tuple[int, dict | str]:
+        infologger.info(f"CirclesHandler.upload_photo | circle_id={circle_id} user_id={user_id}")
+        try:
+            h.assert_member(self, circle_id, user_id)
+        except ValueError:
+            return 403, "Not a member of this circle"
+        if content_type not in {"image/webp", "image/jpeg", "image/png"}:
+            return 400, "Image must be webp, jpeg, or png"
+        # Deterministic path keyed by circle id — no schema change needed;
+        # clients derive the URL and cache-bust with ?v=
+        url = upload_public_image("circle-photos", circle_id, content, content_type)
+        if not url:
+            return 502, "Upload failed"
+        import time
+        return 200, {"photo_url": f"{url}?v={int(time.time())}"}
 
     @log_timing("circles_handler.join_circle")
     def join_circle(self, token: str, user_id: str) -> tuple[int, dict | str]:

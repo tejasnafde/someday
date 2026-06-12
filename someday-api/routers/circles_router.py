@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile
 
 from app_util.log_util import infologger
 from common_helper.auth_helper import jwt_required
@@ -50,6 +50,16 @@ async def update_circle(
 async def delete_circle(circle_id: str, current_user: dict = Depends(jwt_required)):
     infologger.info(f"DELETE /circles/{circle_id} | user_id={current_user['sub']}")
     status, result = handler.delete_circle(circle_id, current_user["sub"])
+    return create_response(status, result)
+
+
+@router.post("/{circle_id}/photo")
+@log_timing("POST /circles/:id/photo")
+async def upload_photo(circle_id: str, file: UploadFile = File(...), current_user: dict = Depends(jwt_required)):
+    """Upload a circle photo (members only; pre-resized image ≤2MB)."""
+    infologger.info(f"POST /circles/{circle_id}/photo | user_id={current_user['sub']} type={file.content_type}")
+    content = await file.read()
+    status, result = handler.upload_photo(circle_id, current_user["sub"], content, file.content_type or "")
     return create_response(status, result)
 
 
