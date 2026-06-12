@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Icon } from "@/components/Sprite";
+import { Tour } from "@/components/Tour";
 import { EmptyState, MemberDot, Skeleton, ThemeToggle, memberColor } from "@/components/ui";
 import { getCached, setCached } from "@/lib/cache";
 import { api } from "@/lib/api";
@@ -69,12 +70,12 @@ export default function Home() {
   return (
     <main className="py-5">
       <div className="flex items-center justify-between">
-        <div className="font-serif text-xs font-medium uppercase tracking-[.18em]" style={{ color: "var(--acc)" }}>
+        <div data-tour="logo" className="font-serif text-xs font-medium uppercase tracking-[.18em]" style={{ color: "var(--acc)" }}>
           Someday
         </div>
         <div className="flex items-center gap-2.5">
           <ThemeToggle />
-          <Link href="/settings" aria-label="Settings"
+          <Link href="/settings" aria-label="Settings" data-tour="settings"
             className="flex h-10 w-10 items-center justify-center rounded-full font-bold text-white"
             style={{ background: "var(--acc)", border: "2px solid var(--brd)", boxShadow: "0 3px 10px var(--acc-glow)" }}>
             {(user?.display_name ?? "?").charAt(0).toUpperCase()}
@@ -144,11 +145,13 @@ export default function Home() {
           </div>
         </form>
       ) : (
-        <button onClick={() => setCreating(true)} className="btn-ghost mt-5 w-full py-3.5 text-sm" style={{ color: "var(--txt-m)" }}>
+        <button onClick={() => setCreating(true)} data-tour="create-circle" className="btn-ghost mt-5 w-full py-3.5 text-sm" style={{ color: "var(--txt-m)" }}>
           <Icon name="plus" size="sm" />
           New Circle
         </button>
       )}
+
+      <Tour page="dashboard" />
     </main>
   );
 }

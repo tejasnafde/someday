@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { Circle, CircleDetail, Intent, LinkMeta, SmartPick, SpinItem, User } from "./types";
+import type { Circle, CircleDetail, Intent, LinkMeta, SmartPick, SpinItem, TourState, User } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -68,6 +68,10 @@ export const api = {
   spin: (circleId: string) => request<{ shortlist: SpinItem[] }>("GET", `/circles/${circleId}/payoff/spin`),
 
   unfurl: (url: string) => request<LinkMeta>("POST", "/unfurl", { url }),
+
+  tourSeen: (step_ids: string[]) =>
+    request<{ tour_state: TourState }>("POST", "/tour/seen", { step_ids }),
+  tourReset: () => request<{ tour_state: TourState }>("POST", "/tour/reset"),
 };
 
 export { ApiError };

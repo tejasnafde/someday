@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Sprite";
+import { Tour } from "@/components/Tour";
 import { EmptyState, IntentCard, MemberDot, NavBar, Skeleton, Spinner, memberColor } from "@/components/ui";
 import { api } from "@/lib/api";
 import { getCached, setCached } from "@/lib/cache";
@@ -163,7 +164,7 @@ export default function CirclePage() {
                 <MemberDot key={m.user_id} name={m.display_name} color={memberColor(i)} />
               ))}
             </div>
-            <button onClick={() => setInviteOpen(true)} aria-label="Invite"
+            <button onClick={() => setInviteOpen(true)} aria-label="Invite" data-tour="invite"
               className="glass flex h-9 w-9 items-center justify-center rounded-full" style={{ color: "var(--txt-m)" }}>
               <Icon name="link" size="sm" />
             </button>
@@ -171,7 +172,7 @@ export default function CirclePage() {
         }
       />
 
-      <div className="flex border-b" style={{ borderColor: "var(--brd-s)" }}>
+      <div data-tour="status-tabs" className="flex border-b" style={{ borderColor: "var(--brd-s)" }}>
         {TABS.map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className="-mb-px flex items-center gap-1.5 px-3.5 py-2.5 text-[13px] font-medium"
@@ -216,18 +217,20 @@ export default function CirclePage() {
             }
           />
         ) : (
-          visible.map((i) => (
-            <IntentCard key={i.id} intent={i} onReact={() => react(i.id)} onBoost={() => boost(i.id)} />
+          visible.map((i, idx) => (
+            <div key={i.id} data-tour={idx === 0 ? "intent-card" : undefined}>
+              <IntentCard intent={i} onReact={() => react(i.id)} onBoost={() => boost(i.id)} />
+            </div>
           ))
         )}
       </div>
 
       <div className="mt-6 flex flex-col gap-3">
-        <Link href={`/circles/${id}/payoff`} className="btn-primary w-full py-4 text-sm">
+        <Link href={`/circles/${id}/payoff`} data-tour="payoff" className="btn-primary w-full py-4 text-sm">
           <Icon name="target" />
           What are we doing today?
         </Link>
-        <Link href={`/circles/${id}/add`} className="btn-ghost w-full py-3.5 text-sm">
+        <Link href={`/circles/${id}/add`} data-tour="add-intent" className="btn-ghost w-full py-3.5 text-sm">
           <Icon name="plus" size="sm" />
           Add something
         </Link>
@@ -281,6 +284,8 @@ export default function CirclePage() {
           </div>
         </div>
       )}
+
+      {intents && <Tour page="circle" />}
     </main>
   );
 }
