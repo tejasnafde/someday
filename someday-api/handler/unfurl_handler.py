@@ -128,11 +128,18 @@ def fetch_maps_meta(url: str) -> dict | None:
 
 
 def fetch_search_meta(url: str) -> dict | None:
-    """share.google place links resolve to google.com/search?q=<place name>."""
-    from urllib.parse import parse_qs, unquote_plus
+    """share.google place links resolve to google.com/search?q=<place name>.
+    From datacenter IPs Google interposes /sorry — but its continue= param
+    still carries the original search URL, so parse the name out of that."""
+    from urllib.parse import parse_qs, unquote, unquote_plus
 
     p = urlparse(url)
-    if p.netloc.lower() not in {"www.google.com", "google.com"} or p.path != "/search":
+    if p.netloc.lower() not in {"www.google.com", "google.com"}:
+        return None
+    if p.path.startswith("/sorry"):
+        cont = parse_qs(p.query).get("continue", [None])[0]
+        return fetch_search_meta(unquote(cont)) if cont else None
+    if p.path != "/search":
         return None
     q = parse_qs(p.query).get("q", [None])[0]
     if not q:
