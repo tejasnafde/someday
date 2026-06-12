@@ -7,6 +7,7 @@ export function UpdateBanner() {
   const t = useTheme();
   const [update, setUpdate] = useState<ApkUpdate | null>(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     checkForApkUpdate().then(setUpdate);
@@ -16,8 +17,11 @@ export function UpdateBanner() {
 
   async function install() {
     setBusy(true);
+    setError("");
     try {
       await downloadAndInstall(update!);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Update failed — try again");
     } finally {
       setBusy(false);
     }
@@ -48,8 +52,8 @@ export function UpdateBanner() {
         <Text style={{ color: t.txt, fontWeight: "700", fontSize: 14 }}>
           Someday {update.version} is ready
         </Text>
-        <Text style={{ color: t.txtM, fontSize: 12, marginTop: 1 }}>
-          {busy ? "Downloading…" : "Quick install, no link needed."}
+        <Text style={{ color: error ? t.pink : t.txtM, fontSize: 12, marginTop: 1 }}>
+          {busy ? "Downloading…" : error || "Quick install, no link needed."}
         </Text>
       </View>
       <TouchableOpacity
