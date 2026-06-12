@@ -31,16 +31,28 @@ export function ThemeToggle() {
   );
 }
 
+const CIRCLE_THEMES = [
+  { key: "cp", icon: "eye" },
+  { key: "cg", icon: "users" },
+  { key: "cb", icon: "globe" },
+];
+
+export function circleTheme(id: string) {
+  let h = 0;
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) | 0;
+  return CIRCLE_THEMES[Math.abs(h) % CIRCLE_THEMES.length];
+}
+
 const DOT_COLORS = ["var(--cp)", "var(--acc)", "var(--cg)", "var(--cb)", "#E6920A", "#E04444"];
 
 export function memberColor(index: number) {
   return DOT_COLORS[index % DOT_COLORS.length];
 }
 
-export function MemberDot({ name, color, size = 22 }: { name: string | null; color: string; size?: number }) {
+export function MemberDot({ name, color, size = 22, src }: { name: string | null; color: string; size?: number; src?: string | null }) {
   return (
     <div
-      className="-mr-1 flex items-center justify-center rounded-full font-bold text-white"
+      className="-mr-1 flex items-center justify-center overflow-hidden rounded-full font-bold text-white"
       style={{
         width: size,
         height: size,
@@ -50,8 +62,36 @@ export function MemberDot({ name, color, size = 22 }: { name: string | null; col
         boxShadow: "0 1px 4px rgba(0,0,0,.14)",
       }}
     >
-      {name ? name.charAt(0).toUpperCase() : ""}
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt="" className="h-full w-full object-cover" />
+      ) : name ? (
+        name.charAt(0).toUpperCase()
+      ) : (
+        ""
+      )}
     </div>
+  );
+}
+
+export function CircleAvatar({ circleId, themeKey, icon, size = 48, v }: { circleId: string; themeKey: string; icon: string; size?: number; v?: number }) {
+  const [failed, setFailed] = useState(false);
+  if (failed)
+    return (
+      <div className="flex shrink-0 items-center justify-center rounded-2xl"
+        style={{ width: size, height: size, background: `var(--${themeKey}-l)`, color: `var(--${themeKey})`, border: "1px solid var(--brd)" }}>
+        <Icon name={icon} size="lg" />
+      </div>
+    );
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/circle-photos/${circleId}${v ? `?v=${v}` : ""}`}
+      alt=""
+      onError={() => setFailed(true)}
+      className="shrink-0 rounded-2xl object-cover"
+      style={{ width: size, height: size, border: "1px solid var(--brd)" }}
+    />
   );
 }
 
