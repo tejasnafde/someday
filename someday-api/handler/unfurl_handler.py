@@ -51,6 +51,23 @@ class OGParser(HTMLParser):
 
 
 YOUTUBE_HOSTS = {"youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"}
+SHORTLINK_HOSTS = {"share.google", "maps.app.goo.gl", "goo.gl", "g.co"}
+
+
+def resolve_shortlink(url: str) -> str:
+    """Google's shorteners (share.google, goo.gl, g.co) redirect to the real
+    destination — resolve before dispatching so maps/youtube handling applies."""
+    if urlparse(url).netloc.lower() not in SHORTLINK_HOSTS:
+        return url
+    try:
+        resp = httpx.get(url, timeout=TIMEOUT, follow_redirects=True, headers=HEADERS)
+        final = str(resp.url)
+        if final != url:
+            infologger.info(f"unfurl.resolve_shortlink | {url} -> {final[:120]}")
+        return final
+    except Exception as exc:
+        infologger.warning(f"unfurl.resolve_shortlink | failed | {exc}")
+        return url
 MAPS_HOSTS = {"maps.app.goo.gl", "goo.gl", "maps.google.com", "www.google.com", "google.com"}
 
 
@@ -88,12 +105,7 @@ def fetch_maps_meta(url: str) -> dict | None:
     from urllib.parse import parse_qs, unquote_plus
 
     try:
-        final = url
-        if urlparse(url).netloc.lower() in {"maps.app.goo.gl", "goo.gl"}:
-            resp = httpx.head(url, timeout=TIMEOUT, follow_redirects=True, headers=HEADERS)
-            final = str(resp.url)
-
-        p = urlparse(final)
+        p = urlparse(url)
         name = None
         m = re.search(r"/maps/place/([^/@?]+)", p.path)
         if m:
@@ -104,7 +116,7 @@ def fetch_maps_meta(url: str) -> dict | None:
                 name = unquote_plus(q)
 
         if not name:
-            infologger.warning(f"unfurl.fetch_maps_meta | no place name in URL | {final[:120]}")
+            infologger.warning(f"unfurl.fetch_maps_meta | no place name in URL | {url[:120]}")
             return None
 
         meta = {"title": name, "image": None, "site": "Google Maps"}
@@ -118,6 +130,7 @@ def fetch_maps_meta(url: str) -> dict | None:
 def fetch_link_meta(url: str) -> dict | None:
     """Returns {"title": ..., "image": ..., "site": ...} or None on failure."""
     infologger.info(f"unfurl.fetch_link_meta | url={url}")
+    url = resolve_shortlink(url)
     if urlparse(url).netloc.lower() in YOUTUBE_HOSTS:
         meta = fetch_youtube_meta(url)
         if meta:
