@@ -9,7 +9,7 @@ const extra = Constants.expoConfig?.extra as Record<string, string>;
 const WEB_URL = extra.webUrl;
 const API_URL = extra.apiUrl;
 
-export function Home() {
+export function Home({ nextPath }: { nextPath?: string | null }) {
   const t = useTheme();
   const [startUrl, setStartUrl] = useState<string | null>(null);
   const webRef = useRef<WebView>(null);
@@ -34,7 +34,7 @@ export function Home() {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (!token) {
-        setStartUrl(WEB_URL);
+        setStartUrl(WEB_URL + (nextPath ?? ""));
         return;
       }
       try {
@@ -44,15 +44,16 @@ export function Home() {
         });
         if (!res.ok) throw new Error(String(res.status));
         const s = await res.json();
+        const nextQ = nextPath ? `?next=${encodeURIComponent(nextPath)}` : "";
         setStartUrl(
-          `${WEB_URL}/auth/callback#access_token=${s.access_token}&refresh_token=${s.refresh_token}&token_type=bearer&type=magiclink`,
+          `${WEB_URL}/auth/callback${nextQ}#access_token=${s.access_token}&refresh_token=${s.refresh_token}&token_type=bearer&type=magiclink`,
         );
       } catch {
         // Web app may already hold its own session in WebView storage
-        setStartUrl(WEB_URL);
+        setStartUrl(WEB_URL + (nextPath ?? ""));
       }
     })();
-  }, []);
+  }, [nextPath]);
 
   if (!startUrl) {
     return (
