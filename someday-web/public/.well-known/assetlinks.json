@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.someday.capture",
+      "sha256_cert_fingerprints": [
+        "0A:1A:66:7B:6F:7F:26:4F:4D:23:BE:B5:C3:84:B9:6E:A5:50:2B:4F:E1:78:04:8C:C8:05:C6:B1:DD:1D:18:18"
+      ]
+    }
+  }
+]
