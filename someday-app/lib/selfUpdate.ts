@@ -1,5 +1,5 @@
 import * as Application from "expo-application";
-import { File, Paths } from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import * as IntentLauncher from "expo-intent-launcher";
 
 const RELEASES_API = "https://api.github.com/repos/tejasnafde/someday/releases/latest";
@@ -36,15 +36,16 @@ export async function checkForApkUpdate(): Promise<ApkUpdate | null> {
   }
 }
 
-export async function downloadAndInstall(update: ApkUpdate, onProgress?: (pct: number) => void) {
-  const dest = new File(Paths.cache, `someday-${update.version}.apk`);
-  if (dest.exists) dest.delete();
+export async function downloadAndInstall(update: ApkUpdate) {
+  const dest = `${FileSystem.cacheDirectory}someday-${update.version}.apk`;
+  const result = await FileSystem.downloadAsync(update.apkUrl, dest);
+  if (result.status !== 200) throw new Error(`download failed (${result.status})`);
 
-  const downloaded = await File.downloadFileAsync(update.apkUrl, dest);
-  onProgress?.(100);
-
+  // The package installer can't read file:// URIs on Android 7+ —
+  // FileProvider content:// URI is required.
+  const contentUri = await FileSystem.getContentUriAsync(result.uri);
   await IntentLauncher.startActivityAsync("android.intent.action.INSTALL_PACKAGE", {
-    data: downloaded.uri,
+    data: contentUri,
     flags: 1, // FLAG_GRANT_READ_URI_PERMISSION
   });
 }
