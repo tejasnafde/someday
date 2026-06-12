@@ -1,6 +1,6 @@
 import Constants from "expo-constants";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, BackHandler, View } from "react-native";
 import { WebView } from "react-native-webview";
 import { supabase } from "../lib/supabase";
 import { useTheme } from "../lib/theme";
@@ -12,6 +12,20 @@ const API_URL = extra.apiUrl;
 export function Home() {
   const t = useTheme();
   const [startUrl, setStartUrl] = useState<string | null>(null);
+  const webRef = useRef<WebView>(null);
+  const canGoBack = useRef(false);
+
+  useEffect(() => {
+    // Android back gesture navigates WebView history instead of closing the app
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (canGoBack.current) {
+        webRef.current?.goBack();
+        return true;
+      }
+      return false;
+    });
+    return () => sub.remove();
+  }, []);
 
   useEffect(() => {
     // The WebView gets its OWN session from the API — sharing the native
@@ -50,6 +64,8 @@ export function Home() {
 
   return (
     <WebView
+      ref={webRef}
+      onNavigationStateChange={(nav) => { canGoBack.current = nav.canGoBack; }}
       source={{ uri: startUrl }}
       style={{ flex: 1, backgroundColor: t.bg }}
       domStorageEnabled
