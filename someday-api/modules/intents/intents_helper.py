@@ -137,3 +137,19 @@ def toggle_boost(db, intent_id: str, user_id: str) -> bool:
     )
     infologger.info(f"intents_helper.toggle_boost | added | intent_id={intent_id}")
     return True
+
+
+def refresh_preview(db, intent_id: str, fetch_meta) -> dict | None:
+    """Re-run unfurl for an existing intent's URL and store the result."""
+    infologger.info(f"intents_helper.refresh_preview | intent_id={intent_id}")
+    rows = db.execute_query_with_value(q.GET_INTENT_URL, {"intent_id": intent_id})
+    if not rows or not rows[0].get("url"):
+        infologger.warning(f"intents_helper.refresh_preview | no url | intent_id={intent_id}")
+        return None
+    meta = fetch_meta(rows[0]["url"])
+    if not meta:
+        return None
+    return db.execute_query_with_value_returning(
+        q.UPDATE_INTENT_META,
+        {"intent_id": intent_id, "link_meta": json.dumps(meta)},
+    )

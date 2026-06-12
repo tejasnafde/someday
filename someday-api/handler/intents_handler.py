@@ -84,6 +84,15 @@ class IntentsHandler(DBUtil):
         added = h.toggle_reaction(self, intent_id, user_id)
         return 200, {"reacted": added}
 
+    @log_timing("intents_handler.refresh_preview")
+    def refresh_preview(self, intent_id: str) -> tuple[int, dict | str]:
+        from handler.unfurl_handler import fetch_link_meta
+        infologger.info(f"IntentsHandler.refresh_preview | intent_id={intent_id}")
+        row = h.refresh_preview(self, intent_id, fetch_link_meta)
+        if not row:
+            return 404, "No URL on this intent or no preview available"
+        return 200, row
+
     @log_timing("intents_handler.toggle_boost")
     def toggle_boost(self, intent_id: str, user_id: str) -> tuple[int, dict]:
         infologger.info(f"IntentsHandler.toggle_boost | intent_id={intent_id} user_id={user_id}")
