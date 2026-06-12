@@ -3,6 +3,8 @@
 from html.parser import HTMLParser
 from urllib.parse import urlparse
 
+import re
+
 import httpx
 
 from app_util.db_util import DBUtil
@@ -49,6 +51,7 @@ class OGParser(HTMLParser):
 
 
 YOUTUBE_HOSTS = {"youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"}
+MAPS_HOSTS = {"maps.app.goo.gl", "goo.gl", "maps.google.com", "www.google.com", "google.com"}
 
 
 def fetch_youtube_meta(url: str) -> dict | None:
@@ -69,11 +72,58 @@ def fetch_youtube_meta(url: str) -> dict | None:
         return None
 
 
+def is_maps_url(url: str) -> bool:
+    p = urlparse(url)
+    host = p.netloc.lower()
+    if host in {"maps.app.goo.gl", "maps.google.com"}:
+        return True
+    if host == "goo.gl" and p.path.startswith("/maps"):
+        return True
+    return host in {"www.google.com", "google.com"} and p.path.startswith("/maps")
+
+
+def fetch_maps_meta(url: str) -> dict | None:
+    """Google serves consent shells to datacenter IPs, but the place name is
+    in the URL itself — resolve shortlinks, then parse /maps/place/<name>/ or ?q=."""
+    from urllib.parse import parse_qs, unquote_plus
+
+    try:
+        final = url
+        if urlparse(url).netloc.lower() in {"maps.app.goo.gl", "goo.gl"}:
+            resp = httpx.head(url, timeout=TIMEOUT, follow_redirects=True, headers=HEADERS)
+            final = str(resp.url)
+
+        p = urlparse(final)
+        name = None
+        m = re.search(r"/maps/place/([^/@?]+)", p.path)
+        if m:
+            name = unquote_plus(m.group(1))
+        else:
+            q = parse_qs(p.query).get("q", [None])[0]
+            if q and not re.fullmatch(r"[-\d.,\s]+", q):  # skip bare coordinates
+                name = unquote_plus(q)
+
+        if not name:
+            infologger.warning(f"unfurl.fetch_maps_meta | no place name in URL | {final[:120]}")
+            return None
+
+        meta = {"title": name, "image": None, "site": "Google Maps"}
+        infologger.info(f"unfurl.fetch_maps_meta | success | title={name!r}")
+        return meta
+    except Exception as exc:
+        infologger.warning(f"unfurl.fetch_maps_meta | failed, falling back to OG | {exc}")
+        return None
+
+
 def fetch_link_meta(url: str) -> dict | None:
     """Returns {"title": ..., "image": ..., "site": ...} or None on failure."""
     infologger.info(f"unfurl.fetch_link_meta | url={url}")
     if urlparse(url).netloc.lower() in YOUTUBE_HOSTS:
         meta = fetch_youtube_meta(url)
+        if meta:
+            return meta
+    if is_maps_url(url):
+        meta = fetch_maps_meta(url)
         if meta:
             return meta
     try:

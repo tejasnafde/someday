@@ -89,6 +89,14 @@ async def toggle_reaction(intent_id: str, current_user: dict = Depends(jwt_requi
     return create_response(status, result)
 
 
+@router.post("/intents/{intent_id}/refresh-preview")
+@log_timing("POST /intents/:id/refresh-preview")
+async def refresh_preview(intent_id: str, current_user: dict = Depends(jwt_required)):
+    infologger.info(f"POST /intents/{intent_id}/refresh-preview | user_id={current_user['sub']}")
+    status, result = handler.refresh_preview(intent_id)
+    return create_response(status, result)
+
+
 @router.post("/intents/{intent_id}/boost")
 @log_timing("POST /intents/:id/boost")
 async def toggle_boost(intent_id: str, current_user: dict = Depends(jwt_required)):
