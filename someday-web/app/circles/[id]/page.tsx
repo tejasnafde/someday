@@ -24,6 +24,8 @@ export default function CirclePage() {
   const [intents, setIntents] = useState<Intent[] | null>(null);
   const [tab, setTab] = useState<(typeof TABS)[number]>("All");
   const [category, setCategory] = useState<Category | "All">("All");
+  const [tag, setTag] = useState<string | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
   const [userId, setUserId] = useState("");
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState("");
@@ -32,7 +34,7 @@ export default function CirclePage() {
   const [copied, setCopied] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
-  const intentsKey = `intents:${id}:${tab}:${category}`;
+  const intentsKey = `intents:${id}:${tab}:${category}:${tag ?? ""}`;
 
   const load = useCallback(() => {
     const cachedCircle = getCached<CircleDetail>(`circle:${id}`);
@@ -44,22 +46,35 @@ export default function CirclePage() {
 
     const cachedIntents = getCached<Intent[]>(intentsKey);
     if (cachedIntents) setIntents(cachedIntents);
-    const params =
+    const params: Parameters<typeof api.intents>[1] =
       tab === "Shortlist" ? { shortlist: true }
       : tab === "Done" ? { task_status: "done" }
-      : category !== "All" ? { category }
-      : undefined;
+      : {};
+    if (tab === "All") {
+      if (category !== "All") params!.category = category;
+      if (tag) params!.tag = tag;
+    }
     api.intents(id, params).then((list) => {
       setCached(intentsKey, list);
       setIntents(list);
     });
-  }, [id, tab, category, intentsKey]);
+  }, [id, tab, category, tag, intentsKey]);
 
   useEffect(() => {
     if (!ready) return;
     load();
     supabase.auth.getSession().then(({ data }) => setUserId(data.session?.user.id ?? ""));
   }, [ready, load]);
+
+  useEffect(() => {
+    if (!ready) return;
+    api.circleTags(id).then(setTags).catch(() => {});
+  }, [ready, id]);
+
+  async function retryPreview(intentId: string) {
+    const updated = await api.refreshPreview(intentId);
+    patchIntent(intentId, (i) => ({ ...i, link_meta: updated.link_meta }));
+  }
 
   useEffect(() => {
     if (renaming) nameRef.current?.focus();
@@ -180,9 +195,11 @@ export default function CirclePage() {
         right={
           <div className="flex items-center gap-2">
             <div className="flex">
-              {circle.members.slice(0, 4).map((m, i) => (
-                <MemberDot key={m.user_id} name={m.display_name} color={memberColor(i)} src={m.avatar_url} />
-              ))}
+              <Link href={`/circles/${id}/members`} aria-label="See members" className="flex">
+                {circle.members.slice(0, 4).map((m, i) => (
+                  <MemberDot key={m.user_id} name={m.display_name} color={memberColor(i)} src={m.avatar_url} />
+                ))}
+              </Link>
             </div>
             <button onClick={() => setInviteOpen(true)} aria-label="Invite" data-tour="invite"
               className="glass flex h-9 w-9 items-center justify-center rounded-full" style={{ color: "var(--txt-m)" }}>
@@ -208,19 +225,40 @@ export default function CirclePage() {
       </div>
 
       {tab === "All" && (
-        <div className="-mx-5 flex gap-2 overflow-x-auto px-5 py-3 [scrollbar-width:none]">
-          {CATEGORIES.map((c) => (
-            <button key={c} onClick={() => setCategory(c)}
-              className="whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-medium capitalize"
-              style={{
-                background: category === c ? "var(--acc-l)" : "var(--glass-lo)",
-                border: `1px solid ${category === c ? "var(--acc)44" : "var(--brd-s)"}`,
-                color: category === c ? "var(--acc)" : "var(--txt-m)",
-              }}>
-              {c}
-            </button>
-          ))}
-        </div>
+        <>
+          <div className="-mx-5 flex gap-2 overflow-x-auto px-5 py-3 [scrollbar-width:none]">
+            {CATEGORIES.map((c) => (
+              <button key={c} onClick={() => setCategory(c)}
+                className="whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-medium capitalize"
+                style={{
+                  background: category === c ? "var(--acc-l)" : "var(--glass-lo)",
+                  border: `1px solid ${category === c ? "var(--acc)44" : "var(--brd-s)"}`,
+                  color: category === c ? "var(--acc)" : "var(--txt-m)",
+                }}>
+                {c}
+              </button>
+            ))}
+          </div>
+          {tags.length > 0 && (
+            <div className="-mx-5 flex items-center gap-2 overflow-x-auto px-5 pb-2 [scrollbar-width:none]">
+              <span className="shrink-0" style={{ color: "var(--txt-l)" }}>
+                <Icon name="settings" size="sm" />
+              </span>
+              {tags.map((tg) => (
+                <button key={tg} onClick={() => setTag(tag === tg ? null : tg)}
+                  className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold"
+                  style={{
+                    background: tag === tg ? "var(--cp-l)" : "var(--glass-lo)",
+                    border: `1px solid ${tag === tg ? "var(--cp)44" : "var(--brd-s)"}`,
+                    color: tag === tg ? "var(--cp)" : "var(--txt-m)",
+                  }}>
+                  {tg}
+                  {tag === tg && <Icon name="x" size="sm" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       <div className="mt-2 flex flex-col gap-3">
@@ -239,7 +277,7 @@ export default function CirclePage() {
         ) : (
           visible.map((i, idx) => (
             <div key={i.id} data-tour={idx === 0 ? "intent-card" : undefined}>
-              <IntentCard intent={i} onReact={() => react(i.id)} onBoost={() => boost(i.id)} />
+              <IntentCard intent={i} onReact={() => react(i.id)} onBoost={() => boost(i.id)} onRetryPreview={retryPreview} />
             </div>
           ))
         )}

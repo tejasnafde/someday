@@ -26,9 +26,10 @@ export interface Circle {
 
 export interface Member {
   user_id: string;
+  email: string | null;
   display_name: string | null;
   avatar_url: string | null;
-  role: string;
+  role: "owner" | "admin" | "member";
   joined_at: string;
 }
 

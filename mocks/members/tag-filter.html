@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tag filter</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg-a:#101010;--bg-b:#131313;--bg-c:#0E0E0E;--glass:rgba(22,22,22,.80);--glass-hi:rgba(30,30,30,.92);--glass-lo:rgba(18,18,18,.42);--glass-nav:rgba(12,12,12,.90);--brd:rgba(255,255,255,.07);--brd-s:rgba(255,255,255,.04);--brd-h:rgba(255,255,255,.11);--txt:#EEE;--txt-m:#888;--txt-l:#444;--acc:#9B8DC4;--acc-l:rgba(155,141,196,.11);--cp:#E8607A;--cg:#2DBF8A}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:linear-gradient(148deg,var(--bg-a),var(--bg-b) 50%,var(--bg-c));min-height:100vh;font-family:'DM Sans',sans-serif;color:var(--txt);padding:36px 20px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.label{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--txt-m)}
+.phone{width:392px;height:780px;background:var(--bg-a);border:1px solid var(--brd-h);border-radius:32px;position:relative;overflow:hidden}
+
+.icon{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.icon-xs{width:11px;height:11px;stroke-width:2}
+.icon-lg{width:18px;height:18px}
+.icon-xl{width:22px;height:22px}
+
+.nav{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--glass-nav);border-bottom:1px solid var(--brd-s)}
+.iconbtn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--glass);border:1px solid var(--brd-h);color:var(--txt-m);flex-shrink:0}
+.title{flex:1;font-family:'Lora',serif;font-weight:600;font-size:17px}
+
+.tabs{display:flex;border-bottom:1px solid var(--brd-s);padding:0 20px}
+.tab{padding:10px 14px;font-size:13px;color:var(--txt-l);display:flex;align-items:center;gap:5px}
+.tab.on{color:var(--acc);border-bottom:2px solid var(--acc);margin-bottom:-1px}
+
+.chip-row{display:flex;gap:8px;padding:11px 20px;overflow-x:auto;align-items:center;border-bottom:1px solid var(--brd-s)}
+.chip-row .lead{color:var(--txt-l);flex-shrink:0;margin-right:2px}
+.chip{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;border:1px solid var(--brd-s);background:var(--glass-lo);color:var(--txt-m);display:flex;align-items:center;gap:5px}
+.chip.on.cat{background:var(--acc-l);color:var(--acc);border-color:rgba(155,141,196,.30)}
+.chip.on.tag{background:rgba(232,96,122,.13);color:var(--cp);border-color:rgba(232,96,122,.30)}
+.chip.dim{opacity:.5}
+
+.divider{padding:0 20px;display:flex;align-items:center;gap:8px;margin:11px 0 -2px}
+.divider .line{flex:1;height:1px;background:var(--brd-s)}
+.divider span{font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--txt-l)}
+
+.intents{padding:14px 20px;display:flex;flex-direction:column;gap:12px}
+.intent{background:var(--glass-hi);border:1px solid var(--brd);border-radius:18px;overflow:hidden}
+.intent-img{height:80px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.30);background:linear-gradient(135deg,#1a1a2e,#3d2c8d)}
+.intent-body{padding:11px 13px}
+.intent-site{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--txt-l);font-weight:600}
+.intent-title{font-family:'Lora',serif;font-size:14px;font-weight:600;margin-top:2px}
+.tag-strip{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.t{font-size:10px;padding:2px 7px;border-radius:5px;background:var(--glass-lo);color:var(--txt-m);border:1px solid var(--brd-s)}
+.t.match{background:rgba(232,96,122,.13);color:var(--cp);border-color:rgba(232,96,122,.30)}
+
+.results{font-size:11px;color:var(--txt-l);padding:10px 20px 0}
+.results strong{color:var(--cp);font-weight:600}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+    <symbol id="i-film" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  </defs>
+</svg>
+
+<div class="label">Tag filter — only tags that exist in this circle; combines with category</div>
+<div class="phone">
+  <div class="nav">
+    <div class="iconbtn"><svg class="icon"><use href="#i-arrow-left"/></svg></div>
+    <div class="title">Tejas + Aanya</div>
+  </div>
+  <div class="tabs">
+    <div class="tab on">All</div>
+    <div class="tab"><svg class="icon"><use href="#i-star"/></svg>Shortlist</div>
+    <div class="tab"><svg class="icon"><use href="#i-check"/></svg>Done</div>
+  </div>
+
+  <div class="chip-row">
+    <span class="lead"><svg class="icon"><use href="#i-filter"/></svg></span>
+    <div class="chip on cat">All</div>
+    <div class="chip">Watch</div><div class="chip">Eat</div><div class="chip">Visit</div><div class="chip">Read</div>
+  </div>
+
+  <div class="divider"><div class="line"></div><span>Tags · tap to filter</span><div class="line"></div></div>
+  <div class="chip-row" style="border-bottom:none">
+    <span class="lead"><svg class="icon"><use href="#i-tag"/></svg></span>
+    <div class="chip on tag">imax<svg class="icon icon-xs"><use href="#i-x"/></svg></div>
+    <div class="chip">date-night</div><div class="chip">cheap</div><div class="chip">indiranagar</div>
+    <div class="chip dim">koramangala</div><div class="chip dim">family</div>
+  </div>
+
+  <div class="results">2 of 12 — filtered by tag <strong>imax</strong></div>
+
+  <div class="intents">
+    <div class="intent">
+      <div class="intent-img"><svg class="icon icon-xl"><use href="#i-film"/></svg></div>
+      <div class="intent-body">
+        <div class="intent-site">YouTube</div>
+        <div class="intent-title">Dune: Part Two</div>
+        <div class="tag-strip"><span class="t">film</span><span class="t">sci-fi</span><span class="t match">imax</span></div>
+      </div>
+    </div>
+    <div class="intent">
+      <div class="intent-img"><svg class="icon icon-xl"><use href="#i-film"/></svg></div>
+      <div class="intent-body">
+        <div class="intent-site">IMDb</div>
+        <div class="intent-title">Oppenheimer rewatch</div>
+        <div class="tag-strip"><span class="t match">imax</span><span class="t">drama</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div style="font-size:13px;color:var(--txt-m);max-width:520px;text-align:center;line-height:1.6">
+Tag list is sourced from the circle's actual intents — empty until the first tagged save, dim chips have nothing matching the active category. Combines with category (e.g. Watch + imax). Matching tags on cards highlight.
+</div>
+</body>
+</html>

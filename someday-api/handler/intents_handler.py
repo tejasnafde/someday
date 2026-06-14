@@ -15,6 +15,7 @@ class IntentsHandler(DBUtil):
         user_id: str,
         task_status: str | None,
         category: str | None,
+        tag: str | None,
         shortlist: bool,
     ) -> tuple[int, list | str]:
         infologger.info(
@@ -25,7 +26,7 @@ class IntentsHandler(DBUtil):
             ch.assert_member(self, circle_id, user_id)
         except ValueError:
             return 403, "Not a member of this circle"
-        intents = h.list_intents(self, circle_id, user_id, task_status, category, shortlist)
+        intents = h.list_intents(self, circle_id, user_id, task_status, category, tag, shortlist)
         return 200, intents
 
     @log_timing("intents_handler.get_intent")
