@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>Option A — Members popover</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-a:#101010;--bg-b:#131313;--bg-c:#0E0E0E;
+  --glass:rgba(22,22,22,.80);--glass-hi:rgba(30,30,30,.92);--glass-lo:rgba(18,18,18,.42);--glass-nav:rgba(12,12,12,.90);
+  --brd:rgba(255,255,255,.07);--brd-s:rgba(255,255,255,.04);--brd-h:rgba(255,255,255,.11);
+  --txt:#EEEEEE;--txt-m:#888;--txt-l:#444;
+  --acc:#9B8DC4;--acc-m:#BDB0E0;--acc-l:rgba(155,141,196,.11);
+  --cp:#E8607A;--cg:#2DBF8A;--cb:#6B8FFF;
+  --r:20px;--rs:12px;--blur:blur(18px) saturate(155%);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:linear-gradient(148deg,var(--bg-a),var(--bg-b) 50%,var(--bg-c));min-height:100vh;font-family:'DM Sans',sans-serif;color:var(--txt);padding:48px 20px;display:flex;flex-direction:column;align-items:center;gap:18px}
+.label{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--txt-m)}
+.phone{width:392px;height:780px;background:var(--bg-a);border:1px solid var(--brd-h);border-radius:32px;position:relative;overflow:hidden}
+.serif{font-family:'Lora',serif}
+.glass{background:var(--glass);backdrop-filter:var(--blur);border:1px solid var(--brd)}
+.glass-hi{background:var(--glass-hi);backdrop-filter:var(--blur);border:1px solid var(--brd)}
+.nav{position:sticky;top:0;display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--glass-nav);backdrop-filter:var(--blur);border-bottom:1px solid var(--brd-s);z-index:10}
+.iconbtn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--glass);border:1px solid var(--brd-h);color:var(--txt-m)}
+.title{flex:1;font-family:'Lora',serif;font-weight:600;font-size:17px;display:flex;align-items:center;gap:8px}
+.dots{display:flex;align-items:center}
+.dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--glass-nav);margin-left:-6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;overflow:hidden}
+.dot:first-child{margin-left:0}
+.dot.cp{background:var(--cp)}.dot.acc{background:var(--acc)}.dot.cg{background:var(--cg)}.dot.cb{background:var(--cb)}
+.dot-more{width:24px;height:24px;border-radius:50%;background:var(--glass-hi);border:2px solid var(--glass-nav);margin-left:-6px;display:flex;align-items:center;justify-content:center;color:var(--txt-m);font-size:9px;font-weight:700}
+.tabs{display:flex;border-bottom:1px solid var(--brd-s);padding:0 20px}
+.tab{padding:10px 14px;font-size:13px;color:var(--txt-l);font-weight:500}
+.tab.on{color:var(--acc);border-bottom:2px solid var(--acc);margin-bottom:-1px}
+.chips{display:flex;gap:8px;padding:12px 20px;overflow-x:auto}
+.chip{padding:6px 12px;border-radius:20px;font-size:12px;background:var(--acc-l);color:var(--acc);border:1px solid rgba(155,141,196,.24);font-weight:600;white-space:nowrap}
+.chip.gh{background:var(--glass-lo);color:var(--txt-m);border-color:var(--brd-s);font-weight:500}
+.intents{padding:0 20px;display:flex;flex-direction:column;gap:12px}
+.intent{background:var(--glass-hi);border:1px solid var(--brd);border-radius:20px;overflow:hidden}
+.intent-img{height:90px;background:linear-gradient(135deg,#2c1810,#7a3010);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.3)}
+.intent-img.maps{background:linear-gradient(135deg,#0a2c2c,#1a5a6b)}
+.intent-body{padding:12px 14px}
+.intent-site{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--txt-l);font-weight:600}
+.intent-title{font-family:'Lora',serif;font-size:14px;font-weight:600;margin-top:2px}
+.intent-foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.badge{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;background:rgba(155,141,196,.09);color:#C4B5FD;border:1.5px solid rgba(155,141,196,.16);text-transform:capitalize}
+.heart{display:flex;align-items:center;gap:4px;height:30px;padding:0 9px;border-radius:14px;background:var(--glass-lo);color:var(--txt-m);font-size:11px;font-weight:700;border:1px solid var(--brd-s)}
+.heart.on{background:rgba(232,96,122,.13);color:var(--cp);border-color:rgba(232,96,122,.27)}
+.bolt{width:30px;height:30px;border-radius:50%;background:rgba(234,165,0,.10);border:1.5px solid rgba(234,165,0,.26);display:flex;align-items:center;justify-content:center;color:rgba(200,160,0,.85)}
+svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+svg.lg{width:18px;height:18px}
+
+/* Popover */
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center;animation:fadein .2s}
+.sheet{width:100%;background:var(--glass-hi);backdrop-filter:var(--blur);border-top-left-radius:24px;border-top-right-radius:24px;border:1px solid var(--brd);border-bottom:none;padding:18px 20px 24px;animation:slideup .25s cubic-bezier(.2,.8,.3,1)}
+.sheet-grab{width:36px;height:4px;border-radius:2px;background:var(--brd-h);margin:0 auto 16px}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.sheet-title{font-family:'Lora',serif;font-weight:600;font-size:18px}
+.sheet-sub{font-size:12px;color:var(--txt-m);margin-top:2px}
+.sheet-x{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--glass-lo);color:var(--txt-m)}
+.member{display:flex;align-items:center;gap:12px;padding:11px 4px}
+.member + .member{border-top:1px solid var(--brd-s)}
+.mavatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;overflow:hidden;flex-shrink:0;background:var(--cp)}
+.mavatar.acc{background:var(--acc)}.mavatar.cg{background:var(--cg)}
+.minfo{flex:1;min-width:0}
+.mname{font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px}
+.crown{font-size:10px;padding:2px 7px;border-radius:8px;background:var(--acc-l);color:var(--acc);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.memail{font-size:12px;color:var(--txt-m);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mjoined{font-size:11px;color:var(--txt-l);text-align:right;white-space:nowrap}
+.invite-row{margin-top:14px;padding-top:14px;border-top:1px solid var(--brd-s);display:flex;align-items:center;justify-content:space-between}
+.invite-row-l{display:flex;align-items:center;gap:12px}
+.invite-icon{width:42px;height:42px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;color:#fff}
+.invite-cta{padding:8px 14px;border-radius:10px;background:var(--acc);color:#fff;font-weight:700;font-size:13px}
+@keyframes slideup{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+</style>
+</head>
+<body>
+<div class="label">Option A — Bottom-sheet popover from member dots</div>
+<div class="phone">
+  <div class="nav">
+    <div class="iconbtn"><svg><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></div>
+    <div class="title"><span>Tejas + Aanya</span></div>
+    <div class="dots">
+      <div class="dot cp">T</div><div class="dot acc">A</div>
+    </div>
+    <div class="iconbtn"><svg><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+  </div>
+  <div class="tabs"><div class="tab on">All</div><div class="tab">⭐ Shortlist 2</div><div class="tab">✓ Done</div></div>
+  <div class="chips"><div class="chip">All</div><div class="chip gh">Watch</div><div class="chip gh">Eat</div><div class="chip gh">Visit</div></div>
+  <div class="intents">
+    <div class="intent">
+      <div class="intent-img maps"><svg class="lg"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      <div class="intent-body">
+        <div class="intent-site">Google Maps</div>
+        <div class="intent-title">Paris Panini — Indiranagar</div>
+        <div class="intent-foot"><span class="badge">Interested</span><div style="display:flex;gap:8px"><div class="heart on"><svg><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>2</div><div class="bolt"><svg><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scrim">
+    <div class="sheet">
+      <div class="sheet-grab"></div>
+      <div class="sheet-head">
+        <div>
+          <div class="sheet-title">Members</div>
+          <div class="sheet-sub">2 in this circle</div>
+        </div>
+        <div class="sheet-x"><svg><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+      </div>
+      <div class="member">
+        <div class="mavatar">T</div>
+        <div class="minfo">
+          <div class="mname">Tejas <span class="crown">Owner</span></div>
+          <div class="memail">nafdetejas@gmail.com</div>
+        </div>
+        <div class="mjoined">Joined Jun 9</div>
+      </div>
+      <div class="member">
+        <div class="mavatar acc">A</div>
+        <div class="minfo">
+          <div class="mname">Aanya</div>
+          <div class="memail">aanya@example.com</div>
+        </div>
+        <div class="mjoined">Joined Jun 12</div>
+      </div>
+      <div class="invite-row">
+        <div class="invite-row-l">
+          <div class="invite-icon"><svg><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          <div>
+            <div style="font-weight:600;font-size:14px">Invite someone</div>
+            <div style="font-size:12px;color:var(--txt-m)">Anyone with the link can join</div>
+          </div>
+        </div>
+        <div class="invite-cta">Copy</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div style="font-size:13px;color:var(--txt-m);max-width:480px;text-align:center;line-height:1.6">
+Tap the row of member dots in the nav → bottom-sheet slides up with the full list and the invite link inline. Lightweight, no new route, dismisses with backdrop tap or grab handle.
+</div>
+</body>
+</html>

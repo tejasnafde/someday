@@ -10,11 +10,12 @@ def list_intents(
     user_id: str,
     task_status: str | None = None,
     category: str | None = None,
+    tag: str | None = None,
     shortlist: bool = False,
 ) -> list[dict]:
     infologger.info(
         f"intents_helper.list_intents | circle_id={circle_id} "
-        f"task_status={task_status} category={category} shortlist={shortlist}"
+        f"task_status={task_status} category={category} tag={tag} shortlist={shortlist}"
     )
     if shortlist:
         return db.execute_query_with_value(
@@ -23,7 +24,7 @@ def list_intents(
     return db.execute_query_with_value(
         q.LIST_INTENTS,
         {"circle_id": circle_id, "user_id": user_id,
-         "task_status": task_status, "category": category},
+         "task_status": task_status, "category": category, "tag": tag},
     )
 
 

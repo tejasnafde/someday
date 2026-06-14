@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>Option B — Members full page</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-a:#101010;--bg-b:#131313;--bg-c:#0E0E0E;
+  --glass:rgba(22,22,22,.80);--glass-hi:rgba(30,30,30,.92);--glass-lo:rgba(18,18,18,.42);--glass-nav:rgba(12,12,12,.90);
+  --brd:rgba(255,255,255,.07);--brd-s:rgba(255,255,255,.04);--brd-h:rgba(255,255,255,.11);
+  --txt:#EEEEEE;--txt-m:#888;--txt-l:#444;
+  --acc:#9B8DC4;--acc-l:rgba(155,141,196,.11);
+  --cp:#E8607A;--cg:#2DBF8A;--cb:#6B8FFF;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:linear-gradient(148deg,var(--bg-a),var(--bg-b) 50%,var(--bg-c));min-height:100vh;font-family:'DM Sans',sans-serif;color:var(--txt);padding:48px 20px;display:flex;flex-direction:column;align-items:center;gap:18px}
+.label{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--txt-m)}
+.phone{width:392px;height:780px;background:var(--bg-a);border:1px solid var(--brd-h);border-radius:32px;position:relative;overflow:hidden}
+.nav{position:sticky;top:0;display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--glass-nav);backdrop-filter:blur(18px) saturate(155%);border-bottom:1px solid var(--brd-s);z-index:10}
+.iconbtn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--glass);border:1px solid var(--brd-h);color:var(--txt-m)}
+.title{flex:1;font-family:'Lora',serif;font-weight:600;font-size:17px}
+.subtitle{font-size:11px;color:var(--txt-l);margin-top:1px}
+svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+svg.lg{width:18px;height:18px}
+
+.body{padding:8px 20px 24px}
+.hero{display:flex;align-items:center;gap:14px;padding:14px;background:var(--glass);border:1px solid var(--brd);border-radius:20px;margin-bottom:20px}
+.circle-icon{width:56px;height:56px;border-radius:18px;background:rgba(232,96,122,.13);color:var(--cp);display:flex;align-items:center;justify-content:center}
+.circle-icon svg{width:24px;height:24px}
+.hero-info{flex:1}
+.hero-name{font-family:'Lora',serif;font-size:18px;font-weight:600}
+.hero-meta{font-size:12px;color:var(--txt-m);margin-top:2px}
+
+.section-label{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--txt-l);margin-bottom:10px}
+
+.member{display:flex;align-items:center;gap:12px;padding:12px;background:var(--glass);border:1px solid var(--brd);border-radius:14px;margin-bottom:8px}
+.mavatar{width:44px;height:44px;border-radius:50%;background:var(--cp);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;flex-shrink:0;overflow:hidden}
+.mavatar.acc{background:var(--acc)}
+.minfo{flex:1;min-width:0}
+.mname{font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px}
+.crown{font-size:9px;padding:2px 6px;border-radius:7px;background:var(--acc-l);color:var(--acc);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.memail{font-size:12px;color:var(--txt-m);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mjoined{font-size:11px;color:var(--txt-l);text-align:right;flex-shrink:0}
+
+.invite-card{margin-top:20px;padding:18px;background:linear-gradient(135deg,rgba(155,141,196,.10),rgba(189,176,224,.05));border:1px solid rgba(155,141,196,.22);border-radius:20px}
+.invite-title{font-family:'Lora',serif;font-size:16px;font-weight:600;margin-bottom:4px}
+.invite-sub{font-size:12px;color:var(--txt-m);margin-bottom:14px}
+.invite-link{background:var(--glass-lo);border:1px solid var(--brd-s);border-radius:10px;padding:9px 12px;font-size:11px;color:var(--txt-m);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:10px;font-family:monospace}
+.invite-cta{width:100%;padding:12px;border-radius:12px;background:linear-gradient(135deg,var(--acc),#BDB0E0);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;gap:8px;border:none}
+
+.menu{display:flex;justify-content:center;gap:28px;margin-top:28px;font-size:12px;color:var(--txt-l)}
+.menu-item{display:flex;align-items:center;gap:6px}
+.menu-item.danger{color:var(--cp)}
+</style>
+</head>
+<body>
+<div class="label">Option B — Dedicated /circles/:id/members page</div>
+<div class="phone">
+  <div class="nav">
+    <div class="iconbtn"><svg><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></div>
+    <div style="flex:1">
+      <div class="title">Members</div>
+      <div class="subtitle">Tejas + Aanya · 2 people</div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="hero">
+      <div class="circle-icon">
+        <svg><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+      </div>
+      <div class="hero-info">
+        <div class="hero-name">Tejas + Aanya</div>
+        <div class="hero-meta">Started by you on Jun 9 · 47 ideas saved</div>
+      </div>
+    </div>
+
+    <div class="section-label">People</div>
+    <div class="member">
+      <div class="mavatar">T</div>
+      <div class="minfo">
+        <div class="mname">Tejas <span class="crown">Owner</span></div>
+        <div class="memail">nafdetejas@gmail.com</div>
+      </div>
+      <div class="mjoined">Joined Jun 9</div>
+    </div>
+    <div class="member">
+      <div class="mavatar acc">A</div>
+      <div class="minfo">
+        <div class="mname">Aanya</div>
+        <div class="memail">aanya@example.com</div>
+      </div>
+      <div class="mjoined">Joined Jun 12</div>
+    </div>
+
+    <div class="invite-card">
+      <div class="invite-title">Bring someone in</div>
+      <div class="invite-sub">Anyone with this link can join.</div>
+      <div class="invite-link">someday-web-gamma.vercel.app/join/8ca0fe4c…</div>
+      <button class="invite-cta">
+        <svg><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy invite link
+      </button>
+    </div>
+
+    <div class="menu">
+      <div class="menu-item">
+        <svg><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Leave circle
+      </div>
+      <div class="menu-item danger">
+        <svg><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        Delete circle
+      </div>
+    </div>
+  </div>
+</div>
+<div style="font-size:13px;color:var(--txt-m);max-width:480px;text-align:center;line-height:1.6">
+Member dots tap → full page. Roomier — invite link is part of the same screen, leave/delete live here (cleaning up the cramped circle-detail footer), and there's room to add member-level actions later (remove member, change role).
+</div>
+</body>
+</html>
