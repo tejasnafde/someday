@@ -48,6 +48,7 @@ GET_CIRCLE_MEMBERS = """
         cm.user_id,
         cm.role,
         cm.joined_at::text,
+        u.email,
         u.display_name,
         u.avatar_url
     FROM public.circle_members cm
@@ -99,4 +100,38 @@ IS_MEMBER = """
     SELECT 1
     FROM public.circle_members
     WHERE circle_id = :circle_id AND user_id = :user_id AND status = 1
+"""
+
+# ── Member management (admin role + remove + transfer ownership) ────────────
+
+GET_MEMBER_ROLE = """
+    SELECT role FROM public.circle_members
+    WHERE circle_id = :circle_id AND user_id = :user_id AND status = 1
+"""
+
+SET_MEMBER_ROLE = """
+    UPDATE public.circle_members
+    SET role = :role
+    WHERE circle_id = :circle_id AND user_id = :target_user_id AND status = 1
+    RETURNING user_id, role
+"""
+
+REMOVE_MEMBER = """
+    UPDATE public.circle_members
+    SET status = 0
+    WHERE circle_id = :circle_id AND user_id = :target_user_id AND status = 1
+"""
+
+SET_CIRCLE_OWNER = """
+    UPDATE public.circles
+    SET owner_id = :new_owner_id
+    WHERE id = :circle_id AND status = 1
+"""
+
+# Tag chips for the circle filter: unique tags across all active intents.
+LIST_CIRCLE_TAGS = """
+    SELECT DISTINCT unnest(tags) AS tag
+    FROM public.intents
+    WHERE circle_id = :circle_id AND status = 1 AND array_length(tags, 1) > 0
+    ORDER BY tag
 """

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>planned_for chip + broken preview action</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg-a:#101010;--bg-b:#131313;--bg-c:#0E0E0E;--glass:rgba(22,22,22,.80);--glass-hi:rgba(30,30,30,.92);--glass-lo:rgba(18,18,18,.42);--glass-nav:rgba(12,12,12,.90);--brd:rgba(255,255,255,.07);--brd-s:rgba(255,255,255,.04);--brd-h:rgba(255,255,255,.11);--txt:#EEE;--txt-m:#888;--txt-l:#444;--acc:#9B8DC4;--acc-l:rgba(155,141,196,.11);--cp:#E8607A;--cg:#2DBF8A;--si-t:#B89000}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:linear-gradient(148deg,var(--bg-a),var(--bg-b) 50%,var(--bg-c));min-height:100vh;font-family:'DM Sans',sans-serif;color:var(--txt);padding:36px 20px;display:flex;flex-direction:column;align-items:center;gap:18px}
+.row{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
+.label{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--txt-m)}
+.col-label{text-align:center;font-size:11px;color:var(--txt-l);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.phone{width:392px;background:var(--bg-a);border:1px solid var(--brd-h);border-radius:32px;overflow:hidden;padding:14px 14px}
+svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+.intent{background:var(--glass-hi);border:1px solid var(--brd);border-radius:18px;overflow:hidden;margin:8px 0}
+.img{height:90px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.30);background:linear-gradient(135deg,#1a1a2e,#3d2c8d)}
+.img.maps{background:linear-gradient(135deg,#0a2c2c,#1a5a6b)}
+.img.broken{background:repeating-linear-gradient(45deg,#1c1c1c 0 8px,#222 8px 16px);color:var(--txt-l)}
+.body{padding:11px 13px}
+.site{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--txt-l);font-weight:600}
+.title{font-family:'Lora',serif;font-size:14px;font-weight:600;margin-top:2px}
+.meta-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px}
+.badge{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;background:rgba(45,191,138,.10);color:var(--cg);border:1.5px solid rgba(45,191,138,.22)}
+.badge.saved{background:rgba(155,141,196,.09);color:#C4B5FD;border-color:rgba(155,141,196,.16)}
+.planned-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:14px;background:rgba(45,191,138,.10);color:var(--cg);border:1px solid rgba(45,191,138,.20)}
+.actions{display:flex;gap:8px;margin-left:auto}
+.heart{display:flex;align-items:center;gap:4px;height:28px;padding:0 9px;border-radius:14px;background:var(--glass-lo);color:var(--txt-m);font-size:11px;font-weight:700;border:1px solid var(--brd-s)}
+.heart.on{background:rgba(232,96,122,.13);color:var(--cp);border-color:rgba(232,96,122,.30)}
+.bolt{width:28px;height:28px;border-radius:50%;background:rgba(234,165,0,.10);border:1.5px solid rgba(234,165,0,.26);color:rgba(200,160,0,.85);display:flex;align-items:center;justify-content:center}
+
+.broken-banner{display:flex;align-items:center;gap:9px;padding:8px 11px;background:rgba(232,96,122,.06);border:1px dashed rgba(232,96,122,.30);border-radius:10px;margin-top:8px}
+.broken-banner .msg{flex:1;font-size:11px;color:var(--cp);line-height:1.4}
+.refresh-btn{padding:5px 11px;background:var(--glass);color:var(--cp);font-size:11px;font-weight:700;border:1px solid rgba(232,96,122,.40);border-radius:8px;display:flex;align-items:center;gap:4px}
+
+/* Payoff screen */
+.payoff{padding:20px 18px 16px}
+.payoff h1{font-family:'Lora',serif;font-size:24px;font-weight:500;text-align:center;line-height:1.25}
+.payoff h1 em{font-style:italic;color:var(--acc)}
+.payoff p{font-size:12px;color:var(--txt-m);text-align:center;margin-top:8px}
+.boost-prompt{margin-top:16px;padding:14px;background:linear-gradient(135deg,rgba(234,165,0,.07),rgba(234,165,0,.02));border:1px dashed rgba(234,165,0,.30);border-radius:16px}
+.bp-head{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--si-t)}
+.bp-sub{font-size:11px;color:var(--txt-m);margin-top:3px;margin-bottom:11px}
+.bp-grid{display:flex;flex-direction:column;gap:7px}
+.bp-row{display:flex;align-items:center;gap:10px;padding:8px;background:var(--glass-lo);border:1px solid var(--brd-s);border-radius:11px}
+.bp-thumb{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#2c1810,#7a3010);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.35);flex-shrink:0}
+.bp-thumb.film{background:linear-gradient(135deg,#1a1a2e,#3d2c8d)}
+.bp-thumb.maps{background:linear-gradient(135deg,#0a2c2c,#1a5a6b)}
+.bp-title{font-size:13px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bp-boost{width:34px;height:34px;border-radius:50%;background:rgba(234,165,0,.10);border:1.5px solid rgba(234,165,0,.28);color:rgba(200,160,0,.85);display:flex;align-items:center;justify-content:center}
+.bp-boost.on{background:rgba(234,165,0,.22);border-color:rgba(234,165,0,.55);color:#E0A800}
+.bp-actions{display:flex;flex-direction:column;gap:9px;margin-top:16px}
+.btn-primary{padding:14px;background:linear-gradient(135deg,var(--acc),#BDB0E0);color:#fff;font-weight:700;font-size:14px;border:none;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-ghost{padding:13px;background:var(--glass);color:var(--txt);font-weight:500;font-size:14px;border:1px solid var(--brd-h);border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px}
+</style>
+</head>
+<body>
+<div class="label">planned_for chip · broken-preview retry · payoff boost prompt</div>
+<div class="row">
+  <div>
+    <div class="col-label">Cards: planned_for chip + retry banner</div>
+    <div class="phone">
+      <div class="intent">
+        <div class="img"><svg style="width:22px;height:22px"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/></svg></div>
+        <div class="body">
+          <div class="site">YouTube</div>
+          <div class="title">Dune: Part Two</div>
+          <div class="meta-row">
+            <span class="badge">Planned</span>
+            <span class="planned-chip"><svg><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>next weekend</span>
+            <div class="actions">
+              <div class="heart on"><svg><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>2</div>
+              <div class="bolt"><svg><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="intent">
+        <div class="img broken"><svg style="width:22px;height:22px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div class="body">
+          <div class="site">share.google</div>
+          <div class="title">Bob's Bar</div>
+          <div class="broken-banner">
+            <svg style="color:var(--cp)"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span class="msg">Couldn't load a preview when you saved this.</span>
+            <button class="refresh-btn"><svg><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Retry</button>
+          </div>
+          <div class="meta-row">
+            <span class="badge saved">Saved</span>
+          </div>
+        </div>
+      </div>
+      <div class="intent">
+        <div class="img maps"><svg style="width:22px;height:22px"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <div class="body">
+          <div class="site">Google Maps</div>
+          <div class="title">Paris Panini — Indiranagar</div>
+          <div class="meta-row">
+            <span class="badge saved">Saved</span>
+            <span class="planned-chip"><svg><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>after exams</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="col-label">Payoff: boost prompt before Best Pick / Spin</div>
+    <div class="phone">
+      <div class="payoff">
+        <h1>What are you doing<br><em>today?</em></h1>
+        <p>You're meeting Aanya. Time to pick.</p>
+
+        <div class="boost-prompt">
+          <div class="bp-head"><svg style="width:16px;height:16px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Feeling anything in particular?</div>
+          <div class="bp-sub">Quick-tap the ones you're in the mood for — it bumps them up the pick.</div>
+          <div class="bp-grid">
+            <div class="bp-row"><div class="bp-thumb film"><svg style="width:16px;height:16px"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/></svg></div><div class="bp-title">Dune: Part Two</div><div class="bp-boost on"><svg style="width:13px;height:13px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div></div>
+            <div class="bp-row"><div class="bp-thumb"><svg style="width:16px;height:16px"><path d="M3 2v7c0 1.1.9 2 2 2s2-.9 2-2V2"/><line x1="5" y1="11" x2="5" y2="22"/><path d="M19 2v4c0 2-2 3-2 3v13"/><path d="M15 2v4c0 2 2 3 2 3"/></svg></div><div class="bp-title">Bob's Bar</div><div class="bp-boost"><svg style="width:13px;height:13px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div></div>
+            <div class="bp-row"><div class="bp-thumb maps"><svg style="width:16px;height:16px"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div><div class="bp-title">Paris Panini — Indiranagar</div><div class="bp-boost on"><svg style="width:13px;height:13px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div></div>
+          </div>
+        </div>
+
+        <div class="bp-actions">
+          <button class="btn-primary"><svg style="color:#fff;width:16px;height:16px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Best Pick</button>
+          <button class="btn-ghost"><svg><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>Spin the Wheel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div style="font-size:13px;color:var(--txt-m);max-width:560px;text-align:center;line-height:1.6">
+The boost prompt appears only when ≥2 shortlisted intents have NO active boosts (so it doesn't nag you on repeat visits). One-tap, instant feedback — boosts then weight the Best Pick algorithm as designed.
+</div>
+</body>
+</html>

@@ -6,13 +6,13 @@ import { Icon } from "@/components/Sprite";
 import { IntentPreview, NavBar, Spinner } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
-import type { CircleDetail, SmartPick, SpinItem } from "@/lib/types";
+import type { CircleDetail, Intent, SmartPick, SpinItem } from "@/lib/types";
 
 export default function PayoffPage() {
   const ready = useAuth();
   const { id } = useParams<{ id: string }>();
   const [circle, setCircle] = useState<CircleDetail | null>(null);
-  const [shortlistCount, setShortlistCount] = useState<number | null>(null);
+  const [shortlist, setShortlist] = useState<Intent[] | null>(null);
   const [pick, setPick] = useState<SmartPick | null>(null);
   const [spinItems, setSpinItems] = useState<SpinItem[] | null>(null);
   const [spinning, setSpinning] = useState(false);
@@ -20,11 +20,24 @@ export default function PayoffPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const reloadShortlist = () => api.intents(id, { shortlist: true }).then(setShortlist);
   useEffect(() => {
     if (!ready) return;
     api.circle(id).then(setCircle);
-    api.intents(id, { shortlist: true }).then((l) => setShortlistCount(l.length));
+    reloadShortlist();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, id]);
+
+  function toggleBoost(intent: Intent) {
+    setShortlist((prev) => prev?.map((i) => i.id === intent.id ? { ...i, boosted_by_me: !i.boosted_by_me } : i) ?? prev);
+    api.boost(intent.id).catch(() => reloadShortlist());
+  }
+
+  const shortlistCount = shortlist?.length ?? null;
+  const showBoostPrompt =
+    shortlist != null &&
+    shortlist.length >= 2 &&
+    shortlist.every((i) => !i.boosted_by_me);
 
   async function bestPick() {
     setBusy(true);
@@ -85,7 +98,43 @@ export default function PayoffPage() {
         )}
       </div>
 
-      <div className="mt-2 flex flex-col gap-3">
+      {showBoostPrompt && (
+        <div className="mt-3 rounded-[var(--r)] p-4"
+          style={{
+            background: "linear-gradient(135deg, rgba(234,165,0,.07), rgba(234,165,0,.02))",
+            border: "1px dashed rgba(234,165,0,.30)",
+          }}>
+          <div className="flex items-center gap-2 text-[13px] font-bold" style={{ color: "#B89000" }}>
+            <Icon name="zap" size="sm" />
+            Feeling anything in particular?
+          </div>
+          <p className="mb-3 mt-0.5 text-[11px]" style={{ color: "var(--txt-m)" }}>
+            Quick-tap the ones you're in the mood for — it bumps them up the pick.
+          </p>
+          <div className="flex flex-col gap-2">
+            {shortlist!.map((i) => (
+              <button key={i.id} onClick={() => toggleBoost(i)}
+                className="flex items-center gap-2.5 rounded-[var(--rs)] p-2 text-left"
+                style={{ background: "var(--glass-lo)", border: "1px solid var(--brd-s)" }}>
+                <div className="h-9 w-9 shrink-0 overflow-hidden rounded-[10px]" style={{ background: "var(--glass)" }}>
+                  <IntentPreview intent={i} height={36} />
+                </div>
+                <div className="min-w-0 flex-1 truncate text-[13px] font-semibold">{i.title}</div>
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                  style={{
+                    background: i.boosted_by_me ? "rgba(234,165,0,.22)" : "rgba(234,165,0,.10)",
+                    border: `1.5px solid rgba(234,165,0,${i.boosted_by_me ? ".55" : ".28"})`,
+                    color: i.boosted_by_me ? "#E0A800" : "rgba(200,160,0,.85)",
+                  }}>
+                  <Icon name="zap" size="sm" />
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-4 flex flex-col gap-3">
         <button onClick={bestPick} disabled={busy} className="btn-primary w-full py-4 text-[15px] disabled:opacity-60">
           <Icon name="target" />
           Best Pick

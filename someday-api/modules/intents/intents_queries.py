@@ -25,6 +25,7 @@ LIST_INTENTS = """
       AND i.status = 1
       AND (:task_status  IS NULL OR i.task_status = :task_status)
       AND (:category     IS NULL OR i.category    = :category)
+      AND (:tag          IS NULL OR :tag = ANY(i.tags))
     GROUP BY i.id
     ORDER BY i.created_at DESC
 """

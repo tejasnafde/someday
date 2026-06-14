@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, File, UploadFile
+from pydantic import BaseModel
 
 from app_util.log_util import infologger
 from common_helper.auth_helper import jwt_required
@@ -76,4 +77,35 @@ async def join_circle(token: str, current_user: dict = Depends(jwt_required)):
 async def leave_circle(circle_id: str, current_user: dict = Depends(jwt_required)):
     infologger.info(f"POST /circles/{circle_id}/leave | user_id={current_user['sub']}")
     status, result = handler.leave_circle(circle_id, current_user["sub"])
+    return create_response(status, result)
+
+
+class RoleRequest(BaseModel):
+    role: str  # admin | member | owner
+
+
+@router.patch("/{circle_id}/members/{target_id}")
+@log_timing("PATCH /circles/:id/members/:user_id")
+async def set_member_role(circle_id: str, target_id: str, request: RoleRequest,
+                          current_user: dict = Depends(jwt_required)):
+    infologger.info(
+        f"PATCH /circles/{circle_id}/members/{target_id} | actor={current_user['sub']} role={request.role}"
+    )
+    status, result = handler.set_member_role(circle_id, current_user["sub"], target_id, request.role)
+    return create_response(status, result)
+
+
+@router.delete("/{circle_id}/members/{target_id}")
+@log_timing("DELETE /circles/:id/members/:user_id")
+async def remove_member(circle_id: str, target_id: str, current_user: dict = Depends(jwt_required)):
+    infologger.info(f"DELETE /circles/{circle_id}/members/{target_id} | actor={current_user['sub']}")
+    status, result = handler.remove_member(circle_id, current_user["sub"], target_id)
+    return create_response(status, result)
+
+
+@router.get("/{circle_id}/tags")
+@log_timing("GET /circles/:id/tags")
+async def list_tags(circle_id: str, current_user: dict = Depends(jwt_required)):
+    infologger.info(f"GET /circles/{circle_id}/tags | user_id={current_user['sub']}")
+    status, result = handler.list_tags(circle_id, current_user["sub"])
     return create_response(status, result)

@@ -83,3 +83,38 @@ def assert_member(db, circle_id: str, user_id: str) -> bool:
     if not rows:
         raise ValueError(f"user {user_id} is not a member of circle {circle_id}")
     return True
+
+
+def get_member_role(db, circle_id: str, user_id: str) -> str | None:
+    rows = db.execute_query_with_value(q.GET_MEMBER_ROLE, {"circle_id": circle_id, "user_id": user_id})
+    return rows[0]["role"] if rows else None
+
+
+def can_manage_members(role: str | None) -> bool:
+    return role in {"owner", "admin"}
+
+
+def set_member_role(db, circle_id: str, target_user_id: str, role: str) -> dict | None:
+    infologger.info(f"circles_helper.set_member_role | circle_id={circle_id} target={target_user_id} role={role}")
+    return db.execute_query_with_value_returning(
+        q.SET_MEMBER_ROLE, {"circle_id": circle_id, "target_user_id": target_user_id, "role": role}
+    ) or None
+
+
+def remove_member(db, circle_id: str, target_user_id: str) -> None:
+    infologger.info(f"circles_helper.remove_member | circle_id={circle_id} target={target_user_id}")
+    db.execute_query_with_value_without_output(
+        q.REMOVE_MEMBER, {"circle_id": circle_id, "target_user_id": target_user_id}
+    )
+
+
+def set_owner(db, circle_id: str, new_owner_id: str) -> None:
+    infologger.info(f"circles_helper.set_owner | circle_id={circle_id} new_owner={new_owner_id}")
+    db.execute_query_with_value_without_output(
+        q.SET_CIRCLE_OWNER, {"circle_id": circle_id, "new_owner_id": new_owner_id}
+    )
+
+
+def list_tags(db, circle_id: str) -> list[str]:
+    rows = db.execute_query_with_value(q.LIST_CIRCLE_TAGS, {"circle_id": circle_id})
+    return [r["tag"] for r in rows]
