@@ -19,6 +19,7 @@ async def list_intents(
     current_user: dict = Depends(jwt_required),
     task_status: str | None = Query(default=None),
     category:    str | None = Query(default=None),
+    tag:         str | None = Query(default=None),
     shortlist:   bool       = Query(default=False),
 ):
     infologger.info(
@@ -26,7 +27,7 @@ async def list_intents(
         f"task_status={task_status} category={category} shortlist={shortlist}"
     )
     status, result = handler.list_intents(
-        circle_id, current_user["sub"], task_status, category, shortlist
+        circle_id, current_user["sub"], task_status, category, tag, shortlist
     )
     return create_response(status, result)
 

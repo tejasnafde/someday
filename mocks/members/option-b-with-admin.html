@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Members — Option B with admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg-a:#101010;--bg-b:#131313;--bg-c:#0E0E0E;--glass:rgba(22,22,22,.80);--glass-hi:rgba(30,30,30,.92);--glass-lo:rgba(18,18,18,.42);--glass-nav:rgba(12,12,12,.90);--brd:rgba(255,255,255,.07);--brd-s:rgba(255,255,255,.04);--brd-h:rgba(255,255,255,.11);--txt:#EEE;--txt-m:#888;--txt-l:#444;--acc:#9B8DC4;--acc-l:rgba(155,141,196,.11);--cp:#E8607A;--cg:#2DBF8A;--cb:#6B8FFF}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:linear-gradient(148deg,var(--bg-a),var(--bg-b) 50%,var(--bg-c));min-height:100vh;font-family:'DM Sans',sans-serif;color:var(--txt);padding:36px 20px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.label{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--txt-m)}
+.row{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+.phone{width:392px;height:780px;background:var(--bg-a);border:1px solid var(--brd-h);border-radius:32px;position:relative;overflow:hidden}
+.phone-label{text-align:center;font-size:11px;color:var(--txt-l);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+
+.icon{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.icon-sm{width:12px;height:12px;stroke-width:2}
+.icon-lg{width:18px;height:18px}
+.icon-xl{width:24px;height:24px}
+
+.nav{position:sticky;top:0;display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--glass-nav);backdrop-filter:blur(18px) saturate(155%);border-bottom:1px solid var(--brd-s);z-index:10}
+.iconbtn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--glass);border:1px solid var(--brd-h);color:var(--txt-m);flex-shrink:0}
+.head-text{flex:1;min-width:0}
+.title{font-family:'Lora',serif;font-weight:600;font-size:17px}
+.sub{font-size:11px;color:var(--txt-l);margin-top:1px}
+
+.body{padding:8px 20px 24px}
+.hero{display:flex;align-items:center;gap:14px;padding:14px;background:var(--glass);border:1px solid var(--brd);border-radius:20px;margin-bottom:18px}
+.cicon{width:56px;height:56px;border-radius:18px;background:rgba(232,96,122,.13);color:var(--cp);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hero-name{font-family:'Lora',serif;font-size:18px;font-weight:600}
+.hero-meta{font-size:12px;color:var(--txt-m);margin-top:2px}
+
+.sec{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--txt-l);margin-bottom:10px}
+
+.member{display:flex;align-items:center;gap:12px;padding:12px;background:var(--glass);border:1px solid var(--brd);border-radius:14px;margin-bottom:8px}
+.member.me{border-color:rgba(155,141,196,.30)}
+.mav{width:44px;height:44px;border-radius:50%;background:var(--cp);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;flex-shrink:0}
+.mav.acc{background:var(--acc)}.mav.cg{background:var(--cg)}.mav.cb{background:var(--cb)}
+.minfo{flex:1;min-width:0}
+.mname{font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tag{font-size:9px;padding:2px 7px;border-radius:7px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.tag.owner{background:var(--acc-l);color:var(--acc)}
+.tag.admin{background:rgba(45,191,138,.13);color:var(--cg)}
+.tag.you{background:var(--glass-lo);color:var(--txt-m);border:1px solid var(--brd-s)}
+.memail{font-size:12px;color:var(--txt-m);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kebab{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--glass-lo);color:var(--txt-m);border:1px solid var(--brd-s);flex-shrink:0}
+
+.invite-card{margin-top:18px;padding:16px;background:linear-gradient(135deg,rgba(155,141,196,.10),rgba(189,176,224,.05));border:1px solid rgba(155,141,196,.22);border-radius:20px}
+.invite-title{font-family:'Lora',serif;font-size:16px;font-weight:600;margin-bottom:4px}
+.invite-sub{font-size:12px;color:var(--txt-m);margin-bottom:12px}
+.invite-link{background:var(--glass-lo);border:1px solid var(--brd-s);border-radius:10px;padding:9px 12px;font-size:11px;color:var(--txt-m);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:10px;font-family:monospace}
+.invite-cta{width:100%;padding:11px;border-radius:12px;background:linear-gradient(135deg,var(--acc),#BDB0E0);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;gap:8px;border:none}
+
+.menu{display:flex;justify-content:center;gap:28px;margin-top:24px;font-size:12px;color:var(--txt-l)}
+.menu-item{display:flex;align-items:center;gap:6px}
+.menu-item.danger{color:var(--cp)}
+
+/* Action sheet */
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;background:var(--glass-hi);backdrop-filter:blur(18px);border-top-left-radius:24px;border-top-right-radius:24px;border:1px solid var(--brd);border-bottom:none;padding:18px 20px 24px}
+.sheet-grab{width:36px;height:4px;border-radius:2px;background:var(--brd-h);margin:0 auto 16px}
+.sheet-who{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--brd-s)}
+.action{display:flex;align-items:center;gap:14px;padding:14px 10px;border-radius:12px;font-size:14px;font-weight:500}
+.action svg{color:var(--txt-m)}
+.action.danger{color:var(--cp)}
+.action.danger svg{color:var(--cp)}
+.action-sub{font-size:11px;color:var(--txt-l);margin-top:2px;font-weight:400}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="i-log-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/></symbol>
+    <symbol id="i-user-plus" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></symbol>
+    <symbol id="i-user-x" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></symbol>
+  </defs>
+</svg>
+
+<div class="label">Option B + admin role + member actions</div>
+<div class="row">
+  <div>
+    <div class="phone-label">Members page (owner's view)</div>
+    <div class="phone">
+      <div class="nav">
+        <div class="iconbtn"><svg class="icon"><use href="#i-arrow-left"/></svg></div>
+        <div class="head-text"><div class="title">Members</div><div class="sub">Tejas + Aanya · 3 people</div></div>
+      </div>
+      <div class="body">
+        <div class="hero">
+          <div class="cicon"><svg class="icon icon-xl"><use href="#i-eye"/></svg></div>
+          <div><div class="hero-name">Tejas + Aanya</div><div class="hero-meta">Started by you on Jun 9 · 47 ideas</div></div>
+        </div>
+        <div class="sec">People</div>
+        <div class="member me">
+          <div class="mav">T</div>
+          <div class="minfo">
+            <div class="mname">Tejas <span class="tag owner">Owner</span> <span class="tag you">You</span></div>
+            <div class="memail">nafdetejas@gmail.com</div>
+          </div>
+        </div>
+        <div class="member">
+          <div class="mav acc">A</div>
+          <div class="minfo">
+            <div class="mname">Aanya <span class="tag admin">Admin</span></div>
+            <div class="memail">aanya@example.com</div>
+          </div>
+          <div class="kebab"><svg class="icon"><use href="#i-more"/></svg></div>
+        </div>
+        <div class="member">
+          <div class="mav cg">V</div>
+          <div class="minfo">
+            <div class="mname">Virendra</div>
+            <div class="memail">virenthakur023@gmail.com</div>
+          </div>
+          <div class="kebab"><svg class="icon"><use href="#i-more"/></svg></div>
+        </div>
+        <div class="invite-card">
+          <div class="invite-title">Bring someone in</div>
+          <div class="invite-sub">Anyone with the link can join.</div>
+          <div class="invite-link">someday-web-gamma.vercel.app/join/8ca0fe…</div>
+          <button class="invite-cta"><svg class="icon"><use href="#i-copy"/></svg>Copy invite link</button>
+        </div>
+        <div class="menu">
+          <div class="menu-item"><svg class="icon"><use href="#i-log-out"/></svg>Leave</div>
+          <div class="menu-item danger"><svg class="icon"><use href="#i-trash"/></svg>Delete circle</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="phone-label">Kebab → actions (owner/admin)</div>
+    <div class="phone">
+      <div class="nav">
+        <div class="iconbtn"><svg class="icon"><use href="#i-arrow-left"/></svg></div>
+        <div class="head-text"><div class="title">Members</div><div class="sub">Tejas + Aanya · 3 people</div></div>
+      </div>
+      <div class="body" style="opacity:.30">
+        <div class="hero"><div class="cicon"><svg class="icon icon-xl"><use href="#i-eye"/></svg></div><div><div class="hero-name">Tejas + Aanya</div><div class="hero-meta">47 ideas</div></div></div>
+        <div class="sec">People</div>
+      </div>
+      <div class="scrim">
+        <div class="sheet">
+          <div class="sheet-grab"></div>
+          <div class="sheet-who">
+            <div class="mav cg">V</div>
+            <div><div style="font-weight:700;font-size:15px">Virendra</div><div style="font-size:12px;color:var(--txt-m)">virenthakur023@gmail.com</div></div>
+          </div>
+          <div class="action">
+            <svg class="icon icon-lg"><use href="#i-user-plus"/></svg>
+            <div><div>Make admin</div><div class="action-sub">Can manage ideas + members. Can't delete the circle.</div></div>
+          </div>
+          <div class="action danger">
+            <svg class="icon icon-lg"><use href="#i-user-x"/></svg>
+            <div>Remove from circle</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div style="font-size:13px;color:var(--txt-m);max-width:560px;text-align:center;line-height:1.6;margin-top:6px">
+Three roles: Owner (one per circle, full control + delete), Admin (manage ideas + promote/demote/remove members), Member (default). Admins can act on members but not on each other or the owner.
+</div>
+</body>
+</html>

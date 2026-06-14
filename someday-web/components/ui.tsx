@@ -153,7 +153,40 @@ export function IntentPreview({ intent, height = 106 }: { intent: Pick<Intent, "
   );
 }
 
-export function IntentCard({ intent, onReact, onBoost }: { intent: Intent; onReact?: () => void; onBoost?: () => void }) {
+function RetryPreviewBanner({ intentId, onRetry }: { intentId: string; onRetry: (id: string) => Promise<void> | void }) {
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const [err, setErr] = useState(false);
+  async function retry(e: React.MouseEvent) {
+    e.preventDefault(); e.stopPropagation();
+    setBusy(true); setErr(false);
+    try { await onRetry(intentId); setDone(true); } catch { setErr(true); }
+    finally { setBusy(false); }
+  }
+  if (done) return null;
+  return (
+    <div className="mt-2.5 flex items-center gap-2 rounded-[var(--rs)] px-2.5 py-2"
+      style={{ background: "var(--cp-l)", border: "1px dashed var(--cp)44" }}>
+      <span style={{ color: "var(--cp)" }}><Icon name="x" size="sm" /></span>
+      <span className="flex-1 text-[11px]" style={{ color: "var(--cp)" }}>
+        {err ? "Still couldn't load a preview." : "No preview when this was saved."}
+      </span>
+      <button onClick={retry} disabled={busy}
+        className="rounded-md px-2 py-1 text-[11px] font-bold disabled:opacity-50"
+        style={{ background: "var(--glass)", color: "var(--cp)", border: "1px solid var(--cp)44" }}>
+        {busy ? "Loading…" : "Retry"}
+      </button>
+    </div>
+  );
+}
+
+export function IntentCard({ intent, onReact, onBoost, onRetryPreview }: {
+  intent: Intent;
+  onReact?: () => void;
+  onBoost?: () => void;
+  onRetryPreview?: (id: string) => Promise<void> | void;
+}) {
+  const previewMissing = !!intent.url && !intent.link_meta?.title;
   return (
     <div className="overflow-hidden" style={{ borderRadius: "var(--r)", boxShadow: "var(--shc)" }}>
       <Link href={`/intents/${intent.id}`}>
@@ -168,8 +201,20 @@ export function IntentCard({ intent, onReact, onBoost }: { intent: Intent; onRea
           )}
           <div className="font-serif text-sm font-semibold leading-snug">{intent.title}</div>
         </Link>
-        <div className="mt-2.5 flex items-center justify-between">
-          <StatusBadge status={intent.task_status} />
+        {previewMissing && onRetryPreview && (
+          <RetryPreviewBanner intentId={intent.id} onRetry={onRetryPreview} />
+        )}
+        <div className="mt-2.5 flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <StatusBadge status={intent.task_status} />
+            {intent.planned_for && (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                style={{ background: "var(--sp)", color: "var(--sp-t)", border: "1px solid var(--sp-t)33" }}>
+                <Icon name="clock" size="sm" />
+                {intent.planned_for.length > 18 ? intent.planned_for.slice(0, 18) + "…" : intent.planned_for}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={onReact}
