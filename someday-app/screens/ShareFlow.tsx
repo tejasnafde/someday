@@ -9,7 +9,7 @@ export function ShareFlow({ url, text, onDone }: { url: string | null; text: str
   const [meta, setMeta] = useState<LinkMeta | null>(null);
   const textTitle = url ? text.replace(url, "").trim().slice(0, 120) : text.slice(0, 120);
   const [title, setTitle] = useState(url ? textTitle : textTitle);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
@@ -17,7 +17,7 @@ export function ShareFlow({ url, text, onDone }: { url: string | null; text: str
   useEffect(() => {
     api.circles().then((c) => {
       setCircles(c);
-      if (c.length === 1) setSelected(c[0].id);
+      if (c.length === 1) setSelected([c[0].id]);
     }).catch((e) => setError(e.message));
     if (url) {
       api.unfurl(url).then((m) => {
@@ -29,11 +29,14 @@ export function ShareFlow({ url, text, onDone }: { url: string | null; text: str
   }, [url]);
 
   async function save() {
-    if (!selected || !title.trim()) return;
+    if (!selected.length || !title.trim()) return;
     setBusy(true);
     setError("");
     try {
-      await api.createIntent(selected, { title: title.trim(), url: url ?? undefined });
+      // ponytail: serial fan-out (N=circles per share, usually 1–3). Parallel via Promise.all if it ever stings.
+      for (const cid of selected) {
+        await api.createIntent(cid, { title: title.trim(), url: url ?? undefined });
+      }
       setSaved(true);
       setTimeout(onDone, 1200);
     } catch (e) {
@@ -86,43 +89,60 @@ export function ShareFlow({ url, text, onDone }: { url: string | null; text: str
           No circles yet — create one on the web app first.
         </Text>
       ) : (
-        circles.map((c) => (
-          <TouchableOpacity
-            key={c.id}
-            onPress={() => setSelected(c.id)}
-            style={{
-              backgroundColor: selected === c.id ? t.accL : t.card,
-              borderColor: selected === c.id ? t.acc : t.brd,
-              borderWidth: 1.5,
-              borderRadius: 14,
-              padding: 15,
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ color: t.txt, fontSize: 15, fontWeight: "600" }}>{c.name}</Text>
-            <Text style={{ color: t.txtM, fontSize: 12 }}>
-              {c.member_count} {c.member_count === 1 ? "member" : "members"}
-            </Text>
-          </TouchableOpacity>
-        ))
+        circles.map((c) => {
+          const on = selected.includes(c.id);
+          return (
+            <TouchableOpacity
+              key={c.id}
+              onPress={() => setSelected((s) => on ? s.filter((x) => x !== c.id) : [...s, c.id])}
+              style={{
+                backgroundColor: on ? t.accL : t.card,
+                borderColor: on ? t.acc : t.brd,
+                borderWidth: 1.5,
+                borderRadius: 14,
+                padding: 15,
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
+                <View style={{
+                  width: 22, height: 22, borderRadius: 6,
+                  borderWidth: 2, borderColor: on ? t.acc : t.brd,
+                  backgroundColor: on ? t.acc : "transparent",
+                  alignItems: "center", justifyContent: "center",
+                }}>
+                  {on && <Text style={{ color: "#fff", fontSize: 14, fontWeight: "900", lineHeight: 16 }}>✓</Text>}
+                </View>
+                <Text style={{ color: t.txt, fontSize: 15, fontWeight: "600", flex: 1 }} numberOfLines={1}>{c.name}</Text>
+              </View>
+              <Text style={{ color: t.txtM, fontSize: 12 }}>
+                {c.member_count} {c.member_count === 1 ? "member" : "members"}
+              </Text>
+            </TouchableOpacity>
+          );
+        })
       )}
 
       {error ? <Text style={{ color: t.pink, fontSize: 13 }}>{error}</Text> : null}
 
       <TouchableOpacity
-        disabled={busy || !selected || !title.trim()}
+        disabled={busy || !selected.length || !title.trim()}
         onPress={save}
         style={{
           backgroundColor: t.acc,
           borderRadius: 14,
           padding: 16,
           alignItems: "center",
-          opacity: busy || !selected || !title.trim() ? 0.5 : 1,
+          opacity: busy || !selected.length || !title.trim() ? 0.5 : 1,
         }}
       >
-        {busy ? <ActivityIndicator color="#fff" /> : <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Save to Circle</Text>}
+        {busy ? <ActivityIndicator color="#fff" /> : (
+          <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>
+            {selected.length > 1 ? `Save to ${selected.length} circles` : "Save to Circle"}
+          </Text>
+        )}
       </TouchableOpacity>
 
       <TouchableOpacity onPress={onDone} style={{ alignItems: "center", padding: 6 }}>
