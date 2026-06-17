@@ -1,6 +1,7 @@
 from app_util.db_util import DBUtil
 from app_util.log_util import infologger, errorlogger
 from common_helper.decorators import log_timing
+from common_helper.storage_helper import upload_public_image
 from modules.circles import circles_helper as ch
 from modules.intents import intents_helper as h
 from schemas.intents_schema import CreateIntentRequest, UpdateIntentRequest
@@ -93,6 +94,19 @@ class IntentsHandler(DBUtil):
         if not row:
             return 404, "No URL on this intent or no preview available"
         return 200, row
+
+    @log_timing("intents_handler.upload_memory_photo")
+    def upload_memory_photo(self, intent_id: str, content: bytes, content_type: str) -> tuple[int, dict | str]:
+        import uuid
+        infologger.info(f"IntentsHandler.upload_memory_photo | intent_id={intent_id} bytes={len(content)}")
+        ext = {"image/webp": "webp", "image/jpeg": "jpg", "image/png": "png"}.get(content_type)
+        if not ext:
+            return 400, "Image must be webp, jpeg, or png"
+        path = f"{intent_id}/{uuid.uuid4().hex}.{ext}"
+        url = upload_public_image("memories", path, content, content_type)
+        if not url:
+            return 502, "Upload failed"
+        return 200, {"url": url}
 
     @log_timing("intents_handler.toggle_boost")
     def toggle_boost(self, intent_id: str, user_id: str) -> tuple[int, dict]:
