@@ -9,6 +9,12 @@ const lora = Lora({ subsets: ["latin"], variable: "--font-lora" });
 export const metadata: Metadata = {
   title: "Someday",
   description: "For all the things you'll do together someday.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Someday",
+  },
 };
 
 const themeInit = `(function(){var t=localStorage.getItem("theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.setAttribute("data-theme","dark")})()`;
@@ -18,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className={`${dmSans.variable} ${lora.variable}`} suppressHydrationWarning>
         <Sprite />
