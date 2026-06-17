@@ -1,15 +1,17 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Query
 
 from app_util.log_util import infologger
 from common_helper.auth_helper import jwt_required
 from common_helper.decorators import log_timing
 from common_helper.response_helper import create_response
+from common_helper.notify import Notify
 from handler.intents_handler import IntentsHandler
 from handler.unfurl_handler import fetch_link_meta
 from schemas.intents_schema import CreateIntentRequest, UpdateIntentRequest
 
 router = APIRouter()
 handler = IntentsHandler()
+notify = Notify()
 
 
 @router.get("/circles/{circle_id}/intents")
@@ -37,6 +39,7 @@ async def list_intents(
 async def create_intent(
     circle_id: str,
     request: CreateIntentRequest,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(jwt_required),
 ):
     infologger.info(
@@ -48,6 +51,8 @@ async def create_intent(
         link_meta = fetch_link_meta(request.url)
 
     status, result = handler.create_intent(circle_id, request, current_user["sub"], link_meta)
+    if status == 201:
+        background_tasks.add_task(notify.intent_created, result["id"], current_user["sub"])
     return create_response(status, result)
 
 
@@ -84,9 +89,15 @@ async def delete_intent(intent_id: str, current_user: dict = Depends(jwt_require
 
 @router.post("/intents/{intent_id}/react")
 @log_timing("POST /intents/:id/react")
-async def toggle_reaction(intent_id: str, current_user: dict = Depends(jwt_required)):
+async def toggle_reaction(
+    intent_id: str,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(jwt_required),
+):
     infologger.info(f"POST /intents/{intent_id}/react | user_id={current_user['sub']}")
     status, result = handler.toggle_reaction(intent_id, current_user["sub"])
+    if result.get("reacted"):
+        background_tasks.add_task(notify.reaction_added, intent_id, current_user["sub"])
     return create_response(status, result)
 
 
@@ -100,7 +111,13 @@ async def refresh_preview(intent_id: str, current_user: dict = Depends(jwt_requi
 
 @router.post("/intents/{intent_id}/boost")
 @log_timing("POST /intents/:id/boost")
-async def toggle_boost(intent_id: str, current_user: dict = Depends(jwt_required)):
+async def toggle_boost(
+    intent_id: str,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(jwt_required),
+):
     infologger.info(f"POST /intents/{intent_id}/boost | user_id={current_user['sub']}")
     status, result = handler.toggle_boost(intent_id, current_user["sub"])
+    if result.get("boosted"):
+        background_tasks.add_task(notify.boost_added, intent_id, current_user["sub"])
     return create_response(status, result)

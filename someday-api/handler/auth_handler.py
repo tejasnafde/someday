@@ -16,6 +16,10 @@ UPSERT_USER = """
     RETURNING id, email, display_name, avatar_url
 """
 
+SET_PUSH_TOKEN = """
+    UPDATE public.users SET push_token = :token WHERE id = :user_id AND status = 1
+"""
+
 GET_USER = """
     SELECT id, email, display_name, avatar_url, tour_state
     FROM public.users
@@ -112,6 +116,12 @@ class AuthHandler(DBUtil):
         except httpx.HTTPError as exc:
             errorlogger.error(f"AuthHandler.webview_session | supabase error | {exc}", exc_info=True)
             return 502, "Could not mint webview session"
+
+    @log_timing("auth_handler.set_push_token")
+    def set_push_token(self, user_id: str, token: str | None) -> tuple[int, str]:
+        infologger.info(f"AuthHandler.set_push_token | user_id={user_id} set={'yes' if token else 'cleared'}")
+        self.execute_query_with_value_without_output(SET_PUSH_TOKEN, {"user_id": user_id, "token": token})
+        return 200, "ok"
 
     @log_timing("auth_handler.get_me")
     def get_me(self, user_id: str) -> tuple[int, dict | str]:
