@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ActivityIndicator, Keyboard, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from "react-native";
+import { ActivityIndicator, Keyboard, Linking, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from "react-native";
 import Constants from "expo-constants";
 import { api } from "../lib/api";
 import { supabase } from "../lib/supabase";
@@ -12,6 +12,18 @@ export function SignIn() {
   const [stage, setStage] = useState<"email" | "code">("email");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  async function signInWithGoogle() {
+    setBusy(true);
+    setError("");
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: "someday://", skipBrowserRedirect: true },
+    });
+    setBusy(false);
+    if (error) { setError(error.message); return; }
+    if (data.url) await Linking.openURL(data.url);
+  }
 
   async function sendCode() {
     Keyboard.dismiss();
@@ -67,6 +79,27 @@ export function SignIn() {
       <Text style={{ fontSize: 26, color: t.txt, textAlign: "center", marginBottom: 10 }}>
         {stage === "email" ? "Sign in to start saving" : "Enter the code we emailed"}
       </Text>
+
+      {stage === "email" && (
+        <>
+          <TouchableOpacity
+            disabled={busy}
+            onPress={signInWithGoogle}
+            style={{
+              flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
+              backgroundColor: t.card, borderColor: t.brd, borderWidth: 1,
+              borderRadius: 14, padding: 15, opacity: busy ? 0.6 : 1,
+            }}
+          >
+            <Text style={{ color: t.txt, fontWeight: "600", fontSize: 15 }}>Continue with Google</Text>
+          </TouchableOpacity>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <View style={{ flex: 1, height: 1, backgroundColor: t.brd }} />
+            <Text style={{ color: t.txtL, fontSize: 11 }}>or</Text>
+            <View style={{ flex: 1, height: 1, backgroundColor: t.brd }} />
+          </View>
+        </>
+      )}
 
       {stage === "email" ? (
         <TextInput
