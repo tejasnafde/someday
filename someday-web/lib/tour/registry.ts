@@ -96,4 +96,11 @@ export const TOUR_REGISTRY: TourStep[] = [
     title: “Manage the circle”,
     body: “Promote someone to admin, remove a member, or grab the invite link to bring a new person in.”,
   },
+  {
+    id: “intent.memories”,
+    page: “intent”,
+    anchor: “intent-memories”,
+    title: “Your memory lives here”,
+    body: “When you mark something done, you can add a note and photos. A little record of actually doing it.”,
+  },
 ];

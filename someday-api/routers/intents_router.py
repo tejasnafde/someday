@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Query, UploadFile
 
 from app_util.log_util import infologger
 from common_helper.auth_helper import jwt_required
@@ -84,6 +84,19 @@ async def update_intent(
 async def delete_intent(intent_id: str, current_user: dict = Depends(jwt_required)):
     infologger.info(f"DELETE /intents/{intent_id} | user_id={current_user['sub']}")
     status, result = handler.delete_intent(intent_id, current_user["sub"])
+    return create_response(status, result)
+
+
+@router.post("/intents/{intent_id}/photos")
+@log_timing("POST /intents/:id/photos")
+async def upload_memory_photo(
+    intent_id: str,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(jwt_required),
+):
+    infologger.info(f"POST /intents/{intent_id}/photos | user_id={current_user['sub']}")
+    content = await file.read()
+    status, result = handler.upload_memory_photo(intent_id, content, file.content_type or "")
     return create_response(status, result)
 
 
