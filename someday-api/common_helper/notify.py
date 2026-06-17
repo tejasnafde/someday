@@ -50,8 +50,7 @@ CREATOR_RECIPIENT = """
 
 
 class Notify(DBUtil):
-    """Fire-and-forget push fan-out + in-app notification storage.
-    Methods are designed for FastAPI BackgroundTasks."""
+    """Fire-and-forget push fan-out + in-app notification storage for social events."""
 
     def store_notification(self, user_id: str, actor_id: str, intent_id: str, notif_type: str, body: str) -> None:
         try:
