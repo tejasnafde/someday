@@ -1,4 +1,4 @@
-"""Push notification fan-out for social events."""
+"""Push notification fan-out for social events and app releases."""
 
 from app_util.db_util import DBUtil
 from app_util.log_util import infologger
@@ -24,6 +24,10 @@ CIRCLE_PUSH_TARGETS = """
                                   AND u.push_token IS NOT NULL
     CROSS JOIN actor
     WHERE i.id = :intent_id AND i.status = 1
+"""
+
+ALL_PUSH_TOKENS = """
+    SELECT push_token FROM public.users WHERE status = 1 AND push_token IS NOT NULL
 """
 
 # Just the intent creator (if different from actor).
@@ -67,6 +71,14 @@ class Notify(DBUtil):
         r = rows[0]
         actor, title, circle = r["actor_name"], r["intent_title"], r["circle_name"]
         send_push(self, [r["push_token"]], circle, f"{actor} likes '{title}'", f"/intents/{intent_id}")
+
+    def update_released(self, version: str) -> None:
+        infologger.info(f"Notify.update_released | version={version}")
+        rows = self.execute_query_with_value(ALL_PUSH_TOKENS, {})
+        if not rows:
+            return
+        tokens = [r["push_token"] for r in rows]
+        send_push(self, tokens, f"Someday v{version} is ready", "Quick install, no link needed.", "/")
 
     def boost_added(self, intent_id: str, actor_id: str) -> None:
         infologger.info(f"Notify.boost_added | intent_id={intent_id} actor_id={actor_id}")
