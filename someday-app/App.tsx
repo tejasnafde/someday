@@ -1,4 +1,5 @@
 import * as Linking from "expo-linking";
+import * as Notifications from "expo-notifications";
 import { useShareIntent } from "expo-share-intent";
 import * as Updates from "expo-updates";
 import { useEffect, useState, useRef } from "react";
@@ -8,8 +9,19 @@ import { UpdateBanner } from "./components/UpdateBanner";
 import { Home } from "./screens/Home";
 import { ShareFlow } from "./screens/ShareFlow";
 import { SignIn } from "./screens/SignIn";
+import { api } from "./lib/api";
+import { registerForPush } from "./lib/push";
 import { supabase } from "./lib/supabase";
 import { useTheme } from "./lib/theme";
+
+// Show push notifications when the app is in the foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 const INACTIVITY_LIMIT_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
@@ -82,6 +94,27 @@ export default function App() {
       sub.subscription.unsubscribe();
       appStateSub.remove();
     };
+  }, []);
+
+  // Register push token on sign-in; ponytail: null-on-signout skipped — new user overwrites on their sign-in
+  useEffect(() => {
+    if (!signedIn) return;
+    registerForPush().then((token) => {
+      if (token) api.setPushToken(token).catch(() => {});
+    });
+  }, [signedIn]);
+
+  // Route notification taps into the existing nextPath / WebView deep-link plumbing
+  useEffect(() => {
+    Notifications.getLastNotificationResponseAsync().then((res) => {
+      const path = res?.notification.request.content.data?.path as string | undefined;
+      if (path) setPendingPath(path);
+    });
+    const sub = Notifications.addNotificationResponseReceivedListener((res) => {
+      const path = res.notification.request.content.data?.path as string | undefined;
+      if (path) setPendingPath(path);
+    });
+    return () => sub.remove();
   }, []);
 
   const sharedUrl = hasShareIntent

@@ -40,4 +40,6 @@ export const api = {
   unfurl: (url: string) => request<LinkMeta>("POST", "/unfurl", { url }),
   createIntent: (circleId: string, fields: { title: string; url?: string; note?: string }) =>
     request("POST", `/circles/${circleId}/intents`, fields),
+  setPushToken: (token: string | null) =>
+    request("PATCH", "/auth/me/push-token", { token }),
 };
