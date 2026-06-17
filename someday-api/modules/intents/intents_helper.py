@@ -84,7 +84,10 @@ def create_intent(
 
 def update_intent(db, intent_id: str, updates: dict) -> dict | None:
     infologger.info(f"intents_helper.update_intent | intent_id={intent_id} fields={list(updates)}")
-    # SQLAlchemy text() requires every named param to be present even when NULL.
+    # Serialize done_photos list → JSON string for CAST(:done_photos AS jsonb)
+    if isinstance(updates.get("done_photos"), list):
+        updates = {**updates, "done_photos": json.dumps(updates["done_photos"])}
+    # SQLAlchemy text() requires every named param present even when NULL.
     # COALESCE(NULL, col) = existing value, so missing fields are preserved.
     params = {
         "intent_id":   intent_id,
@@ -95,6 +98,8 @@ def update_intent(db, intent_id: str, updates: dict) -> dict | None:
         "tags":        None,
         "task_status": None,
         "planned_for": None,
+        "done_note":   None,
+        "done_photos": None,
         **updates,
     }
     row = db.execute_query_with_value_returning(q.UPDATE_INTENT, params)

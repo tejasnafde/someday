@@ -32,8 +32,10 @@ class UpdateIntentRequest(BaseModel):
     note: Optional[str] = None
     category: Optional[str] = None
     tags: Optional[list[str]] = None
-    task_status: Optional[str] = None
-    planned_for: Optional[str] = None
+    task_status:  Optional[str] = None
+    planned_for:  Optional[str] = None
+    done_note:    Optional[str] = None
+    done_photos:  Optional[list[str]] = None
 
     @field_validator("task_status")
     def status_valid(cls, v: Optional[str]) -> Optional[str]:

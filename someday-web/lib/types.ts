@@ -58,6 +58,8 @@ export interface Intent {
   reaction_count: number;
   boosted_by_me: boolean | number;
   reacted_by_me: boolean | number;
+  done_note: string | null;
+  done_photos: string[] | null;
   created_at: string;
   updated_at: string;
 }

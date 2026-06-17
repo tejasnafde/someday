@@ -13,6 +13,8 @@ LIST_INTENTS = """
         i.task_status,
         i.link_meta,
         i.planned_for,
+        i.done_note,
+        i.done_photos,
         i.created_at::text,
         i.updated_at::text,
         COUNT(DISTINCT r.user_id) FILTER (WHERE r.status = 1) AS reaction_count,
@@ -44,6 +46,8 @@ LIST_INTENTS_SHORTLIST = """
         i.task_status,
         i.link_meta,
         i.planned_for,
+        i.done_note,
+        i.done_photos,
         i.created_at::text,
         i.updated_at::text,
         COUNT(DISTINCT r.user_id) FILTER (WHERE r.status = 1) AS reaction_count,
@@ -73,6 +77,8 @@ GET_INTENT_BY_ID = """
         i.task_status,
         i.link_meta,
         i.planned_for,
+        i.done_note,
+        i.done_photos,
         i.created_at::text,
         i.updated_at::text,
         COUNT(DISTINCT r.user_id) FILTER (WHERE r.status = 1) AS reaction_count,
@@ -95,7 +101,8 @@ INSERT_INTENT = """
     )
     RETURNING
         id, circle_id, created_by, title, url, note, category, tags,
-        task_status, link_meta, planned_for, created_at::text, updated_at::text
+        task_status, link_meta, planned_for, done_note, done_photos,
+        created_at::text, updated_at::text
 """
 
 UPDATE_INTENT = """
@@ -105,12 +112,15 @@ UPDATE_INTENT = """
         note        = COALESCE(:note,        note),
         category    = COALESCE(:category,    category),
         tags        = COALESCE(:tags, tags),
-        task_status = COALESCE(:task_status, task_status),
-        planned_for = COALESCE(:planned_for, planned_for)
+        task_status  = COALESCE(:task_status, task_status),
+        planned_for  = COALESCE(:planned_for, planned_for),
+        done_note    = COALESCE(:done_note, done_note),
+        done_photos  = COALESCE(CAST(:done_photos AS jsonb), done_photos)
     WHERE id = :intent_id AND status = 1
     RETURNING
         id, circle_id, created_by, title, url, note, category, tags,
-        task_status, link_meta, planned_for, created_at::text, updated_at::text
+        task_status, link_meta, planned_for, done_note, done_photos,
+        created_at::text, updated_at::text
 """
 
 SOFT_DELETE_INTENT = """
