@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Icon } from "@/components/Sprite";
+import { Tour } from "@/components/Tour";
 import {
   CircleAvatar,
   MemberDot,
@@ -140,7 +141,7 @@ export default function MembersPage() {
       <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--txt-l)" }}>
         People
       </div>
-      <div className="mb-5 flex flex-col gap-2">
+      <div data-tour="members-list" className="mb-5 flex flex-col gap-2">
         {circle.members.map((m, i) => {
           const acts = actionsFor(m);
           return (
@@ -207,6 +208,8 @@ export default function MembersPage() {
           </button>
         )}
       </div>
+
+      <Tour page="members" />
 
       {sheet && (
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"

@@ -82,6 +82,21 @@ Set up `log_util.py` and decorators **before any feature code**. Every endpoint,
 
 ---
 
+## Tours — non-negotiable
+
+Every new user-facing feature ships with a coachmark tour step. No exceptions.
+
+**Checklist before merging any UI change:**
+
+1. Add `data-tour="<anchor>"` to the feature's target element.
+2. Append a `TourStep` to `TOUR_REGISTRY` in `someday-web/lib/tour/registry.ts` with a **stable, never-reused** id (format: `<page>.<feature>`). IDs are permanent — users' seen state lives server-side against these ids.
+3. If the page doesn't already have `<Tour page="..."/>`, add it and extend `TourPage` in `registry.ts`.
+4. Tour copy follows the same voice as the rest of the app: short, second-person, no filler. One sentence is enough.
+
+**Anchor naming convention:** `<page>-<feature>` e.g. `circle-tags`, `intent-planned`, `members-roles`.
+
+---
+
 ## Git
 
 - **main is protected — no direct pushes, even for admins.** All changes go through a feature branch + PR: `git checkout -b <branch>` → push → `gh pr create` → `gh pr merge --merge`. Zero approvals required, so you can merge your own PR immediately.
