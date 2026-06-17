@@ -17,6 +17,7 @@
     },
     "android": {
       "package": "app.someday.capture",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#101010",
         "foregroundImage": "./assets/android-icon-foreground.png",
