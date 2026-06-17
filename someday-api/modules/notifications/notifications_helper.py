@@ -6,7 +6,7 @@ def get_notifications(db, user_id: str) -> dict:
     infologger.info(f"notifications_helper.get_notifications | user_id={user_id}")
     items = db.execute_query_with_value(q.GET_NOTIFICATIONS, {"user_id": user_id})
     count_rows = db.execute_query_with_value(q.GET_UNSEEN_COUNT, {"user_id": user_id})
-    unseen = int(count_rows[0]["unseen"]) if count_rows else 0
+    unseen = int(count_rows[0]["unseen"])
     return {"unseen": unseen, "items": items}
 
 
