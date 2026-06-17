@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "974343814740",
+    "project_id": "teejayproject",
+    "storage_bucket": "teejayproject.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:974343814740:android:18a31f5c9d681f083e37c1",
+        "android_client_info": {
+          "package_name": "app.someday.capture"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAFcw4aNehZAhReL4sGMCNxtnqQu8NrAXM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
