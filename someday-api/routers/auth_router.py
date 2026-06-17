@@ -13,6 +13,10 @@ router = APIRouter()
 handler = AuthHandler()
 
 
+class PushTokenRequest(BaseModel):
+    token: Optional[str] = None
+
+
 class UpdateMeRequest(BaseModel):
     display_name: Optional[str] = None
     avatar_url: Optional[str] = None
@@ -64,6 +68,15 @@ async def upload_avatar(file: UploadFile = File(...), current_user: dict = Depen
     infologger.info(f"POST /auth/me/avatar | user_id={current_user['sub']} type={file.content_type}")
     content = await file.read()
     status, result = handler.upload_avatar(current_user["sub"], content, file.content_type or "")
+    return create_response(status, result)
+
+
+@router.patch("/me/push-token")
+@log_timing("PATCH /auth/me/push-token")
+async def set_push_token(request: PushTokenRequest, current_user: dict = Depends(jwt_required)):
+    """Register or clear the Expo push token for this device."""
+    infologger.info(f"PATCH /auth/me/push-token | user_id={current_user['sub']} set={'yes' if request.token else 'no'}")
+    status, result = handler.set_push_token(current_user["sub"], request.token)
     return create_response(status, result)
 
 
