@@ -6,7 +6,7 @@
 // Users' seen step ids live server-side (users.tour_state), so anyone who
 // hasn't seen the new step gets a mini-tour of just that step on next visit.
 
-export type TourPage = "dashboard" | "circle" | "intent" | "members";
+export type TourPage = "dashboard" | "circle" | "intent" | "members" | "notifications";
 
 export interface TourStep {
   /** Stable forever — never rename or reuse. */
@@ -102,5 +102,12 @@ export const TOUR_REGISTRY: TourStep[] = [
     anchor: “intent-memories”,
     title: “Your memory lives here”,
     body: “When you mark something done, you can add a note and photos. A little record of actually doing it.”,
+  },
+  {
+    id: “dash.notifications”,
+    page: “dashboard”,
+    anchor: “notifications-bell”,
+    title: “Activity bell”,
+    body: “Circle activity — saves, reactions, boosts — shows up here so you never miss what's happening.”,
   },
 ];

@@ -13,6 +13,7 @@ from routers import (
     webhooks_router,
     circles_router,
     intents_router,
+    notifications_router,
     payoff_router,
     tour_router,
     unfurl_router,
@@ -76,10 +77,11 @@ async def health():
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 
-app.include_router(auth_router.router,    prefix="/auth",    tags=["auth"])
-app.include_router(circles_router.router, prefix="/circles", tags=["circles"])
-app.include_router(intents_router.router, prefix="",         tags=["intents"])
-app.include_router(payoff_router.router,  prefix="",         tags=["payoff"])
-app.include_router(tour_router.router,    prefix="/tour",    tags=["tour"])
-app.include_router(unfurl_router.router,  prefix="/unfurl",  tags=["unfurl"])
-app.include_router(webhooks_router.router, prefix="/webhooks", tags=["webhooks"])
+app.include_router(auth_router.router,          prefix="/auth",    tags=["auth"])
+app.include_router(circles_router.router,       prefix="/circles", tags=["circles"])
+app.include_router(intents_router.router,       prefix="",         tags=["intents"])
+app.include_router(notifications_router.router, prefix="",         tags=["notifications"])
+app.include_router(payoff_router.router,        prefix="",         tags=["payoff"])
+app.include_router(tour_router.router,          prefix="/tour",    tags=["tour"])
+app.include_router(unfurl_router.router,        prefix="/unfurl",  tags=["unfurl"])
+app.include_router(webhooks_router.router,      prefix="/webhooks", tags=["webhooks"])
