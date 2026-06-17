@@ -87,8 +87,10 @@ export const api = {
     circleId: string,
     fields: { title: string; url?: string; note?: string; category?: string; tags?: string[] },
   ) => request<Intent>("POST", `/circles/${circleId}/intents`, fields),
-  updateIntent: (id: string, fields: Partial<Pick<Intent, "title" | "url" | "note" | "category" | "task_status" | "planned_for">> & { tags?: string[] }) =>
+  updateIntent: (id: string, fields: Partial<Pick<Intent, "title" | "url" | "note" | "category" | "task_status" | "planned_for" | "done_note" | "done_photos">> & { tags?: string[] }) =>
     request<Intent>("PATCH", `/intents/${id}`, fields),
+  uploadMemoryPhoto: (intentId: string, file: File) =>
+    upload<{ url: string }>(`/intents/${intentId}/photos`, file, file.name),
   deleteIntent: (id: string) => request<unknown>("DELETE", `/intents/${id}`),
   react: (id: string) => request<{ reacted: boolean }>("POST", `/intents/${id}/react`),
   boost: (id: string) => request<{ boosted: boolean }>("POST", `/intents/${id}/boost`),

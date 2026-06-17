@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Sprite";
 import { Tour } from "@/components/Tour";
 import { CATEGORY_ICONS, IntentPreview, NavBar, Spinner } from "@/components/ui";
@@ -20,6 +20,13 @@ export default function IntentPage() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ title: "", note: "", tags: "", category: null as Category | null, planned_for: "" });
   const [saving, setSaving] = useState(false);
+
+  // Memory sheet
+  const [memorySheet, setMemorySheet] = useState(false);
+  const [memoryNote, setMemoryNote] = useState("");
+  const [memoryPhotos, setMemoryPhotos] = useState<File[]>([]);
+  const [memoryUploading, setMemoryUploading] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(() => {
     api.intent(id).then(setIntent);
@@ -58,8 +65,53 @@ export default function IntentPage() {
   }
 
   function setStatus(s: TaskStatus) {
+    // Intercept transition to "done" to capture a memory
+    if (s === "done" && intent!.task_status !== "done") {
+      setMemoryNote("");
+      setMemoryPhotos([]);
+      setMemorySheet(true);
+      return;
+    }
     setIntent((prev) => (prev ? { ...prev, task_status: s } : prev));
     api.updateIntent(id, { task_status: s }).catch(() => load());
+  }
+
+  async function saveMemory() {
+    setMemoryUploading(true);
+    const urls: string[] = [];
+    for (const file of memoryPhotos) {
+      try {
+        const res = await api.uploadMemoryPhoto(id, file);
+        urls.push(res.url);
+      } catch {
+        // skip failed individual uploads, proceed with the rest
+      }
+    }
+    await api.updateIntent(id, {
+      task_status: "done",
+      done_note: memoryNote.trim() || undefined,
+      done_photos: urls.length > 0 ? urls : undefined,
+    });
+    setMemoryUploading(false);
+    setMemorySheet(false);
+    load();
+  }
+
+  async function skipMemory() {
+    await api.updateIntent(id, { task_status: "done" });
+    setMemorySheet(false);
+    setIntent((prev) => (prev ? { ...prev, task_status: "done" } : prev));
+  }
+
+  function addPhotos(files: FileList | null) {
+    if (!files) return;
+    const remaining = 4 - memoryPhotos.length;
+    if (remaining <= 0) return;
+    setMemoryPhotos((prev) => [...prev, ...Array.from(files).slice(0, remaining)]);
+  }
+
+  function removePhoto(i: number) {
+    setMemoryPhotos((prev) => prev.filter((_, idx) => idx !== i));
   }
 
   function react() {
@@ -88,6 +140,9 @@ export default function IntentPage() {
 
   const label = "mb-2 block text-[11px] font-semibold uppercase tracking-wider";
   const input = "glass w-full rounded-[var(--rs)] px-3.5 py-3 text-sm outline-none";
+  const hasMemory =
+    intent.task_status === "done" &&
+    (intent.done_note || (intent.done_photos && intent.done_photos.length > 0));
 
   if (editing) {
     return (
@@ -245,6 +300,29 @@ export default function IntentPage() {
         </div>
       )}
 
+      {hasMemory && (
+        <div data-tour="intent-memories" className="glass mt-4 rounded-[var(--r)] p-4" style={{ boxShadow: "var(--shc)" }}>
+          <div className="mb-3 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--txt-l)" }}>
+            Memory
+          </div>
+          {intent.done_note && (
+            <p className="font-serif text-sm italic leading-relaxed" style={{ color: "var(--txt-m)" }}>
+              &ldquo;{intent.done_note}&rdquo;
+            </p>
+          )}
+          {intent.done_photos && intent.done_photos.length > 0 && (
+            <div className={`grid gap-2 ${intent.done_note ? "mt-3" : ""}`}
+              style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
+              {intent.done_photos.map((url, i) => (
+                <img key={i} src={url} alt=""
+                  className="aspect-square w-full object-cover"
+                  style={{ borderRadius: "var(--rs)" }} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {intent.tags.length > 0 && (
         <div className="mb-8 mt-4 flex flex-wrap gap-1.5">
           {intent.tags.map((t) => (
@@ -255,7 +333,95 @@ export default function IntentPage() {
           ))}
         </div>
       )}
+
       <Tour page="intent" />
+
+      {/* Done-moment memory sheet */}
+      {memorySheet && (
+        <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,.55)" }}>
+          <div
+            className="glass-hi w-full p-5"
+            style={{
+              borderRadius: "var(--r) var(--r) 0 0",
+              paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 20px)",
+            }}>
+            <div className="mb-0.5 font-serif text-xl font-semibold leading-tight">You did it.</div>
+            <div className="mb-4 text-sm" style={{ color: "var(--txt-m)" }}>
+              How was it? Add a note and some photos.
+            </div>
+
+            <textarea
+              value={memoryNote}
+              onChange={(e) => setMemoryNote(e.target.value)}
+              placeholder="We finally went…"
+              rows={3}
+              className="mb-4 w-full resize-none rounded-[var(--rs)] px-3.5 py-3 text-sm font-serif italic outline-none"
+              style={{ background: "var(--glass-lo)", border: "1px solid var(--brd-s)", color: "var(--txt)" }}
+            />
+
+            {/* Photo grid — up to 4 */}
+            {(memoryPhotos.length > 0 || memoryPhotos.length < 4) && (
+              <div className="mb-4 grid grid-cols-4 gap-2">
+                {memoryPhotos.map((file, i) => (
+                  <div key={i} className="relative aspect-square">
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt=""
+                      className="h-full w-full object-cover"
+                      style={{ borderRadius: "var(--rs)" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(i)}
+                      aria-label="Remove photo"
+                      className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center text-white"
+                      style={{ background: "rgba(0,0,0,.6)", borderRadius: "var(--rs)", fontSize: 11, lineHeight: 1 }}>
+                      &#215;
+                    </button>
+                  </div>
+                ))}
+                {memoryPhotos.length < 4 && (
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    aria-label="Add photo"
+                    className="flex aspect-square items-center justify-center"
+                    style={{
+                      border: "1.5px dashed var(--brd-h)",
+                      borderRadius: "var(--rs)",
+                      color: "var(--txt-l)",
+                    }}>
+                    <Icon name="plus" size="md" />
+                  </button>
+                )}
+              </div>
+            )}
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              className="hidden"
+              onChange={(e) => addPhotos(e.target.files)}
+            />
+
+            <div className="flex gap-2.5">
+              <button
+                onClick={saveMemory}
+                disabled={memoryUploading}
+                className="btn-primary flex-1 py-3 text-sm disabled:opacity-60">
+                {memoryUploading ? "Saving…" : "Save memory"}
+              </button>
+              <button
+                onClick={skipMemory}
+                disabled={memoryUploading}
+                className="btn-ghost px-5 py-3 text-sm disabled:opacity-50">
+                Skip
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
