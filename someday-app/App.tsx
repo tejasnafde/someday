@@ -33,9 +33,16 @@ export default function App() {
   const [pendingPath, setPendingPath] = useState<string | null>(null);
 
   useEffect(() => {
-    const handle = (url: string | null) => {
-      const m = url?.match(/https?:\/\/[^/]+(\/join\/[\w-]+)/);
-      if (m) setPendingPath(m[1]);
+    const handle = async (url: string | null) => {
+      if (!url) return;
+      // Invite link: https://someday-web-gamma.vercel.app/join/TOKEN
+      const inviteMatch = url.match(/https?:\/\/[^/]+(\/join\/[\w-]+)/);
+      if (inviteMatch) { setPendingPath(inviteMatch[1]); return; }
+      // OAuth callback: someday://?code=... (PKCE) or someday://#access_token=...
+      if (url.startsWith("someday://") && (url.includes("code=") || url.includes("access_token="))) {
+        const { error } = await supabase.auth.exchangeCodeForSession(url);
+        if (!error) api.verify().catch(() => {});
+      }
     };
     Linking.getInitialURL().then(handle);
     const sub = Linking.addEventListener("url", (e) => handle(e.url));
