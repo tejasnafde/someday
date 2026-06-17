@@ -21,7 +21,6 @@ export default function IntentPage() {
   const [form, setForm] = useState({ title: "", note: "", tags: "", category: null as Category | null, planned_for: "" });
   const [saving, setSaving] = useState(false);
 
-  // Memory sheet
   const [memorySheet, setMemorySheet] = useState(false);
   const [memoryNote, setMemoryNote] = useState("");
   const [memoryPhotos, setMemoryPhotos] = useState<File[]>([]);
@@ -84,7 +83,7 @@ export default function IntentPage() {
         const res = await api.uploadMemoryPhoto(id, file);
         urls.push(res.url);
       } catch {
-        // skip failed individual uploads, proceed with the rest
+        // continue
       }
     }
     await api.updateIntent(id, {
@@ -336,7 +335,6 @@ export default function IntentPage() {
 
       <Tour page="intent" />
 
-      {/* Done-moment memory sheet */}
       {memorySheet && (
         <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,.55)" }}>
           <div
@@ -359,43 +357,40 @@ export default function IntentPage() {
               style={{ background: "var(--glass-lo)", border: "1px solid var(--brd-s)", color: "var(--txt)" }}
             />
 
-            {/* Photo grid — up to 4 */}
-            {(memoryPhotos.length > 0 || memoryPhotos.length < 4) && (
-              <div className="mb-4 grid grid-cols-4 gap-2">
-                {memoryPhotos.map((file, i) => (
-                  <div key={i} className="relative aspect-square">
-                    <img
-                      src={URL.createObjectURL(file)}
-                      alt=""
-                      className="h-full w-full object-cover"
-                      style={{ borderRadius: "var(--rs)" }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removePhoto(i)}
-                      aria-label="Remove photo"
-                      className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center text-white"
-                      style={{ background: "rgba(0,0,0,.6)", borderRadius: "var(--rs)", fontSize: 11, lineHeight: 1 }}>
-                      &#215;
-                    </button>
-                  </div>
-                ))}
-                {memoryPhotos.length < 4 && (
+            <div className="mb-4 grid grid-cols-4 gap-2">
+              {memoryPhotos.map((file, i) => (
+                <div key={i} className="relative aspect-square">
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    style={{ borderRadius: "var(--rs)" }}
+                  />
                   <button
                     type="button"
-                    onClick={() => photoInputRef.current?.click()}
-                    aria-label="Add photo"
-                    className="flex aspect-square items-center justify-center"
-                    style={{
-                      border: "1.5px dashed var(--brd-h)",
-                      borderRadius: "var(--rs)",
-                      color: "var(--txt-l)",
-                    }}>
-                    <Icon name="plus" size="md" />
+                    onClick={() => removePhoto(i)}
+                    aria-label="Remove photo"
+                    className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center text-white"
+                    style={{ background: "rgba(0,0,0,.6)", borderRadius: "var(--rs)", fontSize: 11, lineHeight: 1 }}>
+                    &#215;
                   </button>
-                )}
-              </div>
-            )}
+                </div>
+              ))}
+              {memoryPhotos.length < 4 && (
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  aria-label="Add photo"
+                  className="flex aspect-square items-center justify-center"
+                  style={{
+                    border: "1.5px dashed var(--brd-h)",
+                    borderRadius: "var(--rs)",
+                    color: "var(--txt-l)",
+                  }}>
+                  <Icon name="plus" size="md" />
+                </button>
+              )}
+            </div>
             <input
               ref={photoInputRef}
               type="file"
