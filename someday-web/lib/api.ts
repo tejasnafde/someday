@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { Circle, CircleDetail, Intent, LinkMeta, SmartPick, SpinItem, TourState, User } from "./types";
+import type { AppNotification, Circle, CircleDetail, Intent, LinkMeta, NotificationFeed, SmartPick, SpinItem, TourState, User } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -103,6 +103,9 @@ export const api = {
   tourSeen: (step_ids: string[]) =>
     request<{ tour_state: TourState }>("POST", "/tour/seen", { step_ids }),
   tourReset: () => request<{ tour_state: TourState }>("POST", "/tour/reset"),
+
+  notifications: () => request<NotificationFeed>("GET", "/notifications"),
+  markNotificationsSeen: () => request<{ ok: boolean }>("POST", "/notifications/seen"),
 };
 
 export { ApiError };
