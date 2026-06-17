@@ -1,3 +1,5 @@
+import uuid
+
 from app_util.db_util import DBUtil
 from app_util.log_util import infologger, errorlogger
 from common_helper.decorators import log_timing
@@ -97,7 +99,6 @@ class IntentsHandler(DBUtil):
 
     @log_timing("intents_handler.upload_memory_photo")
     def upload_memory_photo(self, intent_id: str, content: bytes, content_type: str) -> tuple[int, dict | str]:
-        import uuid
         infologger.info(f"IntentsHandler.upload_memory_photo | intent_id={intent_id} bytes={len(content)}")
         ext = {"image/webp": "webp", "image/jpeg": "jpg", "image/png": "png"}.get(content_type)
         if not ext:
