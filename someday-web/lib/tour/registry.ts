@@ -6,7 +6,7 @@
 // Users' seen step ids live server-side (users.tour_state), so anyone who
 // hasn't seen the new step gets a mini-tour of just that step on next visit.
 
-export type TourPage = "dashboard" | "circle";
+export type TourPage = "dashboard" | "circle" | "intent" | "members";
 
 export interface TourStep {
   /** Stable forever — never rename or reuse. */
@@ -69,10 +69,31 @@ export const TOUR_REGISTRY: TourStep[] = [
     body: "Smart-pick scores what you’re all into — or spin the wheel and let fate pick tonight’s plan.",
   },
   {
-    id: "circle.invite",
-    page: "circle",
-    anchor: "invite",
-    title: "Bring them in",
-    body: "Share an invite link — ideas are better when someone else says “yes, let’s”.",
+    id: “circle.invite”,
+    page: “circle”,
+    anchor: “invite”,
+    title: “Bring them in”,
+    body: “Share an invite link — ideas are better when someone else says “yes, let’s”.”,
+  },
+  {
+    id: “circle.tags”,
+    page: “circle”,
+    anchor: “tag-filter”,
+    title: “Filter by tag”,
+    body: “Tagged an idea? Tap a tag here to cut through a long list and find it fast.”,
+  },
+  {
+    id: “intent.planned”,
+    page: “intent”,
+    anchor: “intent-planned”,
+    title: “Set a date”,
+    body: “Add a rough ‘when’ — next weekend, after exams — so it doesn’t stay a someday forever.”,
+  },
+  {
+    id: “members.roles”,
+    page: “members”,
+    anchor: “members-list”,
+    title: “Manage the circle”,
+    body: “Promote someone to admin, remove a member, or grab the invite link to bring a new person in.”,
   },
 ];

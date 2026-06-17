@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Icon } from "@/components/Sprite";
+import { Tour } from "@/components/Tour";
 import { CATEGORY_ICONS, IntentPreview, NavBar, Spinner } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
@@ -178,7 +179,7 @@ export default function IntentPage() {
               </a>
             )}
             {intent.planned_for && (
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: "var(--sp-t)" }}>
+              <span data-tour="intent-planned" className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: "var(--sp-t)" }}>
                 <Icon name="clock" size="sm" />
                 {intent.planned_for}
               </span>
@@ -254,6 +255,7 @@ export default function IntentPage() {
           ))}
         </div>
       )}
+      <Tour page="intent" />
     </main>
   );
 }
