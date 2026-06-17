@@ -64,6 +64,20 @@ export interface Intent {
   updated_at: string;
 }
 
+export interface AppNotification {
+  id: string;
+  type: string;
+  body: string;
+  seen: boolean;
+  intent_id: string | null;
+  created_at: string;
+}
+
+export interface NotificationFeed {
+  unseen: number;
+  items: AppNotification[];
+}
+
 export interface SmartPick {
   intent_id: string;
   title: string;

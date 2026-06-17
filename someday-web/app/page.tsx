@@ -17,6 +17,7 @@ export default function Home() {
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [unseen, setUnseen] = useState(0);
 
   const load = useCallback(() => {
     const cached = getCached<{ user: User; circles: Circle[] }>("me");
@@ -43,6 +44,11 @@ export default function Home() {
   useEffect(() => {
     if (ready) load();
   }, [ready, load]);
+
+  useEffect(() => {
+    if (!ready) return;
+    api.notifications().then((feed) => setUnseen(feed.unseen)).catch(() => {});
+  }, [ready]);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -72,6 +78,17 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-2.5">
           <ThemeToggle />
+          <Link href="/notifications" aria-label="Notifications" data-tour="notifications-bell"
+            className="relative glass flex h-9 w-9 items-center justify-center rounded-full"
+            style={{ color: "var(--txt-m)" }}>
+            <Icon name="bell" size="sm" />
+            {unseen > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white"
+                style={{ background: "var(--acc)" }}>
+                {unseen > 9 ? "9+" : unseen}
+              </span>
+            )}
+          </Link>
           <Link href="/settings" aria-label="Settings" data-tour="settings"
             className="flex h-10 w-10 items-center justify-center rounded-full font-bold text-white"
             style={{ background: "var(--acc)", border: "2px solid var(--brd)", boxShadow: "0 3px 10px var(--acc-glow)" }}>
