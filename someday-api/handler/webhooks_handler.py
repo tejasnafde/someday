@@ -7,6 +7,7 @@ import tempfile
 import httpx
 
 from app_util.log_util import errorlogger, infologger
+from common_helper.notify import Notify
 from common_helper.decorators import log_timing
 from config.settings import settings
 
@@ -71,7 +72,6 @@ def publish_release(version: str, apk_url: str, build_id: str) -> None:
             )
             up.raise_for_status()
         infologger.info(f"webhooks.publish_release | v{version} published with someday.apk")
-        from common_helper.notify import Notify
         Notify().update_released(version)
         if settings.DISCORD_WEBHOOK_URL:
             try:
