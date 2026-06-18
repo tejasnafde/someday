@@ -127,3 +127,28 @@ login → api.me() (includes tour_state)
 
 Branch `feat/onboarding-tour` → PR. No overlap with concurrent native-app work
 (`someday-app`); this touches `someday-web` and one new API module.
+
+---
+
+## Updates since launch
+
+### New `TourPage` values
+
+The original design specified `'dashboard' | 'circle'` only. Three more page
+contexts have been added as new features shipped:
+
+| Value | Covers |
+|---|---|
+| `'intent'` | Intent detail page (`/intents/[id]`) |
+| `'members'` | Members management page (`/circles/[id]/members`) |
+| `'notifications'` | Notifications page (`/notifications`) |
+
+### Tour steps added after initial launch
+
+| id | page | anchor | What it tours |
+|---|---|---|---|
+| `circle.tags` | circle | `tag-filter` | Tag filter chips on the circle detail |
+| `intent.planned` | intent | `intent-planned` | "Set a date" field on intent detail |
+| `members.roles` | members | `members-list` | Member management (promote/remove) |
+| `intent.memories` | intent | `intent-memories` | Done-note + photo memory capture |
+| `dash.notifications` | dashboard | `notifications-bell` | Activity bell in the nav |
