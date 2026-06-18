@@ -1,0 +1,54 @@
+"""Fire-and-forget Discord alerts for 4xx/5xx errors."""
+
+import asyncio
+import traceback
+from datetime import datetime, timezone
+
+import httpx
+
+from app_util.log_util import errorlogger
+from config.settings import settings
+
+
+async def _post(embed: dict) -> None:
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            await client.post(
+                settings.DISCORD_WEBHOOK_URL,
+                json={"username": "Someday API", "embeds": [embed]},
+            )
+    except Exception as exc:
+        errorlogger.error(f"discord_alert | delivery failed | {exc}")
+
+
+def alert(
+    status: int,
+    method: str,
+    path: str,
+    user_hint: str,
+    exc: BaseException | None = None,
+) -> None:
+    """Schedule a Discord alert. Safe to call from async context; no-op if webhook not configured."""
+    if not settings.DISCORD_WEBHOOK_URL:
+        return
+
+    description = ""
+    if exc:
+        tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+        description = f"```\n{tb[-3800:]}\n```"
+
+    embed = {
+        "title": f"`{status}` {method} {path}",
+        "description": description,
+        "color": 0xE53E3E if status >= 500 else 0xDD6B20,
+        "fields": [
+            {"name": "env",  "value": settings.APP_ENV, "inline": True},
+            {"name": "user", "value": user_hint,        "inline": True},
+        ],
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+
+    try:
+        asyncio.get_running_loop().create_task(_post(embed))
+    except RuntimeError:
+        errorlogger.error("discord_alert | no running loop — alert dropped")
