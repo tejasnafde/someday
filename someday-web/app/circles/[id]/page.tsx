@@ -42,7 +42,7 @@ export default function CirclePage() {
     api.circle(id).then((c) => {
       setCached(`circle:${id}`, c);
       setCircle(c);
-    });
+    }).catch(() => router.replace("/"));
 
     const cachedIntents = getCached<Intent[]>(intentsKey);
     if (cachedIntents) setIntents(cachedIntents);
@@ -57,8 +57,8 @@ export default function CirclePage() {
     api.intents(id, params).then((list) => {
       setCached(intentsKey, list);
       setIntents(list);
-    });
-  }, [id, tab, category, tag, intentsKey]);
+    }).catch(() => setIntents([]));
+  }, [id, tab, category, tag, intentsKey, router]);
 
   useEffect(() => {
     if (!ready) return;

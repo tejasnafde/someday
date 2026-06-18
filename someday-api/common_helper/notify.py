@@ -2,8 +2,6 @@
 
 import json
 
-from pywebpush import WebPushException, webpush
-
 from app_util.db_util import DBUtil
 from app_util.log_util import errorlogger, infologger
 from common_helper.push_helper import send_push
@@ -60,6 +58,11 @@ class Notify(DBUtil):
 
     def send_web_push(self, user_ids: list[str], title: str, body: str, path: str) -> None:
         if not user_ids:
+            return
+        try:
+            from pywebpush import WebPushException, webpush  # ponytail: lazy import — keeps intents working if pywebpush missing
+        except ImportError:
+            errorlogger.error("Notify.send_web_push | pywebpush not installed — skipping web push")
             return
         rows = self.execute_query_with_value(GET_WEB_PUSH_FOR_USERS, {"user_ids": user_ids})
         for row in rows:

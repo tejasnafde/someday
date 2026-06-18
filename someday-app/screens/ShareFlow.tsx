@@ -37,8 +37,8 @@ export function ShareFlow({ url, text, onDone }: { url: string | null; text: str
       for (const cid of selected) {
         await api.createIntent(cid, { title: title.trim(), url: url ?? undefined });
       }
+      onDone(); // clears native intent immediately — prevents Android AppState re-trigger loop
       setSaved(true);
-      setTimeout(onDone, 1200);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save");
       setBusy(false);
