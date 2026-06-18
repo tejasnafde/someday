@@ -155,66 +155,56 @@ ALTER TABLE public.intent_boosts  ENABLE ROW LEVEL SECURITY;
 -- Service role bypasses RLS (FastAPI uses service role key for all DB ops)
 -- These policies are a fallback for direct dashboard queries / future client use.
 
-CREATE POLICY "users: read own row"
-    ON public.users FOR SELECT
-    USING (auth.uid() = id);
-
-CREATE POLICY "users: insert own row"
-    ON public.users FOR INSERT
-    WITH CHECK (auth.uid() = id);
-
-CREATE POLICY "users: update own row"
-    ON public.users FOR UPDATE
-    USING (auth.uid() = id);
-
-CREATE POLICY "circles: members can read"
-    ON public.circles FOR SELECT
-    USING (
-        status = 1 AND
-        EXISTS (
-            SELECT 1 FROM public.circle_members cm
-            WHERE cm.circle_id = id AND cm.user_id = auth.uid() AND cm.status = 1
-        )
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'users' AND policyname = 'users: read own row') THEN
+    CREATE POLICY "users: read own row" ON public.users FOR SELECT USING (auth.uid() = id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'users' AND policyname = 'users: insert own row') THEN
+    CREATE POLICY "users: insert own row" ON public.users FOR INSERT WITH CHECK (auth.uid() = id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'users' AND policyname = 'users: update own row') THEN
+    CREATE POLICY "users: update own row" ON public.users FOR UPDATE USING (auth.uid() = id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'circles' AND policyname = 'circles: members can read') THEN
+    CREATE POLICY "circles: members can read" ON public.circles FOR SELECT USING (
+      status = 1 AND EXISTS (
+        SELECT 1 FROM public.circle_members cm
+        WHERE cm.circle_id = id AND cm.user_id = auth.uid() AND cm.status = 1
+      )
     );
-
-CREATE POLICY "circle_members: members can read"
-    ON public.circle_members FOR SELECT
-    USING (
-        status = 1 AND
-        EXISTS (
-            SELECT 1 FROM public.circle_members cm2
-            WHERE cm2.circle_id = circle_id AND cm2.user_id = auth.uid() AND cm2.status = 1
-        )
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'circle_members' AND policyname = 'circle_members: members can read') THEN
+    CREATE POLICY "circle_members: members can read" ON public.circle_members FOR SELECT USING (
+      status = 1 AND EXISTS (
+        SELECT 1 FROM public.circle_members cm2
+        WHERE cm2.circle_id = circle_id AND cm2.user_id = auth.uid() AND cm2.status = 1
+      )
     );
-
-CREATE POLICY "intents: circle members can read"
-    ON public.intents FOR SELECT
-    USING (
-        status = 1 AND
-        EXISTS (
-            SELECT 1 FROM public.circle_members cm
-            WHERE cm.circle_id = intents.circle_id AND cm.user_id = auth.uid() AND cm.status = 1
-        )
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'intents' AND policyname = 'intents: circle members can read') THEN
+    CREATE POLICY "intents: circle members can read" ON public.intents FOR SELECT USING (
+      status = 1 AND EXISTS (
+        SELECT 1 FROM public.circle_members cm
+        WHERE cm.circle_id = intents.circle_id AND cm.user_id = auth.uid() AND cm.status = 1
+      )
     );
-
-CREATE POLICY "reactions: circle members can read"
-    ON public.reactions FOR SELECT
-    USING (
-        status = 1 AND
-        EXISTS (
-            SELECT 1 FROM public.intents i
-            JOIN public.circle_members cm ON cm.circle_id = i.circle_id
-            WHERE i.id = reactions.intent_id AND cm.user_id = auth.uid() AND cm.status = 1
-        )
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'reactions' AND policyname = 'reactions: circle members can read') THEN
+    CREATE POLICY "reactions: circle members can read" ON public.reactions FOR SELECT USING (
+      status = 1 AND EXISTS (
+        SELECT 1 FROM public.intents i
+        JOIN public.circle_members cm ON cm.circle_id = i.circle_id
+        WHERE i.id = reactions.intent_id AND cm.user_id = auth.uid() AND cm.status = 1
+      )
     );
-
-CREATE POLICY "intent_boosts: circle members can read"
-    ON public.intent_boosts FOR SELECT
-    USING (
-        status = 1 AND
-        EXISTS (
-            SELECT 1 FROM public.intents i
-            JOIN public.circle_members cm ON cm.circle_id = i.circle_id
-            WHERE i.id = intent_boosts.intent_id AND cm.user_id = auth.uid() AND cm.status = 1
-        )
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'intent_boosts' AND policyname = 'intent_boosts: circle members can read') THEN
+    CREATE POLICY "intent_boosts: circle members can read" ON public.intent_boosts FOR SELECT USING (
+      status = 1 AND EXISTS (
+        SELECT 1 FROM public.intents i
+        JOIN public.circle_members cm ON cm.circle_id = i.circle_id
+        WHERE i.id = intent_boosts.intent_id AND cm.user_id = auth.uid() AND cm.status = 1
+      )
     );
+  END IF;
+END $$;
