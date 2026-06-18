@@ -1,13 +1,9 @@
 # Production deploy: builds someday-api and rolls it out to Cloud Run.
 # Triggered on push to main when someday-api/** changes.
-#
-# Secrets live in GCP Secret Manager (project teejayproject).
-# The --update-secrets flag here re-attaches them on every deploy so a new
-# service revision always has the correct references — no manual steps needed.
-# To add a new secret:
-#   1. gcloud secrets create MY_SECRET --project=teejayproject --data-file=-
-#   2. gcloud secrets add-iam-policy-binding MY_SECRET --member=serviceAccount:974343814740-compute@developer.gserviceaccount.com --role=roles/secretmanager.secretAccessor
-#   3. Add MY_SECRET=MY_SECRET:latest to --update-secrets below.
+# Secrets are in GCP Secret Manager — add new ones with:
+#   gcloud secrets create MY_SECRET --project=teejayproject --data-file=-
+#   gcloud secrets add-iam-policy-binding MY_SECRET --member=serviceAccount:974343814740-compute@developer.gserviceaccount.com --role=roles/secretmanager.secretAccessor
+#   then add MY_SECRET=MY_SECRET:latest to --update-secrets below.
 
 steps:
   - id: build
