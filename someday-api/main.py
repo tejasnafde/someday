@@ -1,5 +1,6 @@
 """Someday API — FastAPI entry point."""
 
+import threading
 import time
 
 from fastapi import FastAPI, Request
@@ -9,6 +10,7 @@ from app_util.db_util import DBUtil
 from app_util.log_util import errorlogger, infologger
 from common_helper.discord_alert import alert as discord_alert
 from config.settings import settings
+from handler.webhooks_handler import recover_incomplete_releases
 from routers import (
     auth_router,
     webhooks_router,
@@ -73,6 +75,8 @@ async def log_requests(request: Request, call_next):
 async def startup() -> None:
     DBUtil.init_engine()
     infologger.info(f"STARTUP | Someday API v0.1.0 | env={settings.APP_ENV}")
+    if settings.APP_ENV == "production":
+        threading.Thread(target=recover_incomplete_releases, daemon=True).start()
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
