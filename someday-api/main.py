@@ -76,6 +76,7 @@ async def startup() -> None:
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
+@app.get("/", tags=["meta"])
 @app.get("/health", tags=["meta"])
 async def health():
     return {"status": "ok", "env": settings.APP_ENV}
