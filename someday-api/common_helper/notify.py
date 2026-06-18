@@ -1,9 +1,15 @@
 """Push notification fan-out and in-app notification storage for social events."""
 
+import json
+
+from pywebpush import WebPushException, webpush
+
 from app_util.db_util import DBUtil
 from app_util.log_util import errorlogger, infologger
 from common_helper.push_helper import send_push
+from config.settings import settings
 from modules.notifications.notifications_queries import INSERT_NOTIFICATION
+from modules.push.push_queries import DELETE_STALE_ENDPOINT, GET_WEB_PUSH_FOR_USERS
 
 # All circle members except the actor — includes users with and without push tokens.
 CIRCLE_ALL_RECIPIENTS = """
@@ -52,6 +58,23 @@ CREATOR_RECIPIENT = """
 class Notify(DBUtil):
     """Fire-and-forget push fan-out + in-app notification storage for social events."""
 
+    def send_web_push(self, user_ids: list[str], title: str, body: str, path: str) -> None:
+        if not user_ids:
+            return
+        rows = self.execute_query_with_value(GET_WEB_PUSH_FOR_USERS, {"user_ids": user_ids})
+        for row in rows:
+            try:
+                webpush(
+                    subscription_info={"endpoint": row["endpoint"], "keys": {"p256dh": row["p256dh"], "auth": row["auth"]}},
+                    data=json.dumps({"title": title, "body": body, "url": path}),
+                    vapid_private_key=settings.VAPID_PRIVATE_KEY,
+                    vapid_claims={"sub": f"mailto:{settings.VAPID_CONTACT_EMAIL}"},
+                )
+            except WebPushException as exc:
+                errorlogger.error(f"Notify.send_web_push | endpoint={row['endpoint'][:40]}… | {exc}")
+                if getattr(exc, "response", None) and exc.response.status_code == 410:
+                    self.execute_query_with_value_without_output(DELETE_STALE_ENDPOINT, {"endpoint": row["endpoint"]})
+
     def store_notification(self, user_id: str, actor_id: str, intent_id: str, notif_type: str, body: str) -> None:
         try:
             self.execute_query_with_value_without_output(
@@ -72,6 +95,8 @@ class Notify(DBUtil):
         tokens = [row["push_token"] for row in rows if row.get("push_token")]
         if tokens:
             send_push(self, tokens, circle, body, f"/intents/{intent_id}")
+        user_ids = [row["user_id"] for row in rows]
+        self.send_web_push(user_ids, circle, body, f"/intents/{intent_id}")
         for row in rows:
             self.store_notification(row["user_id"], actor_id, intent_id, "intent_created", body)
 
@@ -85,6 +110,7 @@ class Notify(DBUtil):
         body = f"{actor} likes '{title}'"
         if r.get("push_token"):
             send_push(self, [r["push_token"]], circle, body, f"/intents/{intent_id}")
+        self.send_web_push([r["user_id"]], circle, body, f"/intents/{intent_id}")
         self.store_notification(r["user_id"], actor_id, intent_id, "reaction_added", body)
 
     def boost_added(self, intent_id: str, actor_id: str) -> None:
@@ -98,6 +124,8 @@ class Notify(DBUtil):
         tokens = [row["push_token"] for row in rows if row.get("push_token")]
         if tokens:
             send_push(self, tokens, circle, body, f"/intents/{intent_id}")
+        user_ids = [row["user_id"] for row in rows]
+        self.send_web_push(user_ids, circle, body, f"/intents/{intent_id}")
         for row in rows:
             self.store_notification(row["user_id"], actor_id, intent_id, "boost_added", body)
 

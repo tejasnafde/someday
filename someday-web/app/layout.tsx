@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, Lora } from "next/font/google";
+import { PushInit } from "@/components/PushInit";
 import { Sprite } from "@/components/Sprite";
 import "./globals.css";
 
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${dmSans.variable} ${lora.variable}`} suppressHydrationWarning>
         <Sprite />
+        <PushInit />
         <div className="orb orb1" />
         <div className="orb orb2" />
         <div className="orb orb3" />
