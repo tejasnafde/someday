@@ -106,6 +106,11 @@ export const api = {
 
   notifications: () => request<NotificationFeed>("GET", "/notifications"),
   markNotificationsSeen: () => request<{ ok: boolean }>("POST", "/notifications/seen"),
+
+  subscribePush: (sub: { endpoint: string; p256dh: string; auth: string }) =>
+    request<{ ok: boolean }>("POST", "/push/subscribe", sub),
+  unsubscribePush: (sub: { endpoint: string; p256dh: string; auth: string }) =>
+    request<{ ok: boolean }>("DELETE", "/push/subscribe", sub),
 };
 
 export { ApiError };
