@@ -25,7 +25,7 @@ Never ask the user for tokens. Create test users as needed (test1@someday.dev et
 
 ## Build (in someday-web/)
 
-Next.js 15 App Router + TypeScript + Tailwind v4. Minimal deps:
+Next.js 16 App Router + TypeScript + Tailwind v4. Minimal deps:
 @supabase/supabase-js for auth only; plain fetch wrapper for the API.
 
 Screens (routes from design doc):
@@ -36,8 +36,10 @@ Screens (routes from design doc):
 5. /intents/[id] — detail: link preview, who's interested, task_status stepper, react + boost
 6. /circles/[id]/payoff — Best Pick (reveal card with score chips) + Spin (wheel animation over shortlist)
 7. /circles/[id]/invite — share link copy
-8. /join/[token] — accept invite
-9. /settings — display name, sign out
+8. /circles/[id]/members — member list, promote/remove, invite link
+9. /join/[token] — accept invite
+10. /notifications — in-app activity feed (reactions, boosts, saves)
+11. /settings — display name, avatar, sign out
 
 Code standards — hard rules:
 - Minimal code. No speculative abstractions, no unused exports, no boilerplate comments, no defensive try/catch on trusted paths. If a file reads like a tutorial, rewrite it.
@@ -67,12 +69,12 @@ Code standards — hard rules:
 9. Filters (task_status, category, tag) work
 10. Light/dark toggle works, dark is pure charcoal, zero hex literals in components (tokens only)
 11. npm run build clean; no console errors on any screen
-12. Deployed: backend on Railway (railway up from someday-api/, env vars set), frontend on Vercel (vercel --prod from someday-web/, NEXT_PUBLIC_* set), Supabase auth redirect URLs updated to the Vercel domain, full flow re-tested on production URLs
+12. Deployed: backend on GCP Cloud Run (auto-deployed via Cloud Build on push to main), frontend on Vercel (vercel --prod from someday-web/, NEXT_PUBLIC_* set), Supabase auth redirect URLs updated to the Vercel domain, full flow re-tested on production URLs
 
 ## Deployment notes
 
-- Railway: create project `someday-api`, set APP_ENV=dev + SUPABASE_URL + SUPABASE_ANON_KEY + DATABASE_URL + LOG_LEVEL=INFO + ALLOWED_ORIGINS=(vercel domain), start cmd `uvicorn main:app --host 0.0.0.0 --port $PORT`
-- Vercel: project someday-web, NEXT_PUBLIC_API_URL=(railway domain), NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY
+- API: GCP Cloud Run (`someday-api`, project `teejayproject`, asia-south1) — auto-deployed by Cloud Build on pushes to main touching `someday-api/**` (`cloudbuild-production.yaml`). Env vars: APP_ENV=production + SUPABASE_URL + SUPABASE_ANON_KEY + DATABASE_URL + LOG_LEVEL=INFO + ALLOWED_ORIGINS=(vercel domain).
+- Vercel: project someday-web, NEXT_PUBLIC_API_URL=(Cloud Run service URL), NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY
 - Supabase dashboard → Auth → URL configuration: add Vercel domain to redirect allowlist (if dashboard-only, pause and ask — this is the ONLY allowed pause besides CLI re-auth)
 
 ## Pause rules
