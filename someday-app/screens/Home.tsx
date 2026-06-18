@@ -1,6 +1,6 @@
 import Constants from "expo-constants";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, BackHandler, View } from "react-native";
+import { ActivityIndicator, BackHandler, Linking, View } from "react-native";
 import { WebView } from "react-native-webview";
 import { supabase } from "../lib/supabase";
 import { useTheme } from "../lib/theme";
@@ -69,6 +69,13 @@ export function Home({ nextPath }: { nextPath?: string | null }) {
       onNavigationStateChange={(nav) => { canGoBack.current = nav.canGoBack; }}
       source={{ uri: startUrl }}
       style={{ flex: 1, backgroundColor: t.bg }}
+      onShouldStartLoadWithRequest={(req) => {
+        if (req.url.includes("accounts.google.com")) {
+          Linking.openURL(req.url);
+          return false;
+        }
+        return true;
+      }}
       domStorageEnabled
       sharedCookiesEnabled
       startInLoadingState
