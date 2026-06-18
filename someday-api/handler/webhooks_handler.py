@@ -20,13 +20,15 @@ def verify_signature(body: bytes, signature: str) -> bool:
     return hmac.compare_digest(expected, signature or "")
 
 
-def github(method: str, url: str, **kwargs) -> httpx.Response:
+def github(method: str, url: str, upload=False, **kwargs) -> httpx.Response:
     headers = kwargs.pop("headers", {})
     headers.update({
         "Authorization": f"Bearer {settings.GITHUB_TOKEN}",
         "Accept": "application/vnd.github+json",
     })
-    return httpx.request(method, url, headers=headers, timeout=120, **kwargs)
+    # ponytail: upload timeout is long because APKs are ~80 MB
+    timeout = httpx.Timeout(connect=30, read=120, write=600, pool=30) if upload else 120
+    return httpx.request(method, url, headers=headers, timeout=timeout, **kwargs)
 
 
 def release_exists(version: str) -> bool:
@@ -65,11 +67,20 @@ def publish_release(version: str, apk_url: str, build_id: str) -> None:
                 f"https://uploads.github.com/repos/{REPO}/releases/{release_id}/assets?name=someday.apk",
                 headers={"Content-Type": "application/vnd.android.package-archive"},
                 content=tmp.read(),
+                upload=True,
             )
             up.raise_for_status()
         infologger.info(f"webhooks.publish_release | v{version} published with someday.apk")
         from common_helper.notify import Notify
         Notify().update_released(version)
+        if settings.DISCORD_WEBHOOK_URL:
+            try:
+                httpx.post(settings.DISCORD_WEBHOOK_URL, timeout=5, json={
+                    "username": "Someday",
+                    "content": f"🚀 **Someday v{version}** released — APK live on GitHub, update banner active for all users.",
+                })
+            except Exception as exc:
+                errorlogger.error(f"webhooks.publish_release | discord notify failed | {exc}")
     except Exception as exc:
         errorlogger.error(f"webhooks.publish_release | failed | v{version} | {exc}", exc_info=True)
         raise
