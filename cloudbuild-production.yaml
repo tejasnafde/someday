@@ -23,7 +23,7 @@ steps:
       - someday-api
       - --image=${_IMAGE}
       - --region=asia-south1
-      - --update-env-vars=APP_ENV=production,LOG_LEVEL=INFO,SUPABASE_URL=https://hltpqcmmpddjhijqeeko.supabase.co,ALLOWED_ORIGINS=http://localhost:3000,https://someday-web-gamma.vercel.app
+      - --update-env-vars=^|^APP_ENV=production|LOG_LEVEL=INFO|SUPABASE_URL=https://hltpqcmmpddjhijqeeko.supabase.co|ALLOWED_ORIGINS=http://localhost:3000,https://someday-web-gamma.vercel.app
       - --update-secrets=DATABASE_URL=DATABASE_URL:latest,SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest,SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest,EAS_WEBHOOK_SECRET=EAS_WEBHOOK_SECRET:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest,DISCORD_WEBHOOK_URL=DISCORD_WEBHOOK_URL:latest
       - --quiet
 
