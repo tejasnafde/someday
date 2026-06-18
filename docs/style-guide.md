@@ -130,7 +130,7 @@ Use for: Spin the Wheel, Cancel, Leave, secondary actions alongside a primary.
 
 ## 5. Icons
 
-All icons use the SVG sprite system defined in `mock-combined.html` (to be migrated to a `/components/icons/` directory).
+All icons use the SVG sprite system defined in `components/Sprite.tsx`.
 
 ```html
 <svg class="icon icon-md"><use href="#i-name"/></svg>
@@ -173,6 +173,18 @@ All icons use the SVG sprite system defined in `mock-combined.html` (to be migra
 | Theme: dark | `i-moon` |
 | Theme: light | `i-sun` |
 | Time / age | `i-clock` |
+| External link | `i-link` |
+| Delete | `i-trash` |
+| Copy to clipboard | `i-copy` |
+| Settings / gear | `i-settings` |
+| Email / magic link | `i-mail` |
+| Sign out | `i-log-out` |
+| Dismiss / close | `i-x` |
+| Comment / note | `i-message-circle` |
+| Overflow menu | `i-more` |
+| Edit / pencil | `i-pencil` |
+| Notifications bell | `i-bell` |
+| Navigate forward | `i-chevron-right` |
 
 ---
 
