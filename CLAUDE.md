@@ -64,6 +64,25 @@ Set up `log_util.py` and decorators **before any feature code**. Every endpoint,
 
 ## Database
 
+### Hard migration rules (no exceptions)
+
+- **All migrations must be idempotent.** Every statement must be safe to run more than once against a database that already has it applied. No exceptions — this is enforced, not advisory.
+  - Tables: `CREATE TABLE IF NOT EXISTS`
+  - Indexes: `CREATE INDEX IF NOT EXISTS` / `CREATE UNIQUE INDEX IF NOT EXISTS`
+  - Columns: `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`
+  - Functions: `CREATE OR REPLACE FUNCTION`
+  - Triggers: `DROP TRIGGER IF EXISTS` before `CREATE TRIGGER`
+  - Policies: `CREATE POLICY` has no `IF NOT EXISTS` — wrap in a DO block checking `pg_policies`:
+    ```sql
+    DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'x' AND policyname = 'y') THEN
+        CREATE POLICY "y" ON public.x ...;
+      END IF;
+    END $$;
+    ```
+  - Inserts: `ON CONFLICT DO NOTHING`
+- **Apply migrations via Supabase CLI, never the SQL editor.** Run `supabase db push --linked` (switch projects with `supabase link --project-ref <ref>`). If a migration was accidentally run via the editor and is missing from CLI tracking, use `supabase migration repair --status applied <version>` to sync the state, then push.
+
 - **Supabase Postgres** for both dev and prod. Two separate Supabase projects.
 - Load connection string from `settings.py` via `APP_ENV` → `.env.dev` or `.env.production`.
 - All migrations are plain SQL files in `someday-api/supabase/migrations/` (Supabase CLI format: `YYYYMMDDHHMMSS_name.sql`). Run `supabase db push` to apply. No ORM migration tooling.
