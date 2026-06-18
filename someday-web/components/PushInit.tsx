@@ -32,7 +32,7 @@ export function PushInit() {
 
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlB64ToUint8(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!),
+        applicationServerKey: urlB64ToUint8(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!) as unknown as ArrayBuffer,
       });
       const j = sub.toJSON();
       api.subscribePush({ endpoint: j.endpoint!, p256dh: j.keys!.p256dh, auth: j.keys!.auth }).catch(() => {});

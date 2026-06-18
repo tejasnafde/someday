@@ -387,7 +387,7 @@ export default function IntentPage() {
                     borderRadius: "var(--rs)",
                     color: "var(--txt-l)",
                   }}>
-                  <Icon name="plus" size="md" />
+                  <Icon name="plus" />
                 </button>
               )}
             </div>
