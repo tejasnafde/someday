@@ -17,6 +17,11 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
 
+    # Web push (VAPID)
+    VAPID_PUBLIC_KEY: str = ""
+    VAPID_PRIVATE_KEY: str = ""
+    VAPID_CONTACT_EMAIL: str = "hello@someday.app"
+
     # Logging
     LOG_LEVEL: str = "DEBUG"
 

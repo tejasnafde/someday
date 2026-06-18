@@ -15,6 +15,7 @@ from routers import (
     intents_router,
     notifications_router,
     payoff_router,
+    push_router,
     tour_router,
     unfurl_router,
 )
@@ -81,6 +82,7 @@ app.include_router(auth_router.router,          prefix="/auth",    tags=["auth"]
 app.include_router(circles_router.router,       prefix="/circles", tags=["circles"])
 app.include_router(intents_router.router,       prefix="",         tags=["intents"])
 app.include_router(notifications_router.router, prefix="",         tags=["notifications"])
+app.include_router(push_router.router,          prefix="",         tags=["push"])
 app.include_router(payoff_router.router,        prefix="",         tags=["payoff"])
 app.include_router(tour_router.router,          prefix="/tour",    tags=["tour"])
 app.include_router(unfurl_router.router,        prefix="/unfurl",  tags=["unfurl"])
