@@ -75,10 +75,14 @@ def publish_release(version: str, apk_url: str, build_id: str) -> None:
         Notify().update_released(version)
         if settings.DISCORD_WEBHOOK_URL:
             try:
-                httpx.post(settings.DISCORD_WEBHOOK_URL, timeout=5, json={
+                r = httpx.post(settings.DISCORD_WEBHOOK_URL, timeout=5, json={
                     "username": "Someday",
                     "content": f"🚀 **Someday v{version}** released — APK live on GitHub, update banner active for all users.",
                 })
+                if r.status_code >= 400:
+                    errorlogger.error(f"webhooks.publish_release | discord notify failed | status={r.status_code} body={r.text[:200]}")
+                else:
+                    infologger.info(f"webhooks.publish_release | discord notified | v{version}")
             except Exception as exc:
                 errorlogger.error(f"webhooks.publish_release | discord notify failed | {exc}")
     except Exception as exc:
