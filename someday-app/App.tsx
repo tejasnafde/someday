@@ -135,7 +135,7 @@ export default function App() {
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg, paddingTop: Platform.OS === "android" ? StatusBar.currentHeight ?? 0 : 0 }}>
       <StatusBar barStyle="default" />
       {signedIn === null ? null : !signedIn ? (
-        <SignIn />
+        <SignIn shareIntent={hasShareIntent} />
       ) : hasShareIntent ? (
         <ShareFlow url={sharedUrl} text={sharedText} onDone={resetShareIntent} />
       ) : (

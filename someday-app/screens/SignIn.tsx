@@ -1,11 +1,14 @@
 import { useState } from "react";
-import { ActivityIndicator, Keyboard, Linking, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from "react-native";
+import { ActivityIndicator, Keyboard, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from "react-native";
+import * as WebBrowser from "expo-web-browser";
 import Constants from "expo-constants";
 import { api } from "../lib/api";
 import { supabase } from "../lib/supabase";
 import { useTheme } from "../lib/theme";
 
-export function SignIn() {
+WebBrowser.maybeCompleteAuthSession();
+
+export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
   const t = useTheme();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -20,9 +23,18 @@ export function SignIn() {
       provider: "google",
       options: { redirectTo: "someday://", skipBrowserRedirect: true },
     });
+    if (error) { setBusy(false); setError(error.message); return; }
+    if (data.url) {
+      // Chrome Custom Tabs — stays coupled to the app so it properly returns after auth
+      const result = await WebBrowser.openAuthSessionAsync(data.url, "someday://");
+      if (result.type === "success") {
+        await supabase.auth.getSession();
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(result.url);
+        if (exchangeError) setError("Sign-in failed — please try again.");
+        else api.verify().catch(() => {});
+      }
+    }
     setBusy(false);
-    if (error) { setError(error.message); return; }
-    if (data.url) await Linking.openURL(data.url);
   }
 
   async function sendCode() {
@@ -77,7 +89,9 @@ export function SignIn() {
         Someday
       </Text>
       <Text style={{ fontSize: 26, color: t.txt, textAlign: "center", marginBottom: 10 }}>
-        {stage === "email" ? "Sign in to start saving" : "Enter the code we emailed"}
+        {stage === "email"
+          ? (shareIntent ? "Sign in to save this" : "Sign in to start saving")
+          : "Enter the code we emailed"}
       </Text>
 
       {stage === "email" && (
