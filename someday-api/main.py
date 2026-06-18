@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app_util.db_util import DBUtil
 from app_util.log_util import errorlogger, infologger
+from common_helper.discord_alert import alert as discord_alert
 from config.settings import settings
 from routers import (
     auth_router,
@@ -57,10 +58,13 @@ async def log_requests(request: Request, call_next):
     except Exception as exc:
         ms = (time.perf_counter() - t0) * 1000
         errorlogger.error(f"REQUEST_UNHANDLED | {request.url.path} | {ms:.1f}ms | {exc}", exc_info=True)
+        discord_alert(500, request.method, request.url.path, user_hint, exc=exc)
         raise
 
     ms = (time.perf_counter() - t0) * 1000
     infologger.info(f"RESPONSE | {response.status_code} | {ms:.1f}ms")
+    if response.status_code >= 400:
+        discord_alert(response.status_code, request.method, request.url.path, user_hint)
     return response
 
 # ── Startup ───────────────────────────────────────────────────────────────────
