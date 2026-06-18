@@ -37,13 +37,13 @@ def alert(
         tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
         description = f"```\n{tb[-3800:]}\n```"
 
+    env_label = "🔴 PROD" if settings.APP_ENV == "production" else "🟡 DEV"
     embed = {
-        "title": f"`{status}` {method} {path}",
+        "title": f"{env_label} `{status}` {method} {path}",
         "description": description,
         "color": 0xE53E3E if status >= 500 else 0xDD6B20,
         "fields": [
-            {"name": "env",  "value": settings.APP_ENV, "inline": True},
-            {"name": "user", "value": user_hint,        "inline": True},
+            {"name": "user", "value": user_hint, "inline": True},
         ],
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
