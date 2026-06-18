@@ -27,6 +27,7 @@ export default function CirclePage() {
   const [tag, setTag] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [userId, setUserId] = useState("");
+  const [intentsError, setIntentsError] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -57,7 +58,11 @@ export default function CirclePage() {
     api.intents(id, params).then((list) => {
       setCached(intentsKey, list);
       setIntents(list);
-    }).catch(() => setIntents([]));
+      setIntentsError(null);
+    }).catch((e) => {
+      setIntents([]);
+      setIntentsError(e?.message ?? "Could not load");
+    });
   }, [id, tab, category, tag, intentsKey, router]);
 
   useEffect(() => {
@@ -264,6 +269,11 @@ export default function CirclePage() {
       <div className="mt-2 flex flex-col gap-3">
         {!visible ? (
           <Skeleton height={180} count={3} />
+        ) : intentsError ? (
+          <div className="flex flex-col items-center gap-3 py-10 text-center">
+            <p className="text-sm" style={{ color: "var(--cp)" }}>{intentsError}</p>
+            <button onClick={load} className="btn-ghost px-5 py-2 text-sm">Retry</button>
+          </div>
         ) : visible.length === 0 ? (
           <EmptyState
             message={
