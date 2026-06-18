@@ -487,3 +487,171 @@ PHASE 5 — ANDROID + POLISH
 10. Filtering by task_status, category, and tag works.
 11. Data persists across sessions and devices.
 12. All endpoints log full request lifecycle — no silent paths.
+
+---
+
+## Updates since launch
+
+### Deployment correction
+
+The initial design listed *FastAPI on Railway* for the backend. The API is
+deployed on **GCP Cloud Run** (`someday-api`, project `teejayproject`,
+region `asia-south1`), auto-deployed by Cloud Build on pushes to `main`
+that touch `someday-api/**`. Railway was never used.
+
+---
+
+### New features & modules
+
+#### Intent memories (migration `20260617000001_intent_memories.sql`)
+
+When marking an intent done, members can attach a note and photos — a
+lightweight record of actually doing it.
+
+New columns on `intents`:
+```sql
+done_note   text
+done_photos jsonb DEFAULT '[]'
+```
+
+New Supabase Storage bucket: `memories` (public).
+
+New endpoint: `POST /intents/:id/photos` — uploads memory photos to the
+`memories` bucket and appends the URLs to `done_photos`.
+
+#### Push notifications (migrations `20260617000000_push_token.sql`, `20260618000001_web_push.sql`)
+
+Two parallel push channels:
+
+**Expo/native push** — simple per-user token stored on `users`:
+```sql
+-- users table
+push_token text
+```
+New endpoint: `PATCH /me/push-token`
+
+**Web Push (VAPID)** — per-device subscriptions stored in a dedicated table:
+```sql
+CREATE TABLE public.web_push_subscriptions (
+  id         uuid PRIMARY KEY,
+  user_id    uuid REFERENCES users(id),
+  endpoint   text NOT NULL,
+  p256dh     text NOT NULL,
+  auth       text NOT NULL,
+  status     integer DEFAULT 1,
+  created_at timestamptz DEFAULT now()
+);
+```
+New endpoints: `POST /push/subscribe`, `DELETE /push/subscribe`
+
+New modules: `routers/push_router.py`, `handler/push_handler.py`,
+`modules/push/`, `schemas/push_schema.py`, `common_helper/push_helper.py`
+
+#### In-app notifications (migration `20260618000000_notifications.sql`)
+
+Activity feed — social events (saves, reactions, boosts) stored per
+recipient so members can see what's happening in their circles.
+
+```sql
+CREATE TABLE public.notifications (
+  id         uuid PRIMARY KEY,
+  user_id    uuid REFERENCES users(id),
+  actor_id   uuid REFERENCES users(id),
+  intent_id  uuid REFERENCES intents(id),
+  type       text NOT NULL,
+  body       text NOT NULL,
+  seen       boolean DEFAULT false,
+  created_at timestamptz DEFAULT now(),
+  status     integer DEFAULT 1
+);
+```
+
+New endpoints: `GET /notifications`, `POST /notifications/seen`
+
+New modules: `routers/notifications_router.py`,
+`handler/notifications_handler.py`, `modules/notifications/`,
+`common_helper/notify.py`, `common_helper/discord_alert.py`
+
+New web route: `/notifications`
+
+---
+
+### Updated backend file tree
+
+New files added since the original structure was documented:
+
+```
+handler/
+  notifications_handler.py
+  push_handler.py
+  webhooks_handler.py
+
+modules/
+  notifications/
+    notifications_helper.py
+    notifications_queries.py
+  push/
+    push_queries.py
+
+routers/
+  notifications_router.py
+  push_router.py
+  webhooks_router.py        ← POST /eas-build (EAS build webhook)
+
+schemas/
+  push_schema.py
+
+common_helper/
+  discord_alert.py          ← Discord error alerting
+  notify.py                 ← Notification dispatch helpers
+  push_helper.py            ← VAPID / Expo push helpers
+  storage_helper.py         ← Supabase Storage upload helpers
+```
+
+---
+
+### Updated API surface
+
+Endpoints added after the initial spec:
+
+```
+AUTH / USER
+PATCH /me                        Edit display name
+POST  /me/avatar                 Upload avatar to Storage
+PATCH /me/push-token             Register Expo push token
+POST  /webview-session           Mint a session for the Android WebView
+
+CIRCLES
+GET   /circles                   List all circles for current user
+POST  /circles/:id/photo         Upload circle cover photo
+PATCH /circles/:id/members/:uid  Promote/demote a member
+DELETE /circles/:id/members/:uid Remove a member
+GET   /circles/:id/tags          List all tags used in a circle
+
+INTENTS
+GET   /intents/:id               Single intent detail
+POST  /intents/:id/photos        Upload memory photos (done state)
+POST  /intents/:id/refresh-preview  Re-fetch link_meta for an intent
+
+NOTIFICATIONS
+GET   /notifications             List unread + recent notifications
+POST  /notifications/seen        Mark notification ids as seen
+
+PUSH
+POST  /push/subscribe            Register a Web Push subscription
+DELETE /push/subscribe           Remove a Web Push subscription
+
+WEBHOOKS
+POST  /eas-build                 EAS build status webhook
+```
+
+---
+
+### Updated screens
+
+Two new web routes:
+
+| Screen | Route | Key elements |
+|---|---|---|
+| Members | `/circles/:id/members` | Member list, promote/demote admin, remove member, copy invite link |
+| Notifications | `/notifications` | Chronological activity feed; mark-as-seen on open |

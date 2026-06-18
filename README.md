@@ -25,6 +25,10 @@ app decide what you're actually doing tonight.
   ideas by mutual interest, age and boosts; *spin* hands the decision to fate.
 - **Lifecycle** — ideas move saved → interested → planned → done, so the list
   stays a plan, not a graveyard.
+- **Memories** — when marking something done, add a note and photos. A little
+  record of actually doing it.
+- **Notifications** — in-app activity feed for saves, reactions, and boosts
+  across your circles; web push so you don't miss anything.
 - **First-login tour** — new members get a quick spotlight tour; when features
   ship, returning users get a mini-tour of just what's new.
 
