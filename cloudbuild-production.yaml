@@ -1,7 +1,13 @@
 # Production deploy: builds someday-api and rolls it out to Cloud Run.
 # Triggered on push to main when someday-api/** changes.
-# Env vars are NOT set here — they persist on the Cloud Run service;
-# change them with `gcloud run services update someday-api --update-env-vars ...`
+#
+# Secrets live in GCP Secret Manager (project teejayproject).
+# The --update-secrets flag here re-attaches them on every deploy so a new
+# service revision always has the correct references — no manual steps needed.
+# To add a new secret:
+#   1. gcloud secrets create MY_SECRET --project=teejayproject --data-file=-
+#   2. gcloud secrets add-iam-policy-binding MY_SECRET --member=serviceAccount:974343814740-compute@developer.gserviceaccount.com --role=roles/secretmanager.secretAccessor
+#   3. Add MY_SECRET=MY_SECRET:latest to --update-secrets below.
 
 steps:
   - id: build
@@ -21,6 +27,8 @@ steps:
       - someday-api
       - --image=${_IMAGE}
       - --region=asia-south1
+      - --update-env-vars=APP_ENV=production,LOG_LEVEL=INFO,SUPABASE_URL=https://hltpqcmmpddjhijqeeko.supabase.co,ALLOWED_ORIGINS=http://localhost:3000,https://someday-web-gamma.vercel.app
+      - --update-secrets=DATABASE_URL=DATABASE_URL:latest,SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest,SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest,EAS_WEBHOOK_SECRET=EAS_WEBHOOK_SECRET:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest,DISCORD_WEBHOOK_URL=DISCORD_WEBHOOK_URL:latest
       - --quiet
 
 substitutions:
