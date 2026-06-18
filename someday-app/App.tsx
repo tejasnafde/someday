@@ -33,18 +33,12 @@ export default function App() {
   const [pendingPath, setPendingPath] = useState<string | null>(null);
 
   useEffect(() => {
-    const handle = async (url: string | null) => {
+    const handle = (url: string | null) => {
       if (!url) return;
       // Invite link: https://someday-web-gamma.vercel.app/join/TOKEN
       const inviteMatch = url.match(/https?:\/\/[^/]+(\/join\/[\w-]+)/);
-      if (inviteMatch) { setPendingPath(inviteMatch[1]); return; }
-      // OAuth callback: someday://?code=... (PKCE) or someday://#access_token=...
-      if (url.startsWith("someday://") && (url.includes("code=") || url.includes("access_token="))) {
-        await supabase.auth.getSession(); // ensure AsyncStorage is hydrated before PKCE exchange
-        const { error } = await supabase.auth.exchangeCodeForSession(url);
-        if (error) console.error("OAuth callback error:", error.message);
-        else api.verify().catch(() => {});
-      }
+      if (inviteMatch) setPendingPath(inviteMatch[1]);
+      // OAuth is handled entirely inside signInWithGoogle via openAuthSessionAsync
     };
     Linking.getInitialURL().then(handle);
     const sub = Linking.addEventListener("url", (e) => handle(e.url));
