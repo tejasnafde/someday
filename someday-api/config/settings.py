@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
 
+    # Discord error alerts
+    DISCORD_WEBHOOK_URL: str = ""
+
     # Web push (VAPID)
     VAPID_PUBLIC_KEY: str = ""
     VAPID_PRIVATE_KEY: str = ""
