@@ -40,8 +40,17 @@ export default function App() {
       if (inviteMatch) { setPendingPath(inviteMatch[1]); return; }
       // OAuth callback: someday://?code=... (PKCE) or someday://#access_token=...
       if (url.startsWith("someday://") && (url.includes("code=") || url.includes("access_token="))) {
+        // getSession() awaits Supabase's storage init — ensures the PKCE code
+        // verifier is loaded from AsyncStorage before we try to exchange.
+        // Without this, a cold-start (app killed while browser was open) races
+        // getInitialURL against AsyncStorage hydration and always loses.
+        await supabase.auth.getSession();
         const { error } = await supabase.auth.exchangeCodeForSession(url);
-        if (!error) api.verify().catch(() => {});
+        if (error) {
+          console.error("OAuth callback error:", error.message);
+        } else {
+          api.verify().catch(() => {});
+        }
       }
     };
     Linking.getInitialURL().then(handle);
