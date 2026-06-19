@@ -177,6 +177,18 @@ UPDATE_INTENT_META = """
     RETURNING id, link_meta
 """
 
+# One-off backfill: active intents whose preview image is still a remote URL
+# (not yet re-hosted into our own storage).
+SELECT_INTENTS_WITH_REMOTE_PREVIEW = """
+    SELECT id, url, link_meta
+    FROM public.intents
+    WHERE status = 1
+      AND link_meta IS NOT NULL
+      AND link_meta->>'image' IS NOT NULL
+      AND link_meta->>'image' NOT LIKE :rehosted_prefix
+    ORDER BY created_at DESC
+"""
+
 # In two-person circles the adder auto-hearts their own save —
 # the other member's single heart is then enough to shortlist it.
 AUTO_REACT_IF_COUPLE = """
