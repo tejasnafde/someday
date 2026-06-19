@@ -28,20 +28,17 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
       // Chrome Custom Tabs — stays coupled to the app so it properly returns after auth
       const result = await WebBrowser.openAuthSessionAsync(data.url, "someday://");
       if (result.type === "success") {
-        await supabase.auth.getSession();
+        // iOS path: ASWebAuthenticationSession captures the redirect URL directly.
+        // Android path: Chrome Custom Tab closes → URL arrives via Linking → handled in App.tsx.
         const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(result.url);
         if (exchangeError) {
-          console.error("OAuth exchangeCodeForSession failed:", exchangeError.message, exchangeError);
-          api.clientError(
-            "google_oauth_exchange",
-            exchangeError.message,
-            `url_shape=${result.url.split("?")[0]}`,
-          );
+          api.clientError("google_oauth_exchange", exchangeError.message, `url_shape=${result.url.split("?")[0]}`);
           setError("Sign-in failed — please try again.");
         } else {
           api.verify().catch(() => {});
         }
       }
+      // type="dismiss" on Android is expected — App.tsx handles the exchange via Linking
     }
     setBusy(false);
   }
