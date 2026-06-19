@@ -22,6 +22,8 @@ export default function CirclePage() {
   const router = useRouter();
   const [circle, setCircle] = useState<CircleDetail | null>(null);
   const [intents, setIntents] = useState<Intent[] | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [tab, setTab] = useState<(typeof TABS)[number]>("All");
   const [category, setCategory] = useState<Category | "All">("All");
   const [tag, setTag] = useState<string | null>(null);
@@ -45,8 +47,8 @@ export default function CirclePage() {
       setCircle(c);
     }).catch(() => router.replace("/"));
 
-    const cachedIntents = getCached<Intent[]>(intentsKey);
-    if (cachedIntents) setIntents(cachedIntents);
+    const cachedIntents = getCached<{ items: Intent[]; next_cursor: string | null }>(intentsKey);
+    if (cachedIntents) { setIntents(cachedIntents.items); setNextCursor(cachedIntents.next_cursor); }
     const params: Parameters<typeof api.intents>[1] =
       tab === "Shortlist" ? { shortlist: true }
       : tab === "Done" ? { task_status: "done" }
@@ -55,15 +57,43 @@ export default function CirclePage() {
       if (category !== "All") params!.category = category;
       if (tag) params!.tag = tag;
     }
-    api.intents(id, params).then((list) => {
-      setCached(intentsKey, list);
-      setIntents(list);
+    api.intents(id, params).then(({ items, next_cursor }) => {
+      setCached(intentsKey, { items, next_cursor });
+      setIntents(items);
+      setNextCursor(next_cursor);
       setIntentsError(null);
     }).catch((e) => {
       setIntents([]);
+      setNextCursor(null);
       setIntentsError(e?.message ?? "Could not load");
     });
   }, [id, tab, category, tag, intentsKey, router]);
+
+  async function loadMore() {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    const params: Parameters<typeof api.intents>[1] =
+      tab === "Shortlist" ? { shortlist: true }
+      : tab === "Done" ? { task_status: "done" }
+      : {};
+    if (tab === "All") {
+      if (category !== "All") params!.category = category;
+      if (tag) params!.tag = tag;
+    }
+    try {
+      const { items, next_cursor } = await api.intents(id, { ...params, cursor: nextCursor });
+      setIntents((prev) => {
+        const all = [...(prev ?? []), ...items];
+        setCached(intentsKey, { items: all, next_cursor });
+        return all;
+      });
+      setNextCursor(next_cursor);
+    } catch {
+      // leave existing list intact; user can retry
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   useEffect(() => {
     if (!ready) return;
@@ -88,7 +118,7 @@ export default function CirclePage() {
   function patchIntent(intentId: string, patch: (i: Intent) => Intent) {
     setIntents((prev) => {
       const next = prev?.map((i) => (i.id === intentId ? patch(i) : i)) ?? prev;
-      if (next) setCached(intentsKey, next);
+      if (next) setCached(intentsKey, { items: next, next_cursor: nextCursor });
       return next;
     });
   }
@@ -292,6 +322,18 @@ export default function CirclePage() {
           ))
         )}
       </div>
+
+      {nextCursor && (
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="btn-ghost px-6 py-2.5 text-sm disabled:opacity-60"
+          >
+            {loadingMore ? "Loading…" : "Load more"}
+          </button>
+        </div>
+      )}
 
       <div className="fixed inset-x-0 bottom-0 z-30">
         <div className="mx-auto flex max-w-md items-center gap-2.5 px-5 pb-5 pt-4"
