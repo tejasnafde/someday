@@ -1,0 +1,54 @@
+name: App
+
+on:
+  push:
+    branches: [main]
+    paths: [someday-app/**]
+  pull_request:
+    paths: [someday-app/**]
+
+jobs:
+  typecheck:
+    name: TypeScript
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: someday-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: someday-app/package-lock.json
+
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  build:
+    name: EAS Build (Android)
+    needs: typecheck
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: someday-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: someday-app/package-lock.json
+
+      - run: npm ci
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Publish EAS build
+        run: eas build --platform android --profile production --non-interactive
