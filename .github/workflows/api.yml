@@ -33,6 +33,20 @@ jobs:
           DATABASE_URL: postgresql://test:test@localhost/test
           LOG_LEVEL: WARNING
 
+  notify-failure:
+    name: Discord alert
+    needs: [test, deploy]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post to Discord
+        run: |
+          curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{\"username\":\"GitHub CI\",\"content\":\"🔴 **API CI failed** on \`${{ github.ref_name }}\` — ${{ github.event.head_commit.message || github.event.pull_request.title }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}>\"}"
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
   deploy:
     name: Deploy to Cloud Run
     needs: test
