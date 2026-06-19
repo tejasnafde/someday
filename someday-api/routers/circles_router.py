@@ -109,3 +109,12 @@ async def list_tags(circle_id: str, current_user: dict = Depends(jwt_required)):
     infologger.info(f"GET /circles/{circle_id}/tags | user_id={current_user['sub']}")
     status, result = handler.list_tags(circle_id, current_user["sub"])
     return create_response(status, result)
+
+
+@router.post("/{circle_id}/rotate-invite")
+@log_timing("POST /circles/:id/rotate-invite")
+async def rotate_invite(circle_id: str, current_user: dict = Depends(jwt_required)):
+    """Owner-only: invalidates the current invite link and returns a new token."""
+    infologger.info(f"POST /circles/{circle_id}/rotate-invite | user_id={current_user['sub']}")
+    status, result = handler.rotate_invite(circle_id, current_user["sub"])
+    return create_response(status, result)
