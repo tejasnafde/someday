@@ -1,3 +1,5 @@
+import time
+
 import httpx
 
 from app_util.db_util import DBUtil
@@ -67,7 +69,6 @@ class AuthHandler(DBUtil):
         url = upload_public_image("avatars", f"{user_id}.{ext}", content, content_type)
         if not url:
             return 502, "Upload failed"
-        import time
         busted = f"{url}?v={int(time.time())}"
         user = self.execute_query_with_value_returning(
             UPDATE_USER, {"user_id": user_id, "display_name": None, "avatar_url": busted}
