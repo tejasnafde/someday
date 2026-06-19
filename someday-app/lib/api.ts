@@ -36,6 +36,12 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
 export const api = {
   verify: () => request("POST", "/auth/verify"),
+  clientError: (context: string, message: string, detail?: string) =>
+    fetch(`${BASE}/auth/client-error`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ context, message, detail }),
+    }).catch(() => {}), // fire-and-forget, never throws
   circles: () => request<Circle[]>("GET", "/circles"),
   unfurl: (url: string) => request<LinkMeta>("POST", "/unfurl", { url }),
   createIntent: (circleId: string, fields: { title: string; url?: string; note?: string }) =>
