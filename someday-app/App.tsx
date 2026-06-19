@@ -37,8 +37,16 @@ export default function App() {
       if (!url) return;
       // Invite link: https://someday-web-gamma.vercel.app/join/TOKEN
       const inviteMatch = url.match(/https?:\/\/[^/]+(\/join\/[\w-]+)/);
-      if (inviteMatch) setPendingPath(inviteMatch[1]);
-      // OAuth is handled entirely inside signInWithGoogle via openAuthSessionAsync
+      if (inviteMatch) { setPendingPath(inviteMatch[1]); return; }
+      // OAuth callback: on Android, Chrome Custom Tab closes when the redirect fires
+      // and delivers the URL here via the Linking system (openAuthSessionAsync returns
+      // type="dismiss" instead of type="success"). Exchange the code here.
+      if (url.startsWith("someday://") && url.includes("code=")) {
+        supabase.auth.exchangeCodeForSession(url).then(({ error: err }) => {
+          if (err) api.clientError("google_oauth_linking", err.message, `url_shape=${url.split("?")[0]}`);
+        }).catch(() => {});
+        return;
+      }
     };
     Linking.getInitialURL().then(handle);
     const sub = Linking.addEventListener("url", (e) => handle(e.url));
