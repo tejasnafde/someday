@@ -21,11 +21,20 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
   // fires first wins; the second is a no-op. Without this, two parallel
   // exchangeCodeForSession calls race and one gets "invalid flow state".
   const handledCodes = useRef<Set<string>>(new Set());
+  // Android: openAuthSessionAsync resolves as "dismiss" when Chrome Custom Tab
+  // closes, but the Linking listener may still be in flight. We set a 4s fallback
+  // to clear the spinner; the ref lets us cancel it if the listener fires first.
+  const busyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (busyTimeoutRef.current) clearTimeout(busyTimeoutRef.current);
+  }, []);
 
   async function exchange(url: string) {
     const authCode = url.match(/[?&]code=([\w-]+)/)?.[1];
     if (!authCode || handledCodes.current.has(authCode)) return;
     handledCodes.current.add(authCode);
+    if (busyTimeoutRef.current) { clearTimeout(busyTimeoutRef.current); busyTimeoutRef.current = null; }
 
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(authCode);
     if (exchangeError) {
@@ -64,8 +73,8 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
         exchange(result.url);
       } else {
         // type="dismiss"/"cancel": on Android the Linking listener handles the
-        // exchange. Stop the spinner if no code is in flight.
-        setTimeout(() => setBusy(false), 4000);
+        // exchange. Set a fallback to clear the spinner if no code arrives.
+        busyTimeoutRef.current = setTimeout(() => setBusy(false), 4000);
       }
     } else {
       setBusy(false);
