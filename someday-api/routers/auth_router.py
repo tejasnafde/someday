@@ -9,6 +9,7 @@ from common_helper.decorators import log_timing
 from common_helper.discord_alert import alert as discord_alert
 from common_helper.response_helper import create_response
 from handler.auth_handler import AuthHandler
+from schemas.auth_schema import MeOut, UserResponse, WebviewSessionOut
 
 router = APIRouter()
 handler = AuthHandler()
@@ -53,7 +54,7 @@ async def client_error(request: ClientErrorRequest):
     return create_response(200, "logged")
 
 
-@router.post("/verify")
+@router.post("/verify", response_model=UserResponse)
 @log_timing("POST /auth/verify")
 async def verify(current_user: dict = Depends(jwt_required)):
     """
@@ -66,7 +67,7 @@ async def verify(current_user: dict = Depends(jwt_required)):
     return create_response(status, result)
 
 
-@router.get("/me")
+@router.get("/me", response_model=MeOut)
 @log_timing("GET /auth/me")
 async def get_me(current_user: dict = Depends(jwt_required)):
     """Return current user profile + their circles."""
@@ -75,7 +76,7 @@ async def get_me(current_user: dict = Depends(jwt_required)):
     return create_response(status, result)
 
 
-@router.patch("/me")
+@router.patch("/me", response_model=UserResponse)
 @log_timing("PATCH /auth/me")
 async def update_me(request: UpdateMeRequest, current_user: dict = Depends(jwt_required)):
     """Update display name / avatar."""
@@ -84,7 +85,7 @@ async def update_me(request: UpdateMeRequest, current_user: dict = Depends(jwt_r
     return create_response(status, result)
 
 
-@router.post("/me/avatar")
+@router.post("/me/avatar", response_model=UserResponse)
 @log_timing("POST /auth/me/avatar")
 async def upload_avatar(file: UploadFile = File(...), current_user: dict = Depends(jwt_required)):
     """Upload a profile photo (client sends a pre-resized webp/jpeg/png ≤2MB)."""
@@ -103,7 +104,7 @@ async def set_push_token(request: PushTokenRequest, current_user: dict = Depends
     return create_response(status, result)
 
 
-@router.post("/webview-session")
+@router.post("/webview-session", response_model=WebviewSessionOut)
 @log_timing("POST /auth/webview-session")
 async def webview_session(current_user: dict = Depends(jwt_required)):
     """Mint an independent session for the mobile WebView (separate refresh-token family)."""
