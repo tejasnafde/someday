@@ -3,14 +3,21 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, UploadFile
 from pydantic import BaseModel, field_validator
 
-from app_util.log_util import infologger
+from app_util.log_util import infologger, errorlogger
 from common_helper.auth_helper import jwt_required
 from common_helper.decorators import log_timing
+from common_helper.discord_alert import alert as discord_alert
 from common_helper.response_helper import create_response
 from handler.auth_handler import AuthHandler
 
 router = APIRouter()
 handler = AuthHandler()
+
+
+class ClientErrorRequest(BaseModel):
+    context: str          # e.g. "google_oauth_exchange"
+    message: str          # error message from the SDK
+    detail: Optional[str] = None  # extra info (url shape, etc.)
 
 
 class PushTokenRequest(BaseModel):
@@ -28,6 +35,22 @@ class UpdateMeRequest(BaseModel):
             if not v:
                 raise ValueError("display_name cannot be blank")
         return v
+
+
+@router.post("/client-error")
+@log_timing("POST /auth/client-error")
+async def client_error(request: ClientErrorRequest):
+    """
+    Receives client-side auth errors (e.g. exchangeCodeForSession failures) that
+    never reach the backend otherwise, and fires a Discord alert so they're visible.
+    No JWT required — the user can't be authenticated when sign-in fails.
+    """
+    errorlogger.error(
+        f"CLIENT_AUTH_ERROR | context={request.context} | {request.message}"
+        + (f" | {request.detail}" if request.detail else "")
+    )
+    discord_alert(400, "CLIENT", f"/auth/{request.context}", request.message)
+    return create_response(200, "logged")
 
 
 @router.post("/verify")
