@@ -11,6 +11,7 @@ from app_util.db_util import DBUtil
 from app_util.log_util import infologger, errorlogger
 from common_helper.decorators import log_timing
 from common_helper.storage_helper import rehost_remote_image
+from common_helper.url_util import validate_url
 
 TIMEOUT = 8.0
 HEADERS = {
@@ -63,9 +64,13 @@ def resolve_shortlink(url: str) -> str:
     try:
         resp = httpx.get(url, timeout=TIMEOUT, follow_redirects=True, headers=HEADERS)
         final = str(resp.url)
+        validate_url(final)  # guard against open-redirect to private IPs
         if final != url:
             infologger.info(f"unfurl.resolve_shortlink | {url} -> {final[:120]}")
         return final
+    except ValueError as exc:
+        infologger.warning(f"unfurl.resolve_shortlink | blocked redirect | {exc}")
+        return url
     except Exception as exc:
         infologger.warning(f"unfurl.resolve_shortlink | failed | {exc}")
         return url
@@ -171,6 +176,11 @@ def fetch_link_meta(url: str, rehost: bool = True) -> dict | None:
     cannot expire. The standalone /unfurl preview passes rehost=False since that
     result is transient and should not create storage objects."""
     infologger.info(f"unfurl.fetch_link_meta | url={url} rehost={rehost}")
+    try:
+        validate_url(url)
+    except ValueError as exc:
+        infologger.warning(f"unfurl.fetch_link_meta | blocked URL | {exc} | url={url}")
+        return None
     finish = rehost_meta_image if rehost else (lambda m: m)
     url = resolve_shortlink(url)
     if urlparse(url).netloc.lower() in YOUTUBE_HOSTS:
