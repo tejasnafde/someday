@@ -6,9 +6,18 @@
 #   then add MY_SECRET=MY_SECRET:latest to --update-secrets below.
 
 steps:
+  - id: test
+    name: python:3.12-slim
+    entrypoint: bash
+    args:
+      - "-c"
+      - "pip install -r requirements-dev.txt -q && pytest tests/ -q"
+    dir: someday-api
+
   - id: build
     name: gcr.io/cloud-builders/docker
     args: ["build", "-t", "${_IMAGE}", "someday-api"]
+    waitFor: ["test"]
 
   - id: push
     name: gcr.io/cloud-builders/docker
@@ -23,8 +32,8 @@ steps:
       - someday-api
       - --image=${_IMAGE}
       - --region=asia-south1
-      - --update-env-vars=^|^APP_ENV=production|LOG_LEVEL=INFO|SUPABASE_URL=https://hltpqcmmpddjhijqeeko.supabase.co|ALLOWED_ORIGINS=http://localhost:3000,https://someday-web-gamma.vercel.app
-      - --update-secrets=DATABASE_URL=DATABASE_URL:latest,SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest,SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest,EAS_WEBHOOK_SECRET=EAS_WEBHOOK_SECRET:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest,DISCORD_WEBHOOK_URL=DISCORD_WEBHOOK_URL:latest
+      - --update-env-vars=^|^APP_ENV=production|LOG_LEVEL=INFO|SUPABASE_URL=https://hltpqcmmpddjhijqeeko.supabase.co|ALLOWED_ORIGINS=https://someday-web-gamma.vercel.app
+      - --update-secrets=DATABASE_URL=DATABASE_URL:latest,SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest,SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest,EAS_WEBHOOK_SECRET=EAS_WEBHOOK_SECRET:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest,DISCORD_WEBHOOK_URL=DISCORD_WEBHOOK_URL:latest,VAPID_PUBLIC_KEY=VAPID_PUBLIC_KEY:latest,VAPID_PRIVATE_KEY=VAPID_PRIVATE_KEY:latest
       - --quiet
 
 substitutions:

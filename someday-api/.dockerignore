@@ -1,0 +1,14 @@
+.env*
+.git
+.venv
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.ruff_cache
+tests/
+smoke_test.py
+mint_token.py
+scripts/
+migrations/
+*.md

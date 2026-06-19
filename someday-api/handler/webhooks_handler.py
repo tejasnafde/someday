@@ -12,9 +12,6 @@ from common_helper.decorators import log_timing
 from common_helper.notify import Notify
 from config.settings import settings
 
-REPO = "tejasnafde/someday"
-
-
 def verify_signature(body: bytes, signature: str) -> bool:
     expected = "sha1=" + hmac.new(
         settings.EAS_WEBHOOK_SECRET.encode(), body, hashlib.sha1
@@ -34,7 +31,7 @@ def github(method: str, url: str, upload=False, **kwargs) -> httpx.Response:
 
 
 def release_exists(version: str) -> bool:
-    r = github("GET", f"https://api.github.com/repos/{REPO}/releases/tags/v{version}")
+    r = github("GET", f"https://api.github.com/repos/{settings.GITHUB_REPO}/releases/tags/v{version}")
     return r.status_code == 200
 
 
@@ -50,7 +47,7 @@ def upload_and_notify(version: str, apk_url: str, release_id: int) -> None:
         tmp.seek(0)
         up = github(
             "POST",
-            f"https://uploads.github.com/repos/{REPO}/releases/{release_id}/assets?name=someday.apk",
+            f"https://uploads.github.com/repos/{settings.GITHUB_REPO}/releases/{release_id}/assets?name=someday.apk",
             headers={"Content-Type": "application/vnd.android.package-archive"},
             content=tmp.read(),
             upload=True,
@@ -79,7 +76,7 @@ def publish_release(version: str, apk_url: str, build_id: str) -> None:
         infologger.warning(f"webhooks.publish_release | v{version} already exists — skipping")
         return
     try:
-        rel = github("POST", f"https://api.github.com/repos/{REPO}/releases", json={
+        rel = github("POST", f"https://api.github.com/repos/{settings.GITHUB_REPO}/releases", json={
             "tag_name": f"v{version}",
             "name": f"Someday v{version}",
             "body": (
@@ -103,7 +100,7 @@ def recover_incomplete_releases() -> None:
     Recovery finds releases with no someday.apk asset and an 'apk_url: ...' line in the body.
     """
     try:
-        r = github("GET", f"https://api.github.com/repos/{REPO}/releases?per_page=5")
+        r = github("GET", f"https://api.github.com/repos/{settings.GITHUB_REPO}/releases?per_page=5")
         r.raise_for_status()
         for rel in r.json():
             if any(a["name"] == "someday.apk" for a in rel.get("assets", [])):
