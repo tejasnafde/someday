@@ -44,6 +44,76 @@ schemas/<module>_schema.py      ← Pydantic BaseModels for request/response
 - **No `print()`.** Always `infologger` or `errorlogger` from `app_util/log_util.py`.
 - **Handlers return `(status_code, result)` tuples.** Routers wrap with `create_response()`.
 - **No `_` prefix on anything.** There is no private convention in this codebase. Never name a function, method, variable, or module-level constant with a leading underscore. Dunder methods (`__init__`, `__str__`, etc.) are fine — single-underscore names are not. If you think something should be "private", just don't expose it — the underscore prefix adds noise without enforcement.
+- **No top-level imports inside functions.** All imports belong at the top of the file. The only exception is circular-import avoidance, which must be documented with a comment.
+- **All config values in `settings.py`.** No hardcoded strings that could vary between environments (repo names, URLs, tokens). If a constant is used in more than one place or could ever change, put it in `settings.py`.
+
+### Authorization on mutations (non-negotiable)
+
+Every endpoint that mutates or reads a resource gated to circle membership **must verify membership before acting**. The pattern:
+
+```python
+# In the handler method — always the first thing:
+existing = h.get_intent(self, intent_id, user_id)   # enforces membership via EXISTS subquery
+if not existing:
+    return 404, "Intent not found"
+# ... proceed with mutation
+```
+
+- Never trust that a resource belongs to the caller without checking. The SQL query (`GET_INTENT_BY_ID`, etc.) enforces membership via an `EXISTS` subquery — this is the authoritative check, not application logic.
+- If you add a new mutation endpoint, add the membership `EXISTS` clause to the lookup query before anything else.
+
+### Transactions for multi-step writes
+
+Any operation that touches more than one table (or more than one row that must stay consistent) **must use `db.transaction()`**:
+
+```python
+with db.transaction() as conn:
+    row = db.tx_exec_returning(conn, QUERY_A, params_a)
+    db.tx_exec(conn, QUERY_B, {**params_b, "id": row["id"]})
+# commit happens automatically on exit; rollback on exception
+```
+
+- Never call `execute_query_with_value_without_output` multiple times for logically atomic operations. A half-applied state (circle created but owner not added as member, ownership transferred but old role not demoted) is worse than an error.
+- `db.tx_exec(conn, query, params)` — execute on existing connection, no commit.
+- `db.tx_exec_returning(conn, query, params)` — execute RETURNING on existing connection, returns the row dict.
+
+### Cursor-based pagination on all list endpoints
+
+Every endpoint that returns a list of rows **must support cursor pagination**. No offset/page-number pagination (it drifts under concurrent inserts).
+
+```sql
+AND (:cursor IS NULL OR created_at < CAST(:cursor AS timestamptz))
+ORDER BY created_at DESC
+LIMIT :limit
+```
+
+- Router: `cursor: str | None = Query(default=None)`, `limit: int = Query(default=50, ge=1, le=200)`.
+- Handler/helper: pass through to query; return `{"items": [...], "next_cursor": str | None}`.
+- `next_cursor = items[-1]["created_at"] if len(items) == limit else None`
+- Client: pass `next_cursor` as `cursor` on the next call to load more. A null cursor means there are no more pages.
+
+### SSRF protection on all outbound HTTP
+
+Any code that makes an outbound HTTP call with a URL from user input (unfurl, image re-host, webhook, etc.) **must call `common_helper.url_util.validate_url(url)` before the request**:
+
+```python
+from common_helper.url_util import validate_url
+validate_url(url)  # raises ValueError on private IPs, file://, metadata hosts
+```
+
+- `validate_url` blocks: non-http/https schemes, IP literals in private/loopback/link-local ranges, known cloud metadata hostnames (169.254.169.254, etc.).
+- Catch `ValueError` and log at ERROR level; return `None` or 400 to the caller.
+- After following redirects (e.g. shortlink resolution), validate the final URL too.
+- Note: full DNS-rebinding protection requires infra-level egress controls and is out of scope for application code.
+
+### Pinned dependencies
+
+`requirements.txt` uses `==` for every package. When adding a new dependency:
+1. Find the latest stable version.
+2. Pin it: `newpackage==x.y.z`.
+3. Update `cloudbuild-production.yaml` if the build step caches layers that need to be busted.
+
+Never use `>=`, `~=`, or unpinned versions in `requirements.txt`.
 
 ---
 
@@ -106,6 +176,73 @@ Set up `log_util.py` and decorators **before any feature code**. Every endpoint,
 | production | GCP Cloud Run `someday-api` (project `teejayproject`, asia-south1), auto-deployed by Cloud Build on push to main touching `someday-api/**` | Supabase project `someday` (hltpqcmmpddjhijqeeko) |
 
 `APP_ENV` env var selects the environment. Default is `dev`.
+
+---
+
+## Mobile App (Expo / React Native)
+
+### Secure token storage
+
+Auth tokens are stored in the device secure enclave via `expo-secure-store`, **not** `AsyncStorage`. This was a deliberate security fix — do not revert.
+
+- `someday-app/lib/supabase.ts` uses `SecureStore.getItemAsync / setItemAsync / deleteItemAsync` as the Supabase auth storage adapter.
+- The session inactivity timer in `App.tsx` uses `AsyncStorage` only for the `last_active_timestamp` value (not sensitive) — this is intentional. Supabase tokens stay in SecureStore.
+
+### Crash reporting
+
+`App.tsx` installs `ErrorUtils.setGlobalHandler` at module load time. It forwards fatal and non-fatal JS errors to `POST /auth/client-error` via `api.clientError()` (fire-and-forget, never throws).
+
+- `ErrorUtils` is a React Native runtime global — not exported by the `react-native` package. Declare it with a local `declare const ErrorUtils` in the file that uses it.
+- Do not wrap `api.clientError()` in a try/catch — it is already fire-and-forget by design.
+
+### setTimeout safety in auth flows
+
+Any `setTimeout` that refs state or clears a spinner **must be stored in a `useRef<ReturnType<typeof setTimeout> | null>` and cancelled in the cleanup function** returned from `useEffect`. Bare `setTimeout(() => setState(x), N)` after an async operation leaks into unmounted components and can clobber valid state (e.g. clearing a spinner after a successful sign-in).
+
+Pattern:
+```tsx
+const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+// ...
+timerRef.current = setTimeout(() => setBusy(false), 4000);
+// Cancel when the real result arrives:
+if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+```
+
+---
+
+## Web (Next.js)
+
+### Error boundaries
+
+Every Next.js App Router page directory **must have an `error.tsx`** that:
+1. Uses `"use client"` (required by Next.js).
+2. Calls `api.clientError("web_error", error.message, error.digest)` in a `useEffect` so errors are visible in Discord.
+3. Shows a minimal "Something went wrong / Try again" UI.
+
+The root `app/error.tsx` exists and handles the top-level boundary. Do not remove it.
+
+### API call error handling
+
+Every `async` form submit or button handler that calls `api.*()` **must use try/catch/finally**:
+
+```tsx
+async function create(e: React.FormEvent) {
+  e.preventDefault();
+  setBusy(true);
+  setError("");
+  try {
+    await api.createSomething(...);
+    // success path
+  } catch (err: unknown) {
+    setError(err instanceof Error ? err.message : "Something went wrong.");
+  } finally {
+    setBusy(false);  // always resets, even on error
+  }
+}
+```
+
+Letting `await api.call()` throw unhandled leaves the spinner stuck. `finally { setBusy(false) }` is the fix — not `setBusy(false)` after `await`.
 
 ---
 
