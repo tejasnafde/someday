@@ -1,6 +1,8 @@
+import time
+
 from app_util.db_util import DBUtil
 from common_helper.storage_helper import upload_public_image
-from app_util.log_util import infologger, errorlogger
+from app_util.log_util import infologger
 from common_helper.decorators import log_timing
 from modules.circles import circles_helper as h
 from schemas.circles_schema import CreateCircleRequest, UpdateCircleRequest
@@ -56,7 +58,6 @@ class CirclesHandler(DBUtil):
         url = upload_public_image("circle-photos", circle_id, content, content_type)
         if not url:
             return 502, "Upload failed"
-        import time
         return 200, {"photo_url": f"{url}?v={int(time.time())}"}
 
     @log_timing("circles_handler.join_circle")
@@ -82,7 +83,7 @@ class CirclesHandler(DBUtil):
     def set_member_role(self, circle_id: str, actor_id: str, target_id: str, role: str) -> tuple[int, dict | str]:
         """role ∈ {admin, member, owner}.
            'admin'/'member': only owner+admins; admins can't touch owner/other admins.
-           'owner': owner-only — transfers ownership and demotes self to admin."""
+           'owner': owner-only — transfers ownership atomically in one transaction."""
         infologger.info(
             f"CirclesHandler.set_member_role | circle_id={circle_id} actor={actor_id} target={target_id} role={role}"
         )
@@ -103,9 +104,7 @@ class CirclesHandler(DBUtil):
         if role == "owner":
             if actor_role != "owner":
                 return 403, "Only the owner can transfer ownership"
-            h.set_owner(self, circle_id, target_id)
-            h.set_member_role(self, circle_id, target_id, "owner")
-            h.set_member_role(self, circle_id, actor_id, "admin")
+            h.transfer_ownership(self, circle_id, actor_id, target_id)
             return 200, {"message": "Ownership transferred", "new_owner_id": target_id}
 
         if not h.can_manage_members(actor_role):
@@ -145,3 +144,11 @@ class CirclesHandler(DBUtil):
         except ValueError:
             return 403, "Not a member of this circle"
         return 200, h.list_tags(self, circle_id)
+
+    @log_timing("circles_handler.rotate_invite")
+    def rotate_invite(self, circle_id: str, user_id: str) -> tuple[int, dict | str]:
+        infologger.info(f"CirclesHandler.rotate_invite | circle_id={circle_id} user_id={user_id}")
+        row = h.rotate_invite_token(self, circle_id, user_id)
+        if not row:
+            return 403, "Only the circle owner can rotate the invite link"
+        return 200, {"invite_token": row["invite_token"]}

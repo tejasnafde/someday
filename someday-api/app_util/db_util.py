@@ -3,6 +3,7 @@
 import json
 import time
 import uuid
+from contextlib import contextmanager
 
 import pandas as pd
 from sqlalchemy import create_engine
@@ -115,3 +116,34 @@ class DBUtil:
                 exc_info=True,
             )
             raise
+
+    @contextmanager
+    def transaction(self):
+        """Yield an open connection scoped to one transaction. Commits on exit, rolls back on exception."""
+        conn = self.get_connection()
+        try:
+            yield conn
+            conn.commit()
+            infologger.debug("DB_TX | committed")
+        except Exception as exc:
+            conn.rollback()
+            errorlogger.error(f"DB_TX | rolled back | {exc}", exc_info=True)
+            raise
+        finally:
+            conn.close()
+
+    def tx_exec(self, conn, query: str, params: dict) -> None:
+        """Execute a write statement on an existing transaction connection (no auto-commit)."""
+        infologger.debug(f"DB_QUERY(TX) | {query.strip()}")
+        infologger.debug(f"DB_PARAMS | {params}")
+        conn.execute(sql_text(query), params)
+
+    def tx_exec_returning(self, conn, query: str, params: dict) -> dict:
+        """Execute a RETURNING statement on an existing transaction connection."""
+        infologger.debug(f"DB_QUERY(TX) | {query.strip()}")
+        infologger.debug(f"DB_PARAMS | {params}")
+        result = conn.execute(sql_text(query), params)
+        row = result.fetchone()
+        if not row:
+            return {}
+        return df_to_records(pd.DataFrame([row_to_dict(row)]))[0]
