@@ -28,8 +28,10 @@ LIST_INTENTS = """
       AND (:task_status  IS NULL OR i.task_status = :task_status)
       AND (:category     IS NULL OR i.category    = :category)
       AND (:tag          IS NULL OR :tag = ANY(i.tags))
+      AND (:cursor       IS NULL OR i.created_at < CAST(:cursor AS timestamptz))
     GROUP BY i.id
     ORDER BY i.created_at DESC
+    LIMIT :limit
 """
 
 # Shortlist: intents with ≥ 2 distinct interested reactions
@@ -59,9 +61,11 @@ LIST_INTENTS_SHORTLIST = """
     WHERE i.circle_id   = :circle_id
       AND i.status      = 1
       AND i.task_status NOT IN ('done', 'archived')
+      AND (:cursor       IS NULL OR i.created_at < CAST(:cursor AS timestamptz))
     GROUP BY i.id
     HAVING COUNT(DISTINCT r.user_id) FILTER (WHERE r.status = 1) >= 2
     ORDER BY i.created_at DESC
+    LIMIT :limit
 """
 
 GET_INTENT_BY_ID = """
@@ -88,6 +92,10 @@ GET_INTENT_BY_ID = """
     LEFT JOIN public.reactions r ON r.intent_id = i.id
     LEFT JOIN public.intent_boosts b ON b.intent_id = i.id
     WHERE i.id = :intent_id AND i.status = 1
+      AND EXISTS (
+          SELECT 1 FROM public.circle_members cm
+          WHERE cm.circle_id = i.circle_id AND cm.user_id = :user_id AND cm.status = 1
+      )
     GROUP BY i.id
 """
 

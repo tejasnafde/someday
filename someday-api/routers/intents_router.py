@@ -23,13 +23,15 @@ async def list_intents(
     category:    str | None = Query(default=None),
     tag:         str | None = Query(default=None),
     shortlist:   bool       = Query(default=False),
+    cursor:      str | None = Query(default=None),
+    limit:       int        = Query(default=50, ge=1, le=200),
 ):
     infologger.info(
         f"GET /circles/{circle_id}/intents | user_id={current_user['sub']} "
-        f"task_status={task_status} category={category} shortlist={shortlist}"
+        f"task_status={task_status} category={category} shortlist={shortlist} cursor={cursor!r}"
     )
     status, result = handler.list_intents(
-        circle_id, current_user["sub"], task_status, category, tag, shortlist
+        circle_id, current_user["sub"], task_status, category, tag, shortlist, cursor, limit
     )
     return create_response(status, result)
 
@@ -96,7 +98,7 @@ async def upload_memory_photo(
 ):
     infologger.info(f"POST /intents/{intent_id}/photos | user_id={current_user['sub']}")
     content = await file.read()
-    status, result = handler.upload_memory_photo(intent_id, content, file.content_type or "")
+    status, result = handler.upload_memory_photo(intent_id, current_user["sub"], content, file.content_type or "")
     return create_response(status, result)
 
 
@@ -118,7 +120,7 @@ async def toggle_reaction(
 @log_timing("POST /intents/:id/refresh-preview")
 async def refresh_preview(intent_id: str, current_user: dict = Depends(jwt_required)):
     infologger.info(f"POST /intents/{intent_id}/refresh-preview | user_id={current_user['sub']}")
-    status, result = handler.refresh_preview(intent_id)
+    status, result = handler.refresh_preview(intent_id, current_user["sub"])
     return create_response(status, result)
 
 

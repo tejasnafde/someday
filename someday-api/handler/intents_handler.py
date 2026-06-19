@@ -20,17 +20,19 @@ class IntentsHandler(DBUtil):
         category: str | None,
         tag: str | None,
         shortlist: bool,
-    ) -> tuple[int, list | str]:
+        cursor: str | None = None,
+        limit: int = 50,
+    ) -> tuple[int, dict | str]:
         infologger.info(
             f"IntentsHandler.list_intents | circle_id={circle_id} "
-            f"shortlist={shortlist} task_status={task_status}"
+            f"shortlist={shortlist} task_status={task_status} cursor={cursor!r}"
         )
         try:
             ch.assert_member(self, circle_id, user_id)
         except ValueError:
             return 403, "Not a member of this circle"
-        intents = h.list_intents(self, circle_id, user_id, task_status, category, tag, shortlist)
-        return 200, intents
+        page = h.list_intents(self, circle_id, user_id, task_status, category, tag, shortlist, cursor, limit)
+        return 200, page
 
     @log_timing("intents_handler.get_intent")
     def get_intent(self, intent_id: str, user_id: str) -> tuple[int, dict | str]:
@@ -67,7 +69,10 @@ class IntentsHandler(DBUtil):
     def update_intent(
         self, intent_id: str, request: UpdateIntentRequest, user_id: str
     ) -> tuple[int, dict | str]:
-        infologger.info(f"IntentsHandler.update_intent | intent_id={intent_id}")
+        infologger.info(f"IntentsHandler.update_intent | intent_id={intent_id} user_id={user_id}")
+        existing = h.get_intent(self, intent_id, user_id)
+        if not existing:
+            return 404, "Intent not found"
         updates = request.model_dump(exclude_none=True)
         if not updates:
             return 400, "No fields to update"
@@ -78,28 +83,37 @@ class IntentsHandler(DBUtil):
 
     @log_timing("intents_handler.delete_intent")
     def delete_intent(self, intent_id: str, user_id: str) -> tuple[int, str]:
-        infologger.info(f"IntentsHandler.delete_intent | intent_id={intent_id}")
+        infologger.info(f"IntentsHandler.delete_intent | intent_id={intent_id} user_id={user_id}")
+        existing = h.get_intent(self, intent_id, user_id)
+        if not existing:
+            return 404, "Intent not found"
         h.delete_intent(self, intent_id)
         return 200, "Intent deleted"
 
     @log_timing("intents_handler.toggle_reaction")
     def toggle_reaction(self, intent_id: str, user_id: str) -> tuple[int, dict]:
         infologger.info(f"IntentsHandler.toggle_reaction | intent_id={intent_id} user_id={user_id}")
+        if not h.get_intent(self, intent_id, user_id):
+            return 404, "Intent not found"
         added = h.toggle_reaction(self, intent_id, user_id)
         return 200, {"reacted": added}
 
     @log_timing("intents_handler.refresh_preview")
-    def refresh_preview(self, intent_id: str) -> tuple[int, dict | str]:
+    def refresh_preview(self, intent_id: str, user_id: str) -> tuple[int, dict | str]:
         from handler.unfurl_handler import fetch_link_meta
-        infologger.info(f"IntentsHandler.refresh_preview | intent_id={intent_id}")
+        infologger.info(f"IntentsHandler.refresh_preview | intent_id={intent_id} user_id={user_id}")
+        if not h.get_intent(self, intent_id, user_id):
+            return 404, "Intent not found"
         row = h.refresh_preview(self, intent_id, fetch_link_meta)
         if not row:
             return 404, "No URL on this intent or no preview available"
         return 200, row
 
     @log_timing("intents_handler.upload_memory_photo")
-    def upload_memory_photo(self, intent_id: str, content: bytes, content_type: str) -> tuple[int, dict | str]:
-        infologger.info(f"IntentsHandler.upload_memory_photo | intent_id={intent_id} bytes={len(content)}")
+    def upload_memory_photo(self, intent_id: str, user_id: str, content: bytes, content_type: str) -> tuple[int, dict | str]:
+        infologger.info(f"IntentsHandler.upload_memory_photo | intent_id={intent_id} user_id={user_id} bytes={len(content)}")
+        if not h.get_intent(self, intent_id, user_id):
+            return 404, "Intent not found"
         ext = {"image/webp": "webp", "image/jpeg": "jpg", "image/png": "png"}.get(content_type)
         if not ext:
             return 400, "Image must be webp, jpeg, or png"
@@ -112,5 +126,7 @@ class IntentsHandler(DBUtil):
     @log_timing("intents_handler.toggle_boost")
     def toggle_boost(self, intent_id: str, user_id: str) -> tuple[int, dict]:
         infologger.info(f"IntentsHandler.toggle_boost | intent_id={intent_id} user_id={user_id}")
+        if not h.get_intent(self, intent_id, user_id):
+            return 404, "Intent not found"
         added = h.toggle_boost(self, intent_id, user_id)
         return 200, {"boosted": added}
