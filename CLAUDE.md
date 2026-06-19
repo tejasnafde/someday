@@ -47,6 +47,14 @@ schemas/<module>_schema.py      ← Pydantic BaseModels for request/response
 
 ---
 
+## Auth — read the doc first
+
+**Before touching anything auth-related (app, web, or backend), read `docs/auth-architecture.md` in full.**
+
+Sign-in is not a normal native flow. The mobile app is a **native auth shell wrapping a WebView**, and a signed-in device holds **two independent Supabase sessions** — a native one (`AsyncStorage`) and a separately-minted WebView one (web `localStorage`), bridged via `POST /auth/webview-session` and an implicit-grant URL fragment. They are kept separate on purpose (refresh-token rotation reuse-detection would otherwise revoke both). The doc covers the full flow plus the load-bearing gotchas: PKCE `flowType`, the Android `someday:` scheme (no `//`), single-exchange guarding, and the mandatory `expires_in` in the bridge fragment. Client-side auth failures have no server log — instrument with `api.clientError()` → Discord.
+
+---
+
 ## Logging — non-negotiable
 
 Set up `log_util.py` and decorators **before any feature code**. Every endpoint, always.
