@@ -32,6 +32,11 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
         const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(result.url);
         if (exchangeError) {
           console.error("OAuth exchangeCodeForSession failed:", exchangeError.message, exchangeError);
+          api.clientError(
+            "google_oauth_exchange",
+            exchangeError.message,
+            `url_shape=${result.url.split("?")[0]}`,
+          );
           setError("Sign-in failed — please try again.");
         } else {
           api.verify().catch(() => {});
