@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     # CORS
     ALLOWED_ORIGINS: str = "*"
 
+    # GitHub — used by the EAS build webhook to publish releases
+    GITHUB_REPO: str = "tejasnafde/someday"
+
     model_config = SettingsConfigDict(
         env_file=f".env.{os.getenv('APP_ENV', 'dev')}",
         env_file_encoding="utf-8",
