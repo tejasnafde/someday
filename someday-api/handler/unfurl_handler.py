@@ -10,6 +10,7 @@ import httpx
 from app_util.db_util import DBUtil
 from app_util.log_util import infologger, errorlogger
 from common_helper.decorators import log_timing
+from common_helper.storage_helper import rehost_remote_image
 
 TIMEOUT = 8.0
 HEADERS = {
@@ -149,21 +150,40 @@ def fetch_search_meta(url: str) -> dict | None:
     return meta
 
 
-def fetch_link_meta(url: str) -> dict | None:
-    """Returns {"title": ..., "image": ..., "site": ...} or None on failure."""
-    infologger.info(f"unfurl.fetch_link_meta | url={url}")
+def rehost_meta_image(meta: dict | None) -> dict | None:
+    """Re-host meta['image'] into our own storage so the preview survives the
+    source CDN's signed-URL expiry. Falls back to the original URL on failure."""
+    if not meta or not meta.get("image"):
+        return meta
+    permanent = rehost_remote_image(meta["image"])
+    if permanent:
+        meta["image"] = permanent
+    else:
+        infologger.warning(f"unfurl.rehost_meta_image | kept original (rehost failed) | {meta['image'][:120]}")
+    return meta
+
+
+def fetch_link_meta(url: str, rehost: bool = True) -> dict | None:
+    """Returns {"title": ..., "image": ..., "site": ...} or None on failure.
+
+    When rehost is True (default — used when the result is persisted on an
+    intent) the og:image is downloaded and re-hosted in Supabase Storage so it
+    cannot expire. The standalone /unfurl preview passes rehost=False since that
+    result is transient and should not create storage objects."""
+    infologger.info(f"unfurl.fetch_link_meta | url={url} rehost={rehost}")
+    finish = rehost_meta_image if rehost else (lambda m: m)
     url = resolve_shortlink(url)
     if urlparse(url).netloc.lower() in YOUTUBE_HOSTS:
         meta = fetch_youtube_meta(url)
         if meta:
-            return meta
+            return finish(meta)
     if is_maps_url(url):
         meta = fetch_maps_meta(url)
         if meta:
-            return meta
+            return finish(meta)
     meta = fetch_search_meta(url)
     if meta:
-        return meta
+        return finish(meta)
     try:
         resp = httpx.get(url, headers=HEADERS, timeout=TIMEOUT, follow_redirects=True)
         resp.raise_for_status()
@@ -197,7 +217,7 @@ def fetch_link_meta(url: str) -> dict | None:
 
     meta = {"title": title, "image": image, "site": site}
     infologger.info(f"unfurl.fetch_link_meta | success | title={title!r} site={site!r}")
-    return meta
+    return finish(meta)
 
 
 class UnfurlHandler(DBUtil):
@@ -205,7 +225,9 @@ class UnfurlHandler(DBUtil):
     @log_timing("unfurl_handler.unfurl")
     def unfurl(self, url: str) -> tuple[int, dict | str]:
         infologger.info(f"UnfurlHandler.unfurl | url={url}")
-        meta = fetch_link_meta(url)
+        # Transient preview shown before saving — don't create storage objects.
+        # The image is re-hosted later when the intent is actually persisted.
+        meta = fetch_link_meta(url, rehost=False)
         if not meta:
             infologger.warning(f"UnfurlHandler.unfurl | fallback — no metadata | url={url}")
             return 200, {"title": None, "image": None, "site": None}
