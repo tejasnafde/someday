@@ -52,6 +52,7 @@ def spin(db, circle_id: str, user_id: str) -> list[dict]:
         return []
 
     # Shuffle server-side so all clients see the same order for a given spin request.
+    # ponytail: default time-based seed is intentional — we want a different order each call, not reproducibility.
     random.shuffle(rows)
     infologger.info(f"payoff_helper.spin | {len(rows)} items shuffled")
     return [dict(r) for r in rows]
