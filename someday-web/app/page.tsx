@@ -50,14 +50,22 @@ export default function Home() {
     api.notifications().then((feed) => setUnseen(feed.unseen)).catch(() => {});
   }, [ready]);
 
+  const [createError, setCreateError] = useState("");
+
   async function create(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    await api.createCircle(name.trim());
-    setBusy(false);
-    setCreating(false);
-    setName("");
-    load();
+    setCreateError("");
+    try {
+      await api.createCircle(name.trim());
+      setCreating(false);
+      setName("");
+      load();
+    } catch (err: unknown) {
+      setCreateError(err instanceof Error ? err.message : "Could not create circle — try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (!ready || !circles)
@@ -146,6 +154,7 @@ export default function Home() {
             placeholder="Movie nights, school friends, the big trip…"
             className="w-full rounded-[var(--rs)] bg-transparent px-1 py-2 text-sm outline-none"
           />
+          {createError && <p className="text-xs" style={{ color: "var(--cp)" }}>{createError}</p>}
           <div className="flex gap-2.5">
             <button type="submit" disabled={busy || !name.trim()} className="btn-primary flex-1 py-2.5 text-sm disabled:opacity-60">
               Create
