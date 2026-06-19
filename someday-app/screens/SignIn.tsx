@@ -30,8 +30,12 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
       if (result.type === "success") {
         await supabase.auth.getSession();
         const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(result.url);
-        if (exchangeError) setError("Sign-in failed — please try again.");
-        else api.verify().catch(() => {});
+        if (exchangeError) {
+          console.error("OAuth exchangeCodeForSession failed:", exchangeError.message, exchangeError);
+          setError("Sign-in failed — please try again.");
+        } else {
+          api.verify().catch(() => {});
+        }
       }
     }
     setBusy(false);

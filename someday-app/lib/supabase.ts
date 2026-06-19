@@ -11,5 +11,6 @@ export const supabase = createClient(extra.supabaseUrl, extra.supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+    flowType: "pkce", // required: generates code_verifier for exchangeCodeForSession
   },
 });
