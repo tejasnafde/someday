@@ -135,3 +135,11 @@ LIST_CIRCLE_TAGS = """
     WHERE circle_id = :circle_id AND status = 1 AND array_length(tags, 1) > 0
     ORDER BY tag
 """
+
+# Rotate the invite token — owner-only, returns new token.
+ROTATE_INVITE_TOKEN = """
+    UPDATE public.circles
+    SET invite_token = encode(gen_random_bytes(16), 'hex')
+    WHERE id = :circle_id AND owner_id = :user_id AND status = 1
+    RETURNING id, invite_token
+"""
