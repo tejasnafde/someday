@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ActivityIndicator, Keyboard, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from "react-native";
 import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
 import Constants from "expo-constants";
 import { api } from "../lib/api";
 import { supabase } from "../lib/supabase";
@@ -15,6 +16,36 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
   const [stage, setStage] = useState<"email" | "code">("email");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  // Guard: the auth code is single-use. Both openAuthSessionAsync's success
+  // result AND the Linking listener can deliver the same callback URL. Whichever
+  // fires first wins; the second is a no-op. Without this, two parallel
+  // exchangeCodeForSession calls race and one gets "invalid flow state".
+  const handledCodes = useRef<Set<string>>(new Set());
+
+  async function exchange(url: string) {
+    const authCode = url.match(/[?&]code=([\w-]+)/)?.[1];
+    if (!authCode || handledCodes.current.has(authCode)) return;
+    handledCodes.current.add(authCode);
+
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(authCode);
+    if (exchangeError) {
+      api.clientError("google_oauth_exchange", exchangeError.message);
+      setError("Sign-in failed — please try again.");
+    } else {
+      api.verify().catch(() => {});
+    }
+    setBusy(false);
+  }
+
+  // Android: Chrome Custom Tab closes on redirect and the callback URL
+  // (someday:?code=...) arrives here via the Linking system, NOT through
+  // openAuthSessionAsync's return value.
+  useEffect(() => {
+    const sub = Linking.addEventListener("url", (e) => {
+      if (e.url.startsWith("someday:") && e.url.includes("code=")) exchange(e.url);
+    });
+    return () => sub.remove();
+  }, []);
 
   async function signInWithGoogle() {
     setBusy(true);
@@ -25,22 +56,20 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
     });
     if (error) { setBusy(false); setError(error.message); return; }
     if (data.url) {
-      // Chrome Custom Tabs — stays coupled to the app so it properly returns after auth
-      const result = await WebBrowser.openAuthSessionAsync(data.url, "someday://");
+      // Pass "someday:" (no //) as the return scheme — Android strips the slashes.
+      const result = await WebBrowser.openAuthSessionAsync(data.url, "someday:");
       if (result.type === "success") {
-        // iOS path: ASWebAuthenticationSession captures the redirect URL directly.
-        // Android path: Chrome Custom Tab closes → URL arrives via Linking → handled in App.tsx.
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(result.url);
-        if (exchangeError) {
-          api.clientError("google_oauth_exchange", exchangeError.message, `url_shape=${result.url.split("?")[0]}`);
-          setError("Sign-in failed — please try again.");
-        } else {
-          api.verify().catch(() => {});
-        }
+        // iOS returns the redirect URL directly. On Android the Linking listener
+        // above usually fires first; the guard makes whichever loses a no-op.
+        exchange(result.url);
+      } else {
+        // type="dismiss"/"cancel": on Android the Linking listener handles the
+        // exchange. Stop the spinner if no code is in flight.
+        setTimeout(() => setBusy(false), 4000);
       }
-      // type="dismiss" on Android is expected — App.tsx handles the exchange via Linking
+    } else {
+      setBusy(false);
     }
-    setBusy(false);
   }
 
   async function sendCode() {

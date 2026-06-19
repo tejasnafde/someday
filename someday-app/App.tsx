@@ -40,17 +40,10 @@ export default function App() {
       // Invite link: https://someday-web-gamma.vercel.app/join/TOKEN
       const inviteMatch = url.match(/https?:\/\/[^/]+(\/join\/[\w-]+)/);
       if (inviteMatch) { setPendingPath(inviteMatch[1]); return; }
-      // OAuth callback: on Android, Chrome Custom Tab closes when the redirect fires
-      // and delivers the URL here via the Linking system (openAuthSessionAsync returns
-      // type="dismiss" instead of type="success"). Exchange the code here.
-      if (url.startsWith("someday://") && url.includes("code=")) {
-        supabase.auth.exchangeCodeForSession(url).then(({ error: err }) => {
-          if (err) api.clientError("google_oauth_linking", err.message, `url_shape=${url.split("?")[0]}`);
-        }).catch(() => {});
-        return;
-      }
+      // OAuth callbacks (someday:?code=...) are handled in SignIn.tsx's local
+      // Linking listener so that only ONE exchangeCodeForSession call fires.
     };
-    Linking.getInitialURL().then(handle);
+    Linking.getInitialURL().then((url) => handle(url));
     const sub = Linking.addEventListener("url", (e) => handle(e.url));
     return () => sub.remove();
   }, []);
@@ -59,7 +52,7 @@ export default function App() {
     const checkInactivityAndSession = async () => {
       const lastActive = await AsyncStorage.getItem("last_active_timestamp");
       const now = Date.now();
-      
+
       if (lastActive && now - parseInt(lastActive, 10) > INACTIVITY_LIMIT_MS) {
         await supabase.auth.signOut();
         setSignedIn(false);
@@ -98,9 +91,11 @@ export default function App() {
       appState.current = nextAppState;
     });
 
-    // OTA: fetch any pending update now; it applies on next launch
+    // OTA: fetch any pending update and reload so the fix is live on next open
+    // without requiring a second manual restart.
     Updates.checkForUpdateAsync()
       .then((u) => (u.isAvailable ? Updates.fetchUpdateAsync() : null))
+      .then((result) => { if (result) Updates.reloadAsync().catch(() => {}); })
       .catch(() => {});
 
     return () => {
