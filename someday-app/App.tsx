@@ -14,6 +14,14 @@ import { registerForPush } from "./lib/push";
 import { supabase } from "./lib/supabase";
 import { useTheme } from "./lib/theme";
 
+// ErrorUtils is a React Native global — not exported by the react-native package.
+declare const ErrorUtils: {
+  setGlobalHandler: (handler: (error: Error, isFatal?: boolean) => void) => void;
+};
+ErrorUtils.setGlobalHandler((error, isFatal) => {
+  api.clientError("crash", error.message, isFatal ? "fatal" : "non-fatal").catch(() => {});
+});
+
 // Show push notifications when the app is in the foreground
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
