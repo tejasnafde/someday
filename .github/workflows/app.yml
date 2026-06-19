@@ -26,6 +26,20 @@ jobs:
       - run: npm ci
       - run: npx tsc --noEmit
 
+  notify-failure:
+    name: Discord alert
+    needs: [typecheck]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post to Discord
+        run: |
+          curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{\"username\":\"GitHub CI\",\"content\":\"🔴 **App CI failed** on \`${{ github.ref_name }}\` — ${{ github.event.head_commit.message || github.event.pull_request.title }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}>\"}"
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
   build:
     name: EAS Build (Android)
     needs: typecheck
