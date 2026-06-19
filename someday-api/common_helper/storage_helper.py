@@ -5,6 +5,7 @@ import hashlib
 import httpx
 
 from app_util.log_util import errorlogger, infologger
+from common_helper.url_util import validate_url
 from config.settings import settings
 
 MAX_BYTES = 5 * 1024 * 1024
@@ -59,6 +60,11 @@ def rehost_remote_image(remote_url: str, bucket: str = "previews") -> str | None
     the same image twice is idempotent (and upserts in place)."""
     if is_rehosted(remote_url):
         return remote_url  # already ours — nothing to do
+    try:
+        validate_url(remote_url)
+    except ValueError as exc:
+        infologger.warning(f"storage.rehost | blocked URL | {exc} | {remote_url[:120]}")
+        return None
     try:
         resp = httpx.get(
             remote_url, headers=REHOST_FETCH_HEADERS, timeout=15, follow_redirects=True
