@@ -3,6 +3,8 @@ import json
 from app_util.log_util import infologger, errorlogger
 from modules.intents import intents_queries as q
 
+DEFAULT_PAGE_SIZE = 50
+
 
 def list_intents(
     db,
@@ -12,27 +14,33 @@ def list_intents(
     category: str | None = None,
     tag: str | None = None,
     shortlist: bool = False,
-) -> list[dict]:
+    cursor: str | None = None,
+    limit: int = DEFAULT_PAGE_SIZE,
+) -> dict:
+    """Returns {items: [...], next_cursor: str | None}."""
     infologger.info(
         f"intents_helper.list_intents | circle_id={circle_id} "
-        f"task_status={task_status} category={category} tag={tag} shortlist={shortlist}"
+        f"task_status={task_status} category={category} tag={tag} "
+        f"shortlist={shortlist} cursor={cursor!r} limit={limit}"
     )
+    params = {"circle_id": circle_id, "user_id": user_id, "cursor": cursor, "limit": limit}
     if shortlist:
-        return db.execute_query_with_value(
-            q.LIST_INTENTS_SHORTLIST, {"circle_id": circle_id, "user_id": user_id}
+        items = db.execute_query_with_value(q.LIST_INTENTS_SHORTLIST, params)
+    else:
+        items = db.execute_query_with_value(
+            q.LIST_INTENTS,
+            {**params, "task_status": task_status, "category": category, "tag": tag},
         )
-    return db.execute_query_with_value(
-        q.LIST_INTENTS,
-        {"circle_id": circle_id, "user_id": user_id,
-         "task_status": task_status, "category": category, "tag": tag},
-    )
+    next_cursor = items[-1]["created_at"] if len(items) == limit else None
+    return {"items": items, "next_cursor": next_cursor}
 
 
 def get_intent(db, intent_id: str, user_id: str) -> dict | None:
+    """Returns the intent if found AND the user is a member of its circle, else None."""
     infologger.info(f"intents_helper.get_intent | intent_id={intent_id}")
     rows = db.execute_query_with_value(q.GET_INTENT_BY_ID, {"intent_id": intent_id, "user_id": user_id})
     if not rows:
-        infologger.warning(f"intents_helper.get_intent | not found | intent_id={intent_id}")
+        infologger.warning(f"intents_helper.get_intent | not found or not a member | intent_id={intent_id}")
         return None
     return rows[0]
 

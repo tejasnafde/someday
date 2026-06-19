@@ -62,7 +62,16 @@ class IntentOut(BaseModel):
     task_status: str
     link_meta: Optional[dict]
     planned_for: Optional[str]
+    done_note: Optional[str]
+    done_photos: Optional[list]
     reaction_count: int
+    reacted_by_me: bool
     boosted_by_me: bool
     created_at: str
     updated_at: str
+
+
+class IntentPageOut(BaseModel):
+    """Paginated intent list. next_cursor is None when there are no more pages."""
+    items: list[IntentOut]
+    next_cursor: Optional[str]
