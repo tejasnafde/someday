@@ -108,7 +108,7 @@ export default function Home() {
       <h1 className="mt-5 font-serif text-[28px] font-medium leading-tight">
         {greeting},<br />{user?.display_name ?? "friend"}.
       </h1>
-      <p className="mt-1.5 text-[13px]" style={{ color: "var(--txt-m)" }}>
+      <p className="tnum mt-1.5 text-[13px]" style={{ color: "var(--txt-m)" }}>
         {circles.length} {circles.length === 1 ? "circle" : "circles"} · {totalIdeas} ideas waiting
       </p>
 
@@ -125,7 +125,7 @@ export default function Home() {
               <CircleAvatar circleId={c.id} themeKey={theme.key} icon={theme.icon} />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-serif font-semibold">{c.name}</div>
-                <div className="text-xs" style={{ color: "var(--txt-m)" }}>
+                <div className="tnum text-xs" style={{ color: "var(--txt-m)" }}>
                   {c.member_count} {c.member_count === 1 ? "member" : "members"}
                 </div>
                 <div className="mt-2 flex">
