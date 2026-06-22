@@ -141,7 +141,7 @@ export function IntentPreview({ intent, height = 106 }: { intent: Pick<Intent, "
   const image = intent.link_meta?.image;
   if (image) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={image} alt="" className="w-full object-cover" style={{ height }} />;
+    return <img src={image} alt="" className="img-edge w-full object-cover" style={{ height }} />;
   }
   return (
     <div
@@ -219,7 +219,7 @@ export function IntentCard({ intent, onReact, onBoost, onRetryPreview }: {
             <button
               onClick={onReact}
               aria-label="Toggle interested"
-              className="flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-semibold"
+              className="tnum flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-semibold transition-transform active:scale-[.96]"
               style={{
                 background: intent.reacted_by_me ? "var(--cp-l)" : "var(--glass-lo)",
                 color: intent.reacted_by_me ? "var(--cp)" : "var(--txt-m)",
@@ -232,7 +232,7 @@ export function IntentCard({ intent, onReact, onBoost, onRetryPreview }: {
             <button
               onClick={onBoost}
               aria-label="Toggle boost"
-              className="flex h-8 w-8 items-center justify-center rounded-full"
+              className="flex h-8 w-8 items-center justify-center rounded-full transition-transform active:scale-[.96]"
               style={{
                 background: intent.boosted_by_me ? "rgba(234,165,0,.2)" : "rgba(234,165,0,.08)",
                 border: `1.5px solid rgba(234,165,0,${intent.boosted_by_me ? ".5" : ".22"})`,
@@ -260,7 +260,7 @@ export function NavBar({ title, subtitle, back, right }: { title: React.ReactNod
       )}
       <div className="min-w-0 flex-1">
         <div className="truncate font-serif text-lg font-semibold">{title}</div>
-        {subtitle && <div className="text-[11px]" style={{ color: "var(--txt-l)" }}>{subtitle}</div>}
+        {subtitle && <div className="tnum text-[11px]" style={{ color: "var(--txt-l)" }}>{subtitle}</div>}
       </div>
       {right}
     </div>

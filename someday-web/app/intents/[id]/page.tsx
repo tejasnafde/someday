@@ -244,7 +244,7 @@ export default function IntentPage() {
 
       <div className="glass mt-4 flex items-center gap-3 rounded-[var(--r)] p-4" style={{ boxShadow: "var(--shc)" }}>
         <div>
-          <div className="font-serif text-2xl font-semibold" style={{ color: "var(--acc)" }}>
+          <div className="tnum font-serif text-2xl font-semibold" style={{ color: "var(--acc)" }}>
             {intent.reaction_count}
           </div>
           <div className="text-xs" style={{ color: "var(--txt-m)" }}>

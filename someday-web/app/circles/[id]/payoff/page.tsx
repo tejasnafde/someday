@@ -20,7 +20,7 @@ export default function PayoffPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const reloadShortlist = () => api.intents(id, { shortlist: true }).then(setShortlist);
+  const reloadShortlist = () => api.intents(id, { shortlist: true }).then((r) => setShortlist(r.items));
   useEffect(() => {
     if (!ready) return;
     api.circle(id).then(setCircle);
@@ -91,7 +91,7 @@ export default function PayoffPage() {
           {circle.member_count > 1 ? "You're together. Time to pick." : "Invite someone first — this works better together."}
         </p>
         {shortlistCount !== null && (
-          <span className="mt-2.5 inline-block rounded-full px-3.5 py-1.5 text-xs font-semibold"
+          <span className="tnum mt-2.5 inline-block rounded-full px-3.5 py-1.5 text-xs font-semibold"
             style={{ background: "var(--acc-l)", color: "var(--acc)", border: "1.5px solid var(--acc)33" }}>
             {shortlistCount} {shortlistCount === 1 ? "thing" : "things"} you {circle.member_count > 2 ? "all" : "both"} want
           </span>

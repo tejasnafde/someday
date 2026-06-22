@@ -132,7 +132,7 @@ export default function MembersPage() {
         <CircleAvatar circleId={circle.id} themeKey={theme.key} icon={theme.icon} size={52} />
         <div className="min-w-0 flex-1">
           <div className="truncate font-serif text-base font-semibold">{circle.name}</div>
-          <div className="text-xs" style={{ color: "var(--txt-m)" }}>
+          <div className="tnum text-xs" style={{ color: "var(--txt-m)" }}>
             {circle.open_intent_count} {circle.open_intent_count === 1 ? "idea waiting" : "ideas waiting"}
           </div>
         </div>
