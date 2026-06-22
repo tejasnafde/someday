@@ -29,7 +29,7 @@
   --shb: 0 6px 24px rgba(91,75,138,.28);
   --r: 20px; --rs: 12px;
   --blur: blur(18px) saturate(155%);
-  --img-outline: rgba(0,0,0,.10);   /* neutral image edge — pure black, untinted */
+  --img-outline: rgba(0,0,0,.10);
 }
 
 [data-theme="dark"] {
@@ -59,7 +59,7 @@
 
   --shc: 0 4px 24px rgba(0,0,0,.38), 0 1px 4px rgba(0,0,0,.24);
   --shb: 0 6px 24px rgba(0,0,0,.44);
-  --img-outline: rgba(255,255,255,.10);   /* pure white in dark */
+  --img-outline: rgba(255,255,255,.10);
 }
 
 html { color-scheme: light dark }
@@ -70,17 +70,14 @@ body {
   background: linear-gradient(148deg, var(--bg-a), var(--bg-b) 50%, var(--bg-c)) fixed;
   min-height: 100vh;
   transition: background .4s;
-  -webkit-font-smoothing: antialiased;   /* crisper text on macOS */
+  -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-wrap: pretty;                      /* no orphans in body copy */
+  text-wrap: pretty;
 }
 
 .font-serif { font-family: var(--font-lora), serif; text-wrap: balance }
 
-/* tabular figures for any number that updates or aligns (counts, prices, timers) */
 .tnum { font-variant-numeric: tabular-nums }
-
-/* neutral edge on content images — see --img-outline; outline doesn't affect layout */
 .img-edge { outline: 1px solid var(--img-outline); outline-offset: -1px }
 
 .glass {
