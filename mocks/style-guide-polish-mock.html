@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en" class="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Someday — skill polish A/B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..600&family=Lora:ital,wght@0,400..600;1,400..600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   TOKENS — straight from docs/style-guide.md.
+   The ONLY two tokens the skill made me ADD are marked [SKILL+].
+   ============================================================ */
+:root{
+  --bg-a:#F3EEF9; --bg-b:#EBF6F1; --bg-c:#F9EDF3;
+  --txt:#1C1525; --txt-m:#5A4E72; --txt-l:#9B90B4;
+  --acc:#5B4B8A; --acc-m:#8B78C0; --acc-l:rgba(91,75,138,.10); --acc-glow:rgba(91,75,138,.22);
+  --cp:#FF4B6E; --cg:#00B87A; --cb:#4A68F0;
+  --glass:rgba(255,255,255,.66); --glass-lo:rgba(255,255,255,.42); --brd-h:rgba(91,75,138,.16);
+  --r:20px; --rs:12px;
+  /* shc/shb — style guide already mandates token shadows. Skill = the *recipe* inside them. */
+  --shc:0 0 0 1px rgba(0,0,0,.05), 0 1px 2px -1px rgba(0,0,0,.06), 0 4px 12px -2px rgba(0,0,0,.05);
+  --shb:0 1px 2px rgba(91,75,138,.30), 0 6px 16px -4px var(--acc-glow);
+  /* [SKILL+] neutral image-edge token — tokenised so it stays "colours via tokens only" */
+  --img-outline:rgba(0,0,0,.10);
+}
+html.dark{
+  --bg-a:#101010; --bg-b:#131313; --bg-c:#0E0E0E;
+  --txt:#EEEEEE; --txt-m:#888888; --txt-l:#444444;
+  --acc:#9B8DC4; --acc-m:#BDB0E0; --acc-l:rgba(155,141,196,.11); --acc-glow:rgba(155,141,196,.14);
+  --cp:#E8607A; --cg:#2DBF8A; --cb:#6B8FFF;
+  --glass:rgba(22,22,22,.80); --glass-lo:rgba(255,255,255,.05); --brd-h:rgba(255,255,255,.09);
+  --shc:0 0 0 1px rgba(255,255,255,.07), 0 4px 14px -4px rgba(0,0,0,.5);
+  --shb:0 1px 2px rgba(0,0,0,.4), 0 6px 16px -4px var(--acc-glow);
+  --img-outline:rgba(255,255,255,.10);              /* [SKILL+] pure white in dark */
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(160deg,var(--bg-a),var(--bg-b) 55%,var(--bg-c));min-height:100vh;color:var(--txt);
+  font-family:'DM Sans',system-ui,sans-serif;font-size:14px;}
+
+/* ---- harness chrome (not part of the app, just the A/B switch) ---- */
+.bar{position:sticky;top:0;z-index:9;display:flex;gap:8px;align-items:center;justify-content:center;
+  padding:12px;background:var(--glass);backdrop-filter:blur(18px) saturate(155%);border-bottom:1px solid var(--brd-h);}
+.bar b{font-family:Lora,serif;font-weight:600;margin-right:auto;padding-left:6px}
+.tg{font:600 12px 'DM Sans';letter-spacing:.04em;padding:8px 14px;border-radius:var(--rs);cursor:pointer;
+  border:1px solid var(--brd-h);background:var(--glass-lo);color:var(--txt-m)}
+.tg[aria-pressed=true]{background:linear-gradient(135deg,var(--acc),var(--acc-m));color:#fff;border-color:transparent}
+.note{max-width:430px;margin:14px auto 0;padding:0 22px;color:var(--txt-m);font-size:12.5px;line-height:1.5}
+.note code{background:var(--acc-l);padding:1px 5px;border-radius:6px;color:var(--acc);font-size:11.5px}
+
+/* ============================================================
+   THE APP. One markup tree. `.polished` on <body> = skill ON.
+   Everything below a `.polished` selector is exactly what the
+   skill adds — read these to see the diff.
+   ============================================================ */
+.screen{max-width:430px;margin:0 auto;padding:18px 22px 60px}
+h1{font-family:Lora,serif;font-weight:600;font-size:27px;margin:6px 0 2px}
+.sub{color:var(--txt-m);margin:0 0 18px}
+
+.card{display:flex;gap:14px;align-items:center;position:relative;overflow:hidden;
+  padding:17px;background:var(--glass);backdrop-filter:blur(18px) saturate(155%);
+  border-radius:var(--r);box-shadow:var(--shc);margin-bottom:13px;border-left:3px solid var(--ci)}
+.card[data-c=p]{--ci:var(--cp)} .card[data-c=g]{--ci:var(--cg)} .card[data-c=b]{--ci:var(--cb)}
+.ic{flex:none;width:46px;height:46px;border-radius:var(--rs);display:grid;place-items:center;
+  background:color-mix(in srgb,var(--ci) 14%,transparent);color:var(--ci)}
+.tt{flex:1;min-width:0}
+.tt h3{font-family:Lora,serif;font-weight:600;font-size:16px;margin:0 0 3px}
+.tt p{margin:0;color:var(--txt-m);font-size:12.5px}
+.badge{flex:none;font:600 13px 'DM Sans';min-width:30px;text-align:center;padding:4px 9px;border-radius:var(--rs);
+  background:color-mix(in srgb,var(--ci) 14%,transparent);color:var(--ci)}
+.icon{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+.cta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:8px;
+  padding:14px;border:none;border-radius:var(--r);box-shadow:var(--shb);cursor:pointer;
+  background:linear-gradient(135deg,var(--acc),var(--acc-m));color:#fff;font:600 15px 'DM Sans'}
+.cta .icon{width:18px;height:18px;stroke-width:2}
+
+.thumb{width:100%;height:120px;object-fit:cover;border-radius:var(--rs);margin:4px 0 2px;display:block}
+
+/* ---------- SKILL POLISH (only active in .polished) ---------- */
+.polished{ -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }      /* #8 font smoothing */
+.polished h1{ text-wrap:balance; }                                                        /* #10 balance headings */
+.polished .sub,.polished .tt p{ text-wrap:pretty; }                                       /* #10 pretty body */
+.polished .badge{ font-variant-numeric:tabular-nums; }                                    /* #9 tabular nums */
+.polished .thumb{ outline:1px solid var(--img-outline); outline-offset:-1px; }            /* #11 image outline */
+.polished .card{                                                                          /* #4 interruptible */
+  transition-property:box-shadow,transform; transition-duration:160ms; transition-timing-function:ease-out;
+  animation:rise .42s cubic-bezier(.2,0,0,1) backwards; }
+.polished .card:nth-child(1){animation-delay:.04s}                                        /* #5 stagger */
+.polished .card:nth-child(2){animation-delay:.12s}
+.polished .card:nth-child(3){animation-delay:.20s}
+.polished .card:hover{ transform:translateY(-2px); box-shadow:var(--shb); }
+.polished .cta{ transition-property:transform,box-shadow; transition-duration:140ms; transition-timing-function:ease-out;
+  will-change:transform; }                                                                /* #14 specific props, #15 will-change */
+.polished .cta:active{ transform:scale(.96); }                                            /* #12 scale on press */
+.polished .badge{ /* #16 the badge is the tap target → guarantee 40px hit area */
+  position:relative; }
+.polished .badge::after{content:"";position:absolute;inset:50% auto auto 50%;width:40px;height:40px;transform:translate(-50%,-50%)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.polished *{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body class="polished">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+</defs></svg>
+
+<div class="bar">
+  <b>Someday</b>
+  <button class="tg" id="t-pol" aria-pressed="true">Polished (skill on)</button>
+  <button class="tg" id="t-thm" aria-pressed="false">Dark</button>
+</div>
+
+<div class="screen">
+  <h1>Your circles for someday adventures</h1>
+  <p class="sub">Pick a circle to see what everyone wants to do, watch, eat, and visit together.</p>
+
+  <div class="card" data-c="p">
+    <span class="ic"><svg class="icon"><use href="#i-eye"/></svg></span>
+    <div class="tt"><h3>Me &amp; Priya</h3><p>Films, dinners, weekend plans worth keeping</p></div>
+    <span class="badge">14</span>
+  </div>
+
+  <div class="card" data-c="g">
+    <span class="ic"><svg class="icon"><use href="#i-users"/></svg></span>
+    <div class="tt"><h3>The Sunday Gang</h3><p>Restaurants and shows the whole group is into</p></div>
+    <span class="badge">128</span>
+  </div>
+
+  <div class="card" data-c="b">
+    <span class="ic"><svg class="icon"><use href="#i-globe"/></svg></span>
+    <div class="tt"><h3>Lisbon 2026</h3>
+      <img class="thumb" alt="Lisbon" src="https://images.unsplash.com/photo-1585208798174-6cedd86e019a?w=800&q=70">
+      <p>Trip ideas, places to eat, and things to see</p></div>
+    <span class="badge">7</span>
+  </div>
+
+  <button class="cta"><svg class="icon"><use href="#i-plus"/></svg> New circle</button>
+</div>
+
+<p class="note">Toggle <b>Polished</b> off to see your current style guide rendered as-is, then back on to see exactly what the skill adds — nothing else changes. Hover a card; press the button; flip to dark. The only new tokens are <code>--img-outline</code> (light/dark) and the layered recipe inside <code>--shc</code>/<code>--shb</code> you already mandate.</p>
+
+<script>
+const b=document.body,pol=document.getElementById('t-pol'),thm=document.getElementById('t-thm');
+pol.onclick=()=>{const on=b.classList.toggle('polished');pol.setAttribute('aria-pressed',on);pol.textContent=on?'Polished (skill on)':'Plain (current)';};
+thm.onclick=()=>{const d=document.documentElement.classList.toggle('dark');thm.setAttribute('aria-pressed',d);thm.textContent=d?'Light':'Dark';};
+</script>
+</body>
+</html>
