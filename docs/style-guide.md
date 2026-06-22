@@ -51,11 +51,11 @@ All colours must be consumed via CSS variables — never hardcoded hex values in
 
 ### 2c. Per-Circle Identity Colours
 
-Each circle gets one of three colour identities. These appear **only** in:
-- The left-border accent stripe on circle cards
-- The icon background tint inside circle cards
-- The count badge on circle cards
+Each circle gets one of three colour identities. The identity colour appears in **one place per card** — the icon background tint — plus member dots:
+- The icon background tint inside circle cards (the single identity hit)
 - Member dot colours for that circle's members
+
+> **Changed (interface polish):** identity colour used to appear in three places (left stripe + icon + count badge). One confident hit reads calmer and lets the circle name lead. The left stripe is removed and the count badge is now neutral (see below).
 
 | Token | Light | Dark | Usage |
 |---|---|---|---|
@@ -63,7 +63,9 @@ Each circle gets one of three colour identities. These appear **only** in:
 | `--cg` (green) | #00B87A | #2DBF8A | Group/gang circles |
 | `--cb` (blue) | #4A68F0 | #6B8FFF | Trip/event circles |
 
-**These colours must not appear on buttons, backgrounds, or any UI chrome outside the above three contexts.**
+**These colours must not appear on buttons, backgrounds, or any UI chrome outside the above contexts.**
+
+**Count badges are neutral.** The idea/member count on a card is metadata, not identity — render it `background: var(--glass-lo); color: var(--txt-m)` with the `.tnum` class (tabular figures). It should recede, not compete with the circle name.
 
 ### 2d. Status Badge Colours
 
@@ -212,7 +214,27 @@ Never add custom `box-shadow` values to components — use the tokens.
 
 ---
 
-## 8. What is NOT in the design system
+## 8. Interface polish (motion, type, edges)
+
+These are global, low-cost details that make the UI feel finished. Most live in `globals.css` and apply app-wide automatically.
+
+| Detail | Rule | Where |
+|---|---|---|
+| Font smoothing | `-webkit-font-smoothing: antialiased` | on `body` (global) |
+| Heading wrap | `text-wrap: balance` | on `.font-serif` (global) |
+| Body wrap | `text-wrap: pretty` | on `body` (global) |
+| Tabular numbers | `.tnum` class (`font-variant-numeric: tabular-nums`) | any count, timer, price, or number that updates or aligns |
+| Scale on press | `transform: scale(.96)` on `:active` | `.btn-primary` / `.btn-ghost` (global); use `active:scale-[.96]` on other pressables |
+| Image edge | `.img-edge` class → `--img-outline` token | content images/thumbnails only — **not** rounded avatars (outline doesn't follow border-radius) |
+| Transitions | Name exact properties (`transition-property: transform, …`) | never `transition: all` |
+
+**Press feedback:** always `0.96`, never below `0.95` (smaller feels exaggerated). Honour `prefers-reduced-motion`.
+
+**`--img-outline` token:** `rgba(0,0,0,.10)` light / `rgba(255,255,255,.10)` dark — pure black/white, never a tinted neutral (a tint reads as dirt on the image edge).
+
+---
+
+## 9. What is NOT in the design system
 
 If you find yourself reaching for any of the following, stop and reread this guide:
 

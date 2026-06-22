@@ -29,6 +29,7 @@
   --shb: 0 6px 24px rgba(91,75,138,.28);
   --r: 20px; --rs: 12px;
   --blur: blur(18px) saturate(155%);
+  --img-outline: rgba(0,0,0,.10);   /* neutral image edge — pure black, untinted */
 }
 
 [data-theme="dark"] {
@@ -58,6 +59,7 @@
 
   --shc: 0 4px 24px rgba(0,0,0,.38), 0 1px 4px rgba(0,0,0,.24);
   --shb: 0 6px 24px rgba(0,0,0,.44);
+  --img-outline: rgba(255,255,255,.10);   /* pure white in dark */
 }
 
 html { color-scheme: light dark }
@@ -68,9 +70,18 @@ body {
   background: linear-gradient(148deg, var(--bg-a), var(--bg-b) 50%, var(--bg-c)) fixed;
   min-height: 100vh;
   transition: background .4s;
+  -webkit-font-smoothing: antialiased;   /* crisper text on macOS */
+  -moz-osx-font-smoothing: grayscale;
+  text-wrap: pretty;                      /* no orphans in body copy */
 }
 
-.font-serif { font-family: var(--font-lora), serif }
+.font-serif { font-family: var(--font-lora), serif; text-wrap: balance }
+
+/* tabular figures for any number that updates or aligns (counts, prices, timers) */
+.tnum { font-variant-numeric: tabular-nums }
+
+/* neutral edge on content images — see --img-outline; outline doesn't affect layout */
+.img-edge { outline: 1px solid var(--img-outline); outline-offset: -1px }
 
 .glass {
   background: var(--glass);
@@ -99,12 +110,22 @@ body {
   color: #fff; border-radius: var(--r); box-shadow: var(--shb);
   font-weight: 600;
   display: flex; align-items: center; justify-content: center; gap: 9px;
+  transition-property: transform, filter;
+  transition-duration: 140ms; transition-timing-function: cubic-bezier(.2,0,0,1);
+  will-change: transform;
 }
 .btn-ghost {
   background: var(--glass); border: 1px solid var(--brd-h);
   border-radius: var(--r); color: var(--txt); font-weight: 500;
   -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
   display: flex; align-items: center; justify-content: center; gap: 9px;
+  transition-property: transform, background-color;
+  transition-duration: 140ms; transition-timing-function: cubic-bezier(.2,0,0,1);
+}
+.btn-primary:active, .btn-ghost:active { transform: scale(.96) }
+.btn-primary:hover { filter: brightness(1.05) }
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary, .btn-ghost { transition: none }
 }
 
 .orb { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0 }

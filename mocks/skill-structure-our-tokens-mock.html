@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Someday — skill structure, our tokens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..600&family=Lora:ital,wght@0,400..600;1,400..600&display=swap" rel="stylesheet">
+<style>
+/* =================================================================
+   The skill's STRUCTURE + HIERARCHY, rendered entirely in Someday's
+   own tokens (docs/style-guide.md). Proof that the palette wasn't
+   the reason the redesign felt better — the moves were.
+   "MOVE n" comments mark each structural borrow.
+   ================================================================= */
+:root{
+  --bg-a:#F3EEF9; --bg-b:#EBF6F1; --bg-c:#F9EDF3;
+  --txt:#1C1525; --txt-m:#5A4E72; --txt-l:#9B90B4;
+  --acc:#5B4B8A; --acc-m:#8B78C0; --acc-l:rgba(91,75,138,.10); --acc-glow:rgba(91,75,138,.22);
+  --cp:#FF4B6E; --cg:#00B87A; --cb:#4A68F0;
+  --glass:rgba(255,255,255,.66); --glass-lo:rgba(255,255,255,.42); --brd-h:rgba(91,75,138,.16);
+  --r:20px; --rs:12px;
+  --shc:0 0 0 1px rgba(0,0,0,.05), 0 1px 2px -1px rgba(0,0,0,.06), 0 4px 12px -2px rgba(0,0,0,.05);
+  --shc-hi:0 0 0 1px rgba(0,0,0,.06), 0 2px 4px -2px rgba(0,0,0,.10), 0 14px 30px -10px rgba(0,0,0,.14);
+  --shb:0 1px 2px rgba(91,75,138,.30), 0 8px 20px -6px var(--acc-glow);
+  --img-outline:rgba(0,0,0,.10);
+}
+html.dark{
+  --bg-a:#101010; --bg-b:#131313; --bg-c:#0E0E0E;
+  --txt:#EEEEEE; --txt-m:#888888; --txt-l:#444444;
+  --acc:#9B8DC4; --acc-m:#BDB0E0; --acc-l:rgba(155,141,196,.11); --acc-glow:rgba(155,141,196,.14);
+  --cp:#E8607A; --cg:#2DBF8A; --cb:#6B8FFF;
+  --glass:rgba(22,22,22,.80); --glass-lo:rgba(255,255,255,.05); --brd-h:rgba(255,255,255,.09);
+  --shc:0 0 0 1px rgba(255,255,255,.07), 0 6px 18px -6px rgba(0,0,0,.55);
+  --shc-hi:0 0 0 1px rgba(255,255,255,.09), 0 14px 34px -10px rgba(0,0,0,.6);
+  --shb:0 1px 2px rgba(0,0,0,.4), 0 8px 20px -6px var(--acc-glow);
+  --img-outline:rgba(255,255,255,.10);
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(160deg,var(--bg-a),var(--bg-b) 55%,var(--bg-c));min-height:100vh;
+  color:var(--txt);font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.45;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+
+.nav{position:sticky;top:0;z-index:9;display:flex;align-items:center;gap:10px;padding:14px 22px;
+  background:var(--glass);backdrop-filter:blur(18px) saturate(155%);border-bottom:1px solid var(--brd-h)}
+.brand{font-family:Lora,serif;font-weight:600;font-size:21px;letter-spacing:-.01em;margin-right:auto}
+.iconbtn{position:relative;display:grid;place-items:center;width:38px;height:38px;border-radius:var(--rs);
+  border:1px solid var(--brd-h);background:var(--glass-lo);color:var(--txt-m);cursor:pointer;
+  transition-property:transform,color;transition-duration:150ms;transition-timing-function:cubic-bezier(.2,0,0,1)}
+.iconbtn:hover{color:var(--txt)} .iconbtn:active{transform:scale(.96)}
+.iconbtn::after{content:"";position:absolute;inset:50% auto auto 50%;width:42px;height:42px;transform:translate(-50%,-50%)} /* hit area */
+.icon{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+.wrap{max-width:460px;margin:0 auto;padding:8px 22px 70px}
+/* MOVE: eyebrow label — DM Sans caps, the style guide's label role */
+.eyebrow{font-family:'DM Sans';font-size:10.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--txt-l);margin:22px 0 6px}
+/* MOVE 1: serif on the headline (Lora — already ours) + balance */
+h1{font-family:Lora,serif;font-weight:600;font-size:28px;line-height:1.14;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
+.lede{color:var(--txt-m);margin:0 0 20px;text-wrap:pretty;max-width:42ch}
+
+.stack{display:flex;flex-direction:column;gap:13px}
+/* MOVE 4: shadow-as-border, no left stripe; concentric-ish via --r/--rs */
+.circle{position:relative;display:flex;align-items:center;gap:14px;padding:14px;
+  background:var(--glass);backdrop-filter:blur(18px) saturate(155%);
+  border-radius:var(--r);box-shadow:var(--shc);text-decoration:none;color:inherit;cursor:pointer;
+  transition-property:transform,box-shadow;transition-duration:200ms;transition-timing-function:cubic-bezier(.2,0,0,1)}
+.circle:hover{transform:translateY(-2px);box-shadow:var(--shc-hi)}
+.circle:active{transform:translateY(0) scale(.99)}
+/* MOVE 2: identity colour shows up ONCE — the icon tile only */
+.avatar{flex:none;width:48px;height:48px;border-radius:var(--rs);display:grid;place-items:center;
+  background:color-mix(in srgb,var(--ci) 15%,transparent);color:var(--ci)}
+.avatar .icon{width:22px;height:22px}
+.circle[data-k=p]{--ci:var(--cp)} .circle[data-k=g]{--ci:var(--cg)} .circle[data-k=b]{--ci:var(--cb)}
+.meta{flex:1;min-width:0}
+/* MOVE 1: serif on the circle name */
+.meta h3{margin:0 0 2px;font-family:Lora,serif;font-weight:600;font-size:17px;letter-spacing:-.005em}
+.meta p{margin:0;font-size:13px;color:var(--txt-m);white-space:nowrap;overflow:hidden;text-overflow:ellipsis} /* MOVE 6: one-line truncation */
+/* MOVE 3: count is a quiet neutral whisper, tabular — not a coloured badge */
+.count{flex:none;min-width:34px;height:34px;padding:0 9px;border-radius:var(--rs);display:grid;place-items:center;
+  background:var(--glass-lo);color:var(--txt-m);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+
+/* MOVE: staggered enter */
+.circle{animation:rise .5s cubic-bezier(.2,0,0,1) backwards}
+.circle:nth-child(1){animation-delay:.05s}.circle:nth-child(2){animation-delay:.13s}.circle:nth-child(3){animation-delay:.21s}
+@keyframes rise{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
+
+/* MOVE 5: featured card hierarchy. Outer --r(20), padding 8, poster --rs(12) = concentric ✓ */
+.feature{margin-top:14px;padding:8px;background:var(--glass);backdrop-filter:blur(18px) saturate(155%);
+  border-radius:var(--r);box-shadow:var(--shc-hi);animation:rise .5s cubic-bezier(.2,0,0,1) .28s backwards}
+.poster{position:relative;border-radius:var(--rs);overflow:hidden;aspect-ratio:16/10;display:block}
+.poster img{width:100%;height:100%;object-fit:cover;display:block;outline:1px solid var(--img-outline);outline-offset:-1px} /* image outline */
+.play{position:absolute;inset:0;margin:auto;width:54px;height:54px;border-radius:999px;border:none;cursor:pointer;
+  background:rgba(16,16,16,.42);backdrop-filter:blur(6px);display:grid;place-items:center;color:#fff;
+  transition-property:transform,background-color;transition-duration:160ms;transition-timing-function:cubic-bezier(.2,0,0,1)}
+.play:hover{background:rgba(16,16,16,.58)} .play:active{transform:scale(.96)}
+.play .icon{width:22px;height:22px;fill:currentColor;stroke:none;margin-left:3px} /* MOVE: optical nudge on triangle */
+.fbody{padding:14px 12px 12px}
+.fbody h2{margin:0 0 4px;font-family:Lora,serif;font-weight:600;font-size:19px;letter-spacing:-.005em;text-wrap:balance}
+.by{margin:0 0 12px;font-size:13px;color:var(--txt-m)}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+/* MOVE 5: one accent pops (active status), the rest recede. Uses --acc; swap to --sp/--sp-t status tokens in real impl */
+.chip{font-size:12px;font-weight:600;padding:6px 11px;border-radius:var(--rs);background:var(--glass-lo);color:var(--txt-m);border:1px solid transparent}
+.chip[data-on]{background:var(--acc-l);color:var(--acc);border-color:color-mix(in srgb,var(--acc) 26%,transparent)}
+.chip .n{font-variant-numeric:tabular-nums;margin-left:3px;opacity:.75}
+
+/* MOVE: primary CTA = the ONE mandated gradient + token shadow */
+.cta{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;margin-top:18px;padding:15px;
+  border:none;border-radius:var(--r);cursor:pointer;color:#fff;font-size:15px;font-weight:600;
+  background:linear-gradient(135deg,var(--acc),var(--acc-m));box-shadow:var(--shb);
+  transition-property:transform,filter;transition-duration:150ms;transition-timing-function:cubic-bezier(.2,0,0,1);will-change:transform}
+.cta:hover{filter:brightness(1.05)} .cta:active{transform:scale(.96)}
+.cta .icon{width:19px;height:19px;stroke-width:2}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M5 3l16 9-16 9z"/></symbol>
+</defs></svg>
+
+<nav class="nav">
+  <span class="brand">Someday</span>
+  <button class="iconbtn" aria-label="Notifications"><svg class="icon"><use href="#i-bell"/></svg></button>
+  <button class="iconbtn" id="thm" aria-label="Toggle theme"><svg class="icon"><use href="#i-moon"/></svg></button>
+</nav>
+
+<main class="wrap">
+  <p class="eyebrow">Your circles</p>
+  <h1>Things you'll get around to, together</h1>
+  <p class="lede">Three circles, fourteen-odd ideas waiting. Pick one and see what everyone's been saving.</p>
+
+  <div class="stack">
+    <a class="circle" data-k="p" href="#">
+      <span class="avatar"><svg class="icon"><use href="#i-eye"/></svg></span>
+      <span class="meta"><h3>Me &amp; Priya</h3><p>Films, dinners, weekend plans worth keeping</p></span>
+      <span class="count">14</span>
+    </a>
+    <a class="circle" data-k="g" href="#">
+      <span class="avatar"><svg class="icon"><use href="#i-users"/></svg></span>
+      <span class="meta"><h3>The Sunday Gang</h3><p>Restaurants and shows the whole group is into</p></span>
+      <span class="count">128</span>
+    </a>
+    <a class="circle" data-k="b" href="#">
+      <span class="avatar"><svg class="icon"><use href="#i-globe"/></svg></span>
+      <span class="meta"><h3>Lisbon 2026</h3><p>Trip ideas, places to eat, things to see</p></span>
+      <span class="count">7</span>
+    </a>
+  </div>
+
+  <p class="eyebrow">Top pick in Lisbon 2026</p>
+  <article class="feature">
+    <span class="poster">
+      <img alt="Lisbon tram on a hillside street" src="https://images.unsplash.com/photo-1585208798174-6cedd86e019a?w=900&q=70">
+      <button class="play" aria-label="Preview"><svg class="icon"><use href="#i-play"/></svg></button>
+    </span>
+    <div class="fbody">
+      <h2>Ride tram 28 through Alfama at golden hour</h2>
+      <p class="by">Added by Priya · 3 days ago</p>
+      <div class="chips">
+        <span class="chip" data-on>Planned</span>
+        <span class="chip">Interested<span class="n">5</span></span>
+        <span class="chip">Saved<span class="n">2</span></span>
+      </div>
+    </div>
+  </article>
+
+  <button class="cta"><svg class="icon"><use href="#i-plus"/></svg> New circle</button>
+</main>
+
+<script>
+const thm=document.getElementById('thm');
+thm.onclick=()=>{const d=document.documentElement.classList.toggle('dark');
+  thm.querySelector('use').setAttribute('href',d?'#i-moon':'#i-sun');};
+</script>
+</body>
+</html>

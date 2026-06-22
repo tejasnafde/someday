@@ -120,9 +120,8 @@ export default function Home() {
           const theme = circleTheme(c.id);
           return (
             <Link key={c.id} href={`/circles/${c.id}`}
-              className="glass relative flex items-center gap-4 overflow-hidden p-4 pl-5 transition-transform active:scale-[.98]"
+              className="glass relative flex items-center gap-4 overflow-hidden p-4 transition-transform active:scale-[.96]"
               style={{ borderRadius: "var(--r)", boxShadow: "var(--shc)" }}>
-              <div className="absolute inset-y-0 left-0 w-1" style={{ background: `var(--${theme.key})` }} />
               <CircleAvatar circleId={c.id} themeKey={theme.key} icon={theme.icon} />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-serif font-semibold">{c.name}</div>
@@ -135,8 +134,8 @@ export default function Home() {
                   ))}
                 </div>
               </div>
-              <span className="whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-semibold"
-                style={{ background: `var(--${theme.key}-l)`, color: `var(--${theme.key})`, border: `1.5px solid var(--${theme.key})33` }}>
+              <span className="tnum whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-semibold"
+                style={{ background: "var(--glass-lo)", color: "var(--txt-m)" }}>
                 {c.open_intent_count} {c.open_intent_count === 1 ? "idea" : "ideas"}
               </span>
             </Link>
