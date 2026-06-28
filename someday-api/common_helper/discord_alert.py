@@ -21,6 +21,25 @@ async def _post(embed: dict) -> None:
         errorlogger.error(f"discord_alert | delivery failed | {exc}")
 
 
+async def send_build_alert(build_id: str, status: str, log_url: str, commit: str) -> None:
+    """Alert on a failed Cloud Build deploy. A failed revision does not migrate traffic,
+    so without this a bad deploy silently sits behind the previous (stale) revision."""
+    if not settings.DISCORD_WEBHOOK_URL:
+        return
+    env_label = "🔴 PROD" if settings.APP_ENV == "production" else "🟡 DEV"
+    embed = {
+        "title": f"{env_label} Cloud Build {status} — someday-api",
+        "description": (
+            f"Build [`{build_id[:12]}`]({log_url}) ended `{status}`.\n"
+            f"commit `{(commit or 'n/a')[:8]}` — **the deploy did NOT go live; "
+            f"traffic stays on the previous revision.**"
+        ),
+        "color": 0xE53E3E,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    await _post(embed)
+
+
 def alert(
     status: int,
     method: str,
