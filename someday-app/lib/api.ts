@@ -16,22 +16,38 @@ export interface LinkMeta {
   site: string | null;
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (!token) throw new Error("Not signed in");
+const TIMEOUT_MS = 15000;
 
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(body ? { "Content-Type": "application/json" } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.message ?? json.detail ?? res.statusText);
-  return json as T;
+// Reject a request that hasn't settled in 15s so a hung fetch or stalled
+// getSession() can't leave a caller's loading state stuck forever.
+// ponytail: races the whole op; the underlying fetch may run to completion.
+function withTimeout<T>(work: Promise<T>, label: string): Promise<T> {
+  return Promise.race([
+    work,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out`)), TIMEOUT_MS),
+    ),
+  ]);
+}
+
+function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  return withTimeout((async (): Promise<T> => {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) throw new Error("Not signed in");
+
+    const res = await fetch(`${BASE}${path}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(body ? { "Content-Type": "application/json" } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.message ?? json.detail ?? res.statusText);
+    return json as T;
+  })(), `${method} ${path}`);
 }
 
 export const api = {

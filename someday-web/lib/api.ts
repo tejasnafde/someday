@@ -9,39 +9,57 @@ class ApiError extends Error {
   }
 }
 
-async function upload<T>(path: string, blob: Blob, filename: string): Promise<T> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (!token) throw new ApiError(401, "Not signed in");
-  const form = new FormData();
-  form.append("file", blob, filename);
-  const res = await fetch(`${BASE}${path}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: form,
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new ApiError(res.status, json.message ?? json.detail ?? res.statusText);
-  return json as T;
+const TIMEOUT_MS = 15000;
+
+// Reject a request that hasn't settled in 15s so a hung fetch or stalled
+// getSession() can't leave a caller's loading state stuck forever.
+// ponytail: races the whole op; the underlying fetch may run to completion.
+function withTimeout<T>(work: Promise<T>, label: string): Promise<T> {
+  return Promise.race([
+    work,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new ApiError(0, `${label} timed out`)), TIMEOUT_MS),
+    ),
+  ]);
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (!token) throw new ApiError(401, "Not signed in");
+function upload<T>(path: string, blob: Blob, filename: string): Promise<T> {
+  return withTimeout((async (): Promise<T> => {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) throw new ApiError(401, "Not signed in");
+    const form = new FormData();
+    form.append("file", blob, filename);
+    const res = await fetch(`${BASE}${path}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new ApiError(res.status, json.message ?? json.detail ?? res.statusText);
+    return json as T;
+  })(), `POST ${path}`);
+}
 
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(body ? { "Content-Type": "application/json" } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  return withTimeout((async (): Promise<T> => {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) throw new ApiError(401, "Not signed in");
 
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new ApiError(res.status, json.message ?? json.detail ?? res.statusText);
-  return json as T;
+    const res = await fetch(`${BASE}${path}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(body ? { "Content-Type": "application/json" } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new ApiError(res.status, json.message ?? json.detail ?? res.statusText);
+    return json as T;
+  })(), `${method} ${path}`);
 }
 
 export const api = {
