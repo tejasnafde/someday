@@ -57,7 +57,10 @@ export default function CirclePage() {
       if (category !== "All") params!.category = category;
       if (tag) params!.tag = tag;
     }
-    api.intents(id, params).then(({ items, next_cursor }) => {
+    api.intents(id, params).then((res) => {
+      // Tolerate a bare-array response (older API shape): degrade to empty, never stick.
+      const items = Array.isArray(res) ? res : (res?.items ?? []);
+      const next_cursor = Array.isArray(res) ? null : (res?.next_cursor ?? null);
       setCached(intentsKey, { items, next_cursor });
       setIntents(items);
       setNextCursor(next_cursor);
