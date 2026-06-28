@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     # Discord error alerts
     DISCORD_WEBHOOK_URL: str = ""
 
+    # Shared token guarding the Cloud Build → Discord push webhook
+    CLOUDBUILD_ALERT_TOKEN: str = ""
+
     # Web push (VAPID)
     VAPID_PUBLIC_KEY: str = ""
     VAPID_PRIVATE_KEY: str = ""
