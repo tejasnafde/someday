@@ -197,7 +197,7 @@ SELECT_INTENTS_WITH_REMOTE_PREVIEW = """
     ORDER BY created_at DESC
 """
 
-# In two-person circles the adder auto-hearts their own save —
+# In two-person circles the adder auto-hearts their own save -
 # the other member's single heart is then enough to shortlist it.
 AUTO_REACT_IF_COUPLE = """
     INSERT INTO public.reactions (intent_id, user_id, kind, status)

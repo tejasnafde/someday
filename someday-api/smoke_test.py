@@ -48,7 +48,7 @@ if _exp and _exp < _now:
     sys.exit(1)
 
 _ttl = _exp - _now if _exp else "?"
-print(f"\033[0;32m✓ Token valid — expires in {_ttl}s\033[0m")
+print(f"\033[0;32m✓ Token valid - expires in {_ttl}s\033[0m")
 
 HEADERS = {
     "Authorization": f"Bearer {TOKEN}",
@@ -103,7 +103,7 @@ def req(
         return data
 
     except httpx.ConnectError:
-        print(f"  {RED}✗ CONNECTION REFUSED — is the server running?{RST}")
+        print(f"  {RED}✗ CONNECTION REFUSED - is the server running?{RST}")
         results.append({"label": label, "status": 0, "ok": False})
         return {}
     except Exception as exc:
@@ -121,7 +121,7 @@ print(f"{'='*60}")
 
 # 1. Health check (no auth needed)
 req("GET /health", "GET", "/health",
-    note="No auth — should always return 200")
+    note="No auth - should always return 200")
 
 # 2. Upsert user from JWT
 me = req("POST /auth/verify", "POST", "/auth/verify", expect=200,
@@ -131,7 +131,7 @@ user_id = (me.get("user") or {}).get("id", "")
 print(f"\n  {YEL}→ user_id = {user_id}{RST}")
 
 if not user_id:
-    print(f"\n{RED}Auth failed — aborting. Check token and server logs.{RST}")
+    print(f"\n{RED}Auth failed - aborting. Check token and server logs.{RST}")
     sys.exit(1)
 
 # 3. Get current user + circles
@@ -141,7 +141,7 @@ req("GET /auth/me", "GET", "/auth/me",
 # 4. Create a circle
 circle = req("POST /circles", "POST", "/circles", expect=201,
     body={"name": "Smoke Test Circle", "emoji": None},
-    note="Create a new circle — caller becomes owner + member")
+    note="Create a new circle - caller becomes owner + member")
 
 circle_id = circle.get("id", "")
 print(f"\n  {YEL}→ circle_id = {circle_id}{RST}")
@@ -162,7 +162,7 @@ req("PATCH /circles/:id", "PATCH", f"/circles/{circle_id}",
 # 8. Unfurl a URL
 unfurl = req("POST /unfurl", "POST", "/unfurl",
     body={"url": "https://www.youtube.com/watch?v=Way9Dexny3w"},
-    note="Fetch OG metadata — expects title + site")
+    note="Fetch OG metadata - expects title + site")
 
 # 9. Create intent with URL (triggers server-side unfurl)
 intent1 = req("POST /circles/:id/intents", "POST", f"/circles/{circle_id}/intents",
@@ -207,7 +207,7 @@ req("PATCH /intents/:id (task_status)", "PATCH", f"/intents/{intent1_id}",
 
 # 14. React to intent (toggle interested)
 req("POST /intents/:id/react", "POST", f"/intents/{intent1_id}/react",
-    note="Toggle 'interested' reaction — should add it (reaction_count → 1)")
+    note="Toggle 'interested' reaction - should add it (reaction_count → 1)")
 
 # 15. React again (toggle off)
 req("POST /intents/:id/react (toggle off)", "POST", f"/intents/{intent1_id}/react",
@@ -219,26 +219,26 @@ req("POST /intents/:id/react (toggle back on)", "POST", f"/intents/{intent1_id}/
 
 # 17. Boost an intent
 req("POST /intents/:id/boost", "POST", f"/intents/{intent1_id}/boost",
-    note="Add boost signal — affects smart-pick score")
+    note="Add boost signal - affects smart-pick score")
 
 # 18. Get intent detail
 req("GET /intents/:id", "GET", f"/intents/{intent1_id}",
     note="Should show reaction_count=1, boosted_by_me=true")
 
-# 19. Shortlist (needs ≥2 members — will be empty with 1 user, that's expected)
+# 19. Shortlist (needs ≥2 members - will be empty with 1 user, that's expected)
 req("GET /circles/:id/intents?shortlist=true", "GET",
     f"/circles/{circle_id}/intents?shortlist=true",
-    note="Shortlist requires ≥2 members interested — empty with 1 user is correct")
+    note="Shortlist requires ≥2 members interested - empty with 1 user is correct")
 
-# 20. Smart pick (same constraint — will 404 with 1 user)
+# 20. Smart pick (same constraint - will 404 with 1 user)
 req("GET /circles/:id/payoff/smart", "GET",
     f"/circles/{circle_id}/payoff/smart", expect=404,
-    note="Expected 404 with 1 user — needs ≥2 interested members")
+    note="Expected 404 with 1 user - needs ≥2 interested members")
 
 # 21. Spin (same constraint)
 req("GET /circles/:id/payoff/spin", "GET",
     f"/circles/{circle_id}/payoff/spin", expect=404,
-    note="Expected 404 with 1 user — shortlist is empty")
+    note="Expected 404 with 1 user - shortlist is empty")
 
 # 22. Get invite link (circle detail has it)
 circle_detail = req("GET /circles/:id (check invite_token)", "GET",
@@ -251,7 +251,7 @@ print(f"  {YEL}→ share link   = {BASE}/circles/join/{invite_token}{RST}")
 
 # 23. Soft delete intent2
 req("DELETE /intents/:id", "DELETE", f"/intents/{intent2_id}",
-    note="Soft delete — sets status=0, never hard-deletes")
+    note="Soft delete - sets status=0, never hard-deletes")
 
 # 24. Verify intent2 gone from list
 req("GET /circles/:id/intents (after delete)", "GET",

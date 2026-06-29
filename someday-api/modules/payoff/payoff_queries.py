@@ -8,7 +8,7 @@ SMART_PICK score formula (100 pts max):
 
 Tiebreaker: most recently reacted to.
 Only shortlisted intents (≥ 2 interested reactions) are eligible.
-Membership gate + member count are inlined — one round trip per endpoint.
+Membership gate + member count are inlined - one round trip per endpoint.
 """
 
 SMART_PICK = """

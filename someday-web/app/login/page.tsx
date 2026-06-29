@@ -36,7 +36,7 @@ export default function Login() {
     if (error)
       setError(
         error.message.includes("rate limit")
-          ? "Too many sign-in emails right now — wait a bit and try again."
+          ? "Too many sign-in emails right now - wait a bit and try again."
           : error.message,
       );
     else setSent(true);
@@ -49,7 +49,7 @@ export default function Login() {
     const { error } = await supabase.auth.verifyOtp({ email, token: code.trim(), type: "email" });
     if (error) {
       setBusy(false);
-      setError("That code didn't work — check it and try again.");
+      setError("That code didn't work - check it and try again.");
       return;
     }
     await api.verify().catch(() => {});

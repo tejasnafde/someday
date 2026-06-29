@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     APP_ENV: str = "dev"
 
-    # Supabase — JWT verification uses ES256 JWKS derived from SUPABASE_URL
+    # Supabase - JWT verification uses ES256 JWKS derived from SUPABASE_URL
     SUPABASE_URL: str
     SUPABASE_ANON_KEY: str
     SUPABASE_SERVICE_ROLE_KEY: str = ""  # admin API; used by mint_token.py for testing
@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     # CORS
     ALLOWED_ORIGINS: str = "*"
 
-    # GitHub — used by the EAS build webhook to publish releases
+    # GitHub - used by the EAS build webhook to publish releases
     GITHUB_REPO: str = "tejasnafde/someday"
 
     model_config = SettingsConfigDict(

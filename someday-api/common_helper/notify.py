@@ -9,7 +9,7 @@ from config.settings import settings
 from modules.notifications.notifications_queries import INSERT_NOTIFICATION
 from modules.push.push_queries import DELETE_STALE_ENDPOINT, GET_WEB_PUSH_FOR_USERS
 
-# All circle members except the actor — includes users with and without push tokens.
+# All circle members except the actor - includes users with and without push tokens.
 CIRCLE_ALL_RECIPIENTS = """
     WITH actor AS (
         SELECT display_name FROM public.users WHERE id = :actor_id AND status = 1
@@ -34,7 +34,7 @@ ALL_PUSH_TOKENS = """
     SELECT push_token FROM public.users WHERE status = 1 AND push_token IS NOT NULL
 """
 
-# Intent creator (if different from actor) — includes even without push token.
+# Intent creator (if different from actor) - includes even without push token.
 CREATOR_RECIPIENT = """
     WITH actor AS (
         SELECT display_name FROM public.users WHERE id = :actor_id AND status = 1
@@ -60,9 +60,9 @@ class Notify(DBUtil):
         if not user_ids:
             return
         try:
-            from pywebpush import WebPushException, webpush  # ponytail: lazy import — keeps intents working if pywebpush missing
+            from pywebpush import WebPushException, webpush  # ponytail: lazy import - keeps intents working if pywebpush missing
         except ImportError:
-            errorlogger.error("Notify.send_web_push | pywebpush not installed — skipping web push")
+            errorlogger.error("Notify.send_web_push | pywebpush not installed - skipping web push")
             return
         rows = self.execute_query_with_value(GET_WEB_PUSH_FOR_USERS, {"user_ids": user_ids})
         for row in rows:

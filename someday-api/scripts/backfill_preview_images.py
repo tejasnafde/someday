@@ -2,8 +2,8 @@
 
 Existing intents stored the raw og:image URL. Many of those are signed CDN URLs
 (Instagram/FB scontent, S3 presigned, etc.) that have since expired, showing as
-broken JPEGs. This downloads each one — or re-unfurls the source page when the
-direct image is dead — and re-hosts it permanently in the `previews` bucket.
+broken JPEGs. This downloads each one - or re-unfurls the source page when the
+direct image is dead - and re-hosts it permanently in the `previews` bucket.
 
 Run against an environment explicitly (INFO logging shows per-row progress):
 
@@ -67,7 +67,7 @@ def main() -> None:
         new_url = rehost_remote_image(image)
         source = "direct"
         if not new_url and r.get("url"):
-            # Direct image is dead — re-unfurl the source page for a fresh og:image
+            # Direct image is dead - re-unfurl the source page for a fresh og:image
             # (fetch_link_meta with rehost=True re-hosts it for us).
             fresh = fetch_link_meta(r["url"], rehost=True)
             if fresh and is_rehosted(fresh.get("image") or ""):

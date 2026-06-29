@@ -1,4 +1,4 @@
-"""Supabase JWT verification — RS256 via JWKS."""
+"""Supabase JWT verification - RS256 via JWKS."""
 
 import jwt
 from fastapi import Depends, HTTPException
@@ -42,5 +42,5 @@ def verify_supabase_jwt(
 
 
 def jwt_required(payload: dict = Depends(verify_supabase_jwt)) -> dict:
-    """Dependency alias — use this in router Depends() calls."""
+    """Dependency alias - use this in router Depends() calls."""
     return payload

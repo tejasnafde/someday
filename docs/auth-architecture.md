@@ -10,8 +10,8 @@
 
 The mobile app is **not** a normal native app. It is a **native auth shell wrapping a WebView**:
 
-- `someday-app/screens/SignIn.tsx` — a **native** React Native sign-in screen (no Google logo on the button; that's how you tell it apart from the web one).
-- `someday-app/screens/Home.tsx` — once signed in, this is just a **`react-native-webview`** pointing at the web app (`someday-web` on Vercel). Everything past login is the web app rendered inside the shell.
+- `someday-app/screens/SignIn.tsx` - a **native** React Native sign-in screen (no Google logo on the button; that's how you tell it apart from the web one).
+- `someday-app/screens/Home.tsx` - once signed in, this is just a **`react-native-webview`** pointing at the web app (`someday-web` on Vercel). Everything past login is the web app rendered inside the shell.
 
 Because of this, **there are two independent Supabase sessions on a signed-in device:**
 
@@ -23,7 +23,7 @@ Because of this, **there are two independent Supabase sessions on a signed-in de
 They are **separate on purpose.** Supabase rotates refresh tokens and runs
 reuse-detection: if the native app and the WebView shared one refresh-token
 family, the first token refresh on either side would invalidate the other and
-revoke the whole family — signing the user out everywhere. So the backend mints
+revoke the whole family - signing the user out everywhere. So the backend mints
 a *second, independent* session for the WebView.
 
 ---
@@ -39,7 +39,7 @@ a *second, independent* session for the WebView.
 │ 2. WebBrowser.openAuthSessionAsync(url, 'someday:')  ← Chrome Tab    │
 │ 3. Google → Supabase → redirect to  someday:?code=XXXX               │
 │    ⚠ Android delivers this via the Linking system, and STRIPS the    │
-│      '//' — the URL is `someday:?code=` NOT `someday://?code=`       │
+│      '//' - the URL is `someday:?code=` NOT `someday://?code=`       │
 │ 4. exactly ONE exchangeCodeForSession(code) runs (guarded by a Set)  │
 │    → NATIVE session saved to AsyncStorage, onAuthStateChange fires   │
 └──────────────────────────────────────────────────────────────────────┘
@@ -87,7 +87,7 @@ Linking system. Both paths funnel into the same single guarded exchange.
 
 3. **Exchange the auth code exactly once.** On Android the callback URL can
    arrive *both* via the Linking listener *and* via `openAuthSessionAsync`'s
-   result. The auth code is single-use server-side — two parallel exchanges race
+   result. The auth code is single-use server-side - two parallel exchanges race
    and the loser gets *"invalid flow state, no valid flow state found"*. Guard
    with a `Set` of already-handled codes (see `SignIn.tsx`).
 
@@ -100,7 +100,7 @@ Linking system. Both paths funnel into the same single guarded exchange.
    `access_token | expires_in | refresh_token | token_type` is missing. Derive
    `expires_in` from the JWT's `exp` claim (don't hardcode). Omitting it makes
    `/auth/callback` poll for 5s and then show *"Sign-in link expired or
-   invalid."* — which looks like a web bug but originates in the app.
+   invalid."* - which looks like a web bug but originates in the app.
 
 6. **If `/auth/webview-session` fails, `Home.tsx` falls back to loading the bare
    web login** (`WEB_URL + nextPath`). Symptom: the user sees the *web* login
@@ -112,12 +112,12 @@ Linking system. Both paths funnel into the same single guarded exchange.
 7. **`/auth/webview-session` needs `SUPABASE_SERVICE_ROLE_KEY`.** It calls
    `admin/generate_link`. Returns 500 if the key isn't configured for the env.
 
-8. **It mints a *new* session deliberately** — do not "optimise" it to reuse the
+8. **It mints a *new* session deliberately** - do not "optimise" it to reuse the
    native session's tokens (see refresh-token rotation note above).
 
 ### Web (`someday-web`)
 
-9. **The web Supabase client uses default options** (`lib/supabase.ts`) —
+9. **The web Supabase client uses default options** (`lib/supabase.ts`) -
    implicit flow, `detectSessionInUrl: true`. The WebView bridge depends on this.
    If you ever switch the web client to `flowType: 'pkce'`, the implicit
    `#access_token` fragment from the bridge will be rejected and the WebView
@@ -127,7 +127,7 @@ Linking system. Both paths funnel into the same single guarded exchange.
 
 ## Observability
 
-There is **no server log for client-side auth failures** — they happen before
+There is **no server log for client-side auth failures** - they happen before
 any authenticated backend call. Use the fire-and-forget
 `api.clientError(context, message, detail?)` helper (app) →
 `POST /auth/client-error` (no JWT) → Discord alert. When debugging an auth

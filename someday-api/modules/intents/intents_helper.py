@@ -74,7 +74,7 @@ def create_intent(
         },
     )
     if not row:
-        # Membership gate in INSERT_INTENT returned nothing — caller is not a member
+        # Membership gate in INSERT_INTENT returned nothing - caller is not a member
         infologger.warning(f"intents_helper.create_intent | not a member | circle_id={circle_id} user_id={user_id}")
         return None
     reacted = db.execute_query_with_value_returning(

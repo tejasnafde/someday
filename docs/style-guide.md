@@ -1,4 +1,4 @@
-# Someday — Design System & Style Guide
+# Someday - Design System & Style Guide
 
 > This document is the source of truth for all UI decisions.
 > Before adding any colour, component, or visual treatment, check here first.
@@ -25,7 +25,7 @@
 
 ## 2. Colour Tokens
 
-All colours must be consumed via CSS variables — never hardcoded hex values in components.
+All colours must be consumed via CSS variables - never hardcoded hex values in components.
 
 ### 2a. Base Palette
 
@@ -36,7 +36,7 @@ All colours must be consumed via CSS variables — never hardcoded hex values in
 | `--txt-m` | #5A4E72 | #888888 |
 | `--txt-l` | #9B90B4 | #444444 |
 
-**Dark mode rule:** Background and surface tokens must be neutral grey/charcoal — zero colour tint. The only colour allowed in dark backgrounds is the accent on interactive elements.
+**Dark mode rule:** Background and surface tokens must be neutral grey/charcoal - zero colour tint. The only colour allowed in dark backgrounds is the accent on interactive elements.
 
 ### 2b. Accent (Primary Interactive)
 
@@ -51,7 +51,7 @@ All colours must be consumed via CSS variables — never hardcoded hex values in
 
 ### 2c. Per-Circle Identity Colours
 
-Each circle gets one of three colour identities. The identity colour appears in **one place per card** — the icon background tint — plus member dots:
+Each circle gets one of three colour identities. The identity colour appears in **one place per card** - the icon background tint - plus member dots:
 - The icon background tint inside circle cards (the single identity hit)
 - Member dot colours for that circle's members
 
@@ -65,7 +65,7 @@ Each circle gets one of three colour identities. The identity colour appears in 
 
 **These colours must not appear on buttons, backgrounds, or any UI chrome outside the above contexts.**
 
-**Count badges are neutral.** The idea/member count on a card is metadata, not identity — render it `background: var(--glass-lo); color: var(--txt-m)` with the `.tnum` class (tabular figures). It should recede, not compete with the circle name.
+**Count badges are neutral.** The idea/member count on a card is metadata, not identity - render it `background: var(--glass-lo); color: var(--txt-m)` with the `.tnum` class (tabular figures). It should recede, not compete with the circle name.
 
 ### 2d. Status Badge Colours
 
@@ -76,13 +76,13 @@ Status badges are the only place status-specific colour appears.
 | Saved | `--ss` | `--ss-t` |
 | Interested | `--si` | `--si-t` |
 | Planned | `--sp` | `--sp-t` |
-| Done | Same as Saved, reduced opacity | — |
+| Done | Same as Saved, reduced opacity | - |
 
 ---
 
 ## 3. Glass Surface System
 
-The app uses a layered glass system. Choose the right layer — don't mix them arbitrarily.
+The app uses a layered glass system. Choose the right layer - don't mix them arbitrarily.
 
 | Class | Usage |
 |---|---|
@@ -93,7 +93,7 @@ The app uses a layered glass system. Choose the right layer — don't mix them a
 
 **Implementation:** always pair with `backdrop-filter: blur(18px) saturate(155%)` and include the `@supports` fallback for non-supporting browsers (solid `--glass-hi` background).
 
-**Dark mode:** Glass in dark mode is charcoal-tinted (`rgba(22,22,22, .80)`) — no colour bleed from the surface.
+**Dark mode:** Glass in dark mode is charcoal-tinted (`rgba(22,22,22, .80)`) - no colour bleed from the surface.
 
 ---
 
@@ -125,8 +125,8 @@ Use for: Spin the Wheel, Cancel, Leave, secondary actions alongside a primary.
 **Rules:**
 - One primary CTA per screen maximum
 - Never use circle identity colours (`--cp`, `--cg`, `--cb`) on buttons
-- Never create a one-off button colour for a "special" action (e.g. green for "Planned") — use primary CTA style
-- Destructive actions (Delete, Leave) use secondary style with `color: var(--cp)` text only — never a red filled button in the POC
+- Never create a one-off button colour for a "special" action (e.g. green for "Planned") - use primary CTA style
+- Destructive actions (Delete, Leave) use secondary style with `color: var(--cp)` text only - never a red filled button in the POC
 
 ---
 
@@ -146,10 +146,10 @@ All icons use the SVG sprite system defined in `components/Sprite.tsx`.
 | `.icon-xl` | 38px (intent card preview headers) |
 
 **Rules:**
-- Stroke-based only (fill:none, stroke:currentColor) — except `.icon-fill` for filled variants (star selected, heart filled)
-- stroke-width: 1.8, stroke-linecap: round, stroke-linejoin: round — never change these per-icon
+- Stroke-based only (fill:none, stroke:currentColor) - except `.icon-fill` for filled variants (star selected, heart filled)
+- stroke-width: 1.8, stroke-linecap: round, stroke-linejoin: round - never change these per-icon
 - Never use emoji as UI elements. Emoji are user-generated content only (circle names, notes)
-- Icon colour inherits from parent (`currentColor`) — never set a fixed colour on an icon directly
+- Icon colour inherits from parent (`currentColor`) - never set a fixed colour on an icon directly
 
 ### Icon map
 
@@ -210,7 +210,7 @@ All icons use the SVG sprite system defined in `components/Sprite.tsx`.
 | `--shc` | Standard card shadow (circle cards, intent cards) |
 | `--shb` | Button shadow (primary CTA only) |
 
-Never add custom `box-shadow` values to components — use the tokens.
+Never add custom `box-shadow` values to components - use the tokens.
 
 ---
 
@@ -225,12 +225,12 @@ These are global, low-cost details that make the UI feel finished. Most live in 
 | Body wrap | `text-wrap: pretty` | on `body` (global) |
 | Tabular numbers | `.tnum` class (`font-variant-numeric: tabular-nums`) | any count, timer, price, or number that updates or aligns |
 | Scale on press | `transform: scale(.96)` on `:active` | `.btn-primary` / `.btn-ghost` (global); use `active:scale-[.96]` on other pressables |
-| Image edge | `.img-edge` class → `--img-outline` token | content images/thumbnails only — **not** rounded avatars (outline doesn't follow border-radius) |
+| Image edge | `.img-edge` class → `--img-outline` token | content images/thumbnails only - **not** rounded avatars (outline doesn't follow border-radius) |
 | Transitions | Name exact properties (`transition-property: transform, …`) | never `transition: all` |
 
 **Press feedback:** always `0.96`, never below `0.95` (smaller feels exaggerated). Honour `prefers-reduced-motion`.
 
-**`--img-outline` token:** `rgba(0,0,0,.10)` light / `rgba(255,255,255,.10)` dark — pure black/white, never a tinted neutral (a tint reads as dirt on the image edge).
+**`--img-outline` token:** `rgba(0,0,0,.10)` light / `rgba(255,255,255,.10)` dark - pure black/white, never a tinted neutral (a tint reads as dirt on the image edge).
 
 ---
 

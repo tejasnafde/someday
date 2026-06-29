@@ -1,4 +1,4 @@
-"""DBUtil — base class for all handlers."""
+"""DBUtil - base class for all handlers."""
 
 import json
 import time
@@ -28,7 +28,7 @@ def df_to_records(df: pd.DataFrame) -> list[dict]:
     """Convert a DataFrame to a JSON-safe list of dicts via pandas serialiser.
 
     date_format='iso' keeps timestamps as readable ISO strings.
-    NaN → None, numpy scalars → Python primitives — all handled by pandas.
+    NaN → None, numpy scalars → Python primitives - all handled by pandas.
     """
     if df.empty:
         return []

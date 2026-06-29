@@ -39,7 +39,7 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(authCode);
     if (exchangeError) {
       api.clientError("google_oauth_exchange", exchangeError.message);
-      setError("Sign-in failed — please try again.");
+      setError("Sign-in failed - please try again.");
     } else {
       api.verify().catch(() => {});
     }
@@ -65,7 +65,7 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
     });
     if (error) { setBusy(false); setError(error.message); return; }
     if (data.url) {
-      // Pass "someday:" (no //) as the return scheme — Android strips the slashes.
+      // Pass "someday:" (no //) as the return scheme - Android strips the slashes.
       const result = await WebBrowser.openAuthSessionAsync(data.url, "someday:");
       if (result.type === "success") {
         // iOS returns the redirect URL directly. On Android the Linking listener
@@ -91,7 +91,7 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
       options: { emailRedirectTo: `${webUrl}/auth/callback` },
     });
     setBusy(false);
-    if (error) setError(error.message.includes("rate limit") ? "Too many emails right now — try again in a bit." : error.message);
+    if (error) setError(error.message.includes("rate limit") ? "Too many emails right now - try again in a bit." : error.message);
     else setStage("code");
   }
 
@@ -114,7 +114,7 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
 
     if (!error) await api.verify().catch(() => {});
     setBusy(false);
-    if (error) setError("That code didn't work — check it and try again.");
+    if (error) setError("That code didn't work - check it and try again.");
   }
 
   const input = {

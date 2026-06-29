@@ -37,7 +37,7 @@ export function ShareFlow({ url, text, onDone }: { url: string | null; text: str
       for (const cid of selected) {
         await api.createIntent(cid, { title: title.trim(), url: url ?? undefined });
       }
-      onDone(); // clears native intent immediately — prevents Android AppState re-trigger loop
+      onDone(); // clears native intent immediately - prevents Android AppState re-trigger loop
       setSaved(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save");
@@ -86,7 +86,7 @@ export function ShareFlow({ url, text, onDone }: { url: string | null; text: str
         <ActivityIndicator color={t.acc} />
       ) : circles.length === 0 ? (
         <Text style={{ color: t.txtM, fontSize: 14 }}>
-          No circles yet — create one on the web app first.
+          No circles yet - create one on the web app first.
         </Text>
       ) : (
         circles.map((c) => {

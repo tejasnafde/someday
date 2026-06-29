@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Someday — skill structure, our tokens</title>
+<title>Someday - skill structure, our tokens</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..600&family=Lora:ital,wght@0,400..600;1,400..600&display=swap" rel="stylesheet">
@@ -11,7 +11,7 @@
 /* =================================================================
    The skill's STRUCTURE + HIERARCHY, rendered entirely in Someday's
    own tokens (docs/style-guide.md). Proof that the palette wasn't
-   the reason the redesign felt better — the moves were.
+   the reason the redesign felt better - the moves were.
    "MOVE n" comments mark each structural borrow.
    ================================================================= */
 :root{
@@ -54,10 +54,10 @@ body{margin:0;background:linear-gradient(160deg,var(--bg-a),var(--bg-b) 55%,var(
 .icon{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
 .wrap{max-width:460px;margin:0 auto;padding:8px 22px 70px}
-/* MOVE: eyebrow label — DM Sans caps, the style guide's label role */
+/* MOVE: eyebrow label - DM Sans caps, the style guide's label role */
 .eyebrow{font-family:'DM Sans';font-size:10.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;
   color:var(--txt-l);margin:22px 0 6px}
-/* MOVE 1: serif on the headline (Lora — already ours) + balance */
+/* MOVE 1: serif on the headline (Lora - already ours) + balance */
 h1{font-family:Lora,serif;font-weight:600;font-size:28px;line-height:1.14;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
 .lede{color:var(--txt-m);margin:0 0 20px;text-wrap:pretty;max-width:42ch}
 
@@ -69,7 +69,7 @@ h1{font-family:Lora,serif;font-weight:600;font-size:28px;line-height:1.14;letter
   transition-property:transform,box-shadow;transition-duration:200ms;transition-timing-function:cubic-bezier(.2,0,0,1)}
 .circle:hover{transform:translateY(-2px);box-shadow:var(--shc-hi)}
 .circle:active{transform:translateY(0) scale(.99)}
-/* MOVE 2: identity colour shows up ONCE — the icon tile only */
+/* MOVE 2: identity colour shows up ONCE - the icon tile only */
 .avatar{flex:none;width:48px;height:48px;border-radius:var(--rs);display:grid;place-items:center;
   background:color-mix(in srgb,var(--ci) 15%,transparent);color:var(--ci)}
 .avatar .icon{width:22px;height:22px}
@@ -78,7 +78,7 @@ h1{font-family:Lora,serif;font-weight:600;font-size:28px;line-height:1.14;letter
 /* MOVE 1: serif on the circle name */
 .meta h3{margin:0 0 2px;font-family:Lora,serif;font-weight:600;font-size:17px;letter-spacing:-.005em}
 .meta p{margin:0;font-size:13px;color:var(--txt-m);white-space:nowrap;overflow:hidden;text-overflow:ellipsis} /* MOVE 6: one-line truncation */
-/* MOVE 3: count is a quiet neutral whisper, tabular — not a coloured badge */
+/* MOVE 3: count is a quiet neutral whisper, tabular - not a coloured badge */
 .count{flex:none;min-width:34px;height:34px;padding:0 9px;border-radius:var(--rs);display:grid;place-items:center;
   background:var(--glass-lo);color:var(--txt-m);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
 

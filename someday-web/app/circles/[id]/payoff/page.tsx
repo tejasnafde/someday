@@ -88,7 +88,7 @@ export default function PayoffPage() {
           What are you doing<br /><em style={{ color: "var(--acc)" }}>today?</em>
         </h1>
         <p className="mt-2 text-[13px]" style={{ color: "var(--txt-m)" }}>
-          {circle.member_count > 1 ? "You're together. Time to pick." : "Invite someone first — this works better together."}
+          {circle.member_count > 1 ? "You're together. Time to pick." : "Invite someone first - this works better together."}
         </p>
         {shortlistCount !== null && (
           <span className="tnum mt-2.5 inline-block rounded-full px-3.5 py-1.5 text-xs font-semibold"
@@ -109,7 +109,7 @@ export default function PayoffPage() {
             Feeling anything in particular?
           </div>
           <p className="mb-3 mt-0.5 text-[11px]" style={{ color: "var(--txt-m)" }}>
-            Quick-tap the ones you're in the mood for — it bumps them up the pick.
+            Quick-tap the ones you're in the mood for - it bumps them up the pick.
           </p>
           <div className="flex flex-col gap-2">
             {shortlist!.map((i) => (

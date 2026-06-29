@@ -76,10 +76,10 @@ export function Tour({ page }: { page: TourPage }) {
           setCached("me", me);
           seen = me.user.tour_state?.seen;
         } catch {
-          return; // can't know state — fail quiet, never re-nag
+          return; // can't know state - fail quiet, never re-nag
         }
       }
-      if (seen === undefined) return; // API not migrated yet — fail quiet
+      if (seen === undefined) return; // API not migrated yet - fail quiet
       if (cancelled) return;
       const seenSet = new Set([...seen, ...getPending()]);
       const unseen = TOUR_REGISTRY.filter((s) => s.page === page && !seenSet.has(s.id));
@@ -99,7 +99,7 @@ export function Tour({ page }: { page: TourPage }) {
     if (!step) return;
     const el = document.querySelector(`[data-tour="${step.anchor}"]`);
     if (!el) {
-      // Anchor not rendered (empty state, flagged-off feature) — skip it.
+      // Anchor not rendered (empty state, flagged-off feature) - skip it.
       viewed.current.add(step.id);
       setIndex((i) => i + 1);
       return;

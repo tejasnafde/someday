@@ -136,7 +136,7 @@ LIST_CIRCLE_TAGS = """
     ORDER BY tag
 """
 
-# Rotate the invite token — owner-only, returns new token.
+# Rotate the invite token - owner-only, returns new token.
 ROTATE_INVITE_TOKEN = """
     UPDATE public.circles
     SET invite_token = encode(gen_random_bytes(16), 'hex')

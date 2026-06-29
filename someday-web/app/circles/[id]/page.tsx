@@ -311,10 +311,10 @@ export default function CirclePage() {
           <EmptyState
             message={
               tab === "Shortlist"
-                ? "Nothing here yet — when two of you are interested in the same thing, it shows up here."
+                ? "Nothing here yet - when two of you are interested in the same thing, it shows up here."
                 : tab === "Done"
                   ? "No memories yet. Mark something done after you do it together."
-                  : "Nothing saved yet — drop in the first thing you should do together."
+                  : "Nothing saved yet - drop in the first thing you should do together."
             }
           />
         ) : (

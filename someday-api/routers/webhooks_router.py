@@ -20,7 +20,7 @@ handler = WebhooksHandler()
 @router.post("/eas-build")
 @log_timing("POST /webhooks/eas-build")
 async def eas_build(request: Request, background: BackgroundTasks):
-    """EAS build notification — HMAC-verified, release published in the background
+    """EAS build notification - HMAC-verified, release published in the background
     so the webhook responds before EAS's delivery timeout."""
     body = await request.body()
     if not verify_signature(body, request.headers.get("expo-signature", "")):

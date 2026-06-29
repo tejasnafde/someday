@@ -100,7 +100,7 @@ export default function MembersPage() {
 
   async function leaveCircle() {
     if (myRole === "owner") {
-      alert("Transfer ownership before leaving — promote another member first.");
+      alert("Transfer ownership before leaving - promote another member first.");
       return;
     }
     if (!confirm("Leave this circle?")) return;

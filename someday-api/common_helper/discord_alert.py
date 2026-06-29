@@ -28,10 +28,10 @@ async def send_build_alert(build_id: str, status: str, log_url: str, commit: str
         return
     env_label = "🔴 PROD" if settings.APP_ENV == "production" else "🟡 DEV"
     embed = {
-        "title": f"{env_label} Cloud Build {status} — someday-api",
+        "title": f"{env_label} Cloud Build {status} - someday-api",
         "description": (
             f"Build [`{build_id[:12]}`]({log_url}) ended `{status}`.\n"
-            f"commit `{(commit or 'n/a')[:8]}` — **the deploy did NOT go live; "
+            f"commit `{(commit or 'n/a')[:8]}` - **the deploy did NOT go live; "
             f"traffic stays on the previous revision.**"
         ),
         "color": 0xE53E3E,
@@ -70,4 +70,4 @@ def alert(
     try:
         asyncio.get_running_loop().create_task(_post(embed))
     except RuntimeError:
-        errorlogger.error("discord_alert | no running loop — alert dropped")
+        errorlogger.error("discord_alert | no running loop - alert dropped")

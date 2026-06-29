@@ -1,4 +1,4 @@
-"""Decorators — apply to every router endpoint and handler method."""
+"""Decorators - apply to every router endpoint and handler method."""
 
 import asyncio
 import functools

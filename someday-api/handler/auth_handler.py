@@ -82,7 +82,7 @@ class AuthHandler(DBUtil):
 
         Supabase rotates refresh tokens: if the native app and the WebView
         share one session, the first refresh invalidates the other and
-        reuse-detection revokes the whole family — both get signed out.
+        reuse-detection revokes the whole family - both get signed out.
         A separately minted session has its own refresh-token family.
         """
         infologger.info(f"AuthHandler.webview_session | email={email}")

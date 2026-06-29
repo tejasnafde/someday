@@ -11,4 +11,4 @@ class SmartPickOut(BaseModel):
 
 
 class SpinOut(BaseModel):
-    shortlist: list[dict]  # shuffled shortlisted intents — frontend animates the wheel
+    shortlist: list[dict]  # shuffled shortlisted intents - frontend animates the wheel

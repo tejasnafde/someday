@@ -1,4 +1,4 @@
-// Client-side square-crop + resize before upload — keeps files ~50KB
+// Client-side square-crop + resize before upload - keeps files ~50KB
 // so the storage free tier lasts forever.
 
 export function resizeImage(file: File, size = 512): Promise<Blob> {

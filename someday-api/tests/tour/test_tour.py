@@ -1,4 +1,4 @@
-"""Tour endpoints — seen-step merge, reset, and tour_state exposure on /auth/me."""
+"""Tour endpoints - seen-step merge, reset, and tour_state exposure on /auth/me."""
 
 import json
 

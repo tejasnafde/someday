@@ -65,7 +65,7 @@ export default function NotificationsPage() {
     <main>
       <NavBar title="Notifications" back="/" />
       {items.length === 0 ? (
-        <EmptyState message="Nothing yet — activity from your circles shows up here." />
+        <EmptyState message="Nothing yet - activity from your circles shows up here." />
       ) : (
         <div className="flex flex-col gap-2.5">
           {items.map((item) => (

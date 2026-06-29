@@ -1,4 +1,4 @@
-"""URL unfurl — fetch Open Graph metadata from any URL."""
+"""URL unfurl - fetch Open Graph metadata from any URL."""
 
 from html.parser import HTMLParser
 from urllib.parse import urlparse
@@ -22,7 +22,7 @@ HEADERS = {
 
 
 class OGParser(HTMLParser):
-    """Minimal parser — extracts <meta property="og:*"> and <title>."""
+    """Minimal parser - extracts <meta property="og:*"> and <title>."""
 
     def __init__(self):
         super().__init__()
@@ -58,7 +58,7 @@ SHORTLINK_HOSTS = {"share.google", "maps.app.goo.gl", "goo.gl", "g.co"}
 
 def resolve_shortlink(url: str) -> str:
     """Google's shorteners (share.google, goo.gl, g.co) redirect to the real
-    destination — resolve before dispatching so maps/youtube handling applies."""
+    destination - resolve before dispatching so maps/youtube handling applies."""
     if urlparse(url).netloc.lower() not in SHORTLINK_HOSTS:
         return url
     try:
@@ -78,7 +78,7 @@ MAPS_HOSTS = {"maps.app.goo.gl", "goo.gl", "maps.google.com", "www.google.com", 
 
 
 def fetch_youtube_meta(url: str) -> dict | None:
-    """YouTube serves stripped pages to datacenter IPs — oEmbed is reliable and keyless."""
+    """YouTube serves stripped pages to datacenter IPs - oEmbed is reliable and keyless."""
     try:
         resp = httpx.get(
             "https://www.youtube.com/oembed",
@@ -107,7 +107,7 @@ def is_maps_url(url: str) -> bool:
 
 def fetch_maps_meta(url: str) -> dict | None:
     """Google serves consent shells to datacenter IPs, but the place name is
-    in the URL itself — resolve shortlinks, then parse /maps/place/<name>/ or ?q=."""
+    in the URL itself - resolve shortlinks, then parse /maps/place/<name>/ or ?q=."""
     from urllib.parse import parse_qs, unquote_plus
 
     try:
@@ -135,7 +135,7 @@ def fetch_maps_meta(url: str) -> dict | None:
 
 def fetch_search_meta(url: str) -> dict | None:
     """share.google place links resolve to google.com/search?q=<place name>.
-    From datacenter IPs Google interposes /sorry — but its continue= param
+    From datacenter IPs Google interposes /sorry - but its continue= param
     still carries the original search URL, so parse the name out of that."""
     from urllib.parse import parse_qs, unquote, unquote_plus
 
@@ -171,7 +171,7 @@ def rehost_meta_image(meta: dict | None) -> dict | None:
 def fetch_link_meta(url: str, rehost: bool = True) -> dict | None:
     """Returns {"title": ..., "image": ..., "site": ...} or None on failure.
 
-    When rehost is True (default — used when the result is persisted on an
+    When rehost is True (default - used when the result is persisted on an
     intent) the og:image is downloaded and re-hosted in Supabase Storage so it
     cannot expire. The standalone /unfurl preview passes rehost=False since that
     result is transient and should not create storage objects."""
@@ -211,7 +211,7 @@ def fetch_link_meta(url: str, rehost: bool = True) -> dict | None:
 
     parser = OGParser()
     try:
-        parser.feed(resp.text)  # YouTube buries og: tags >600KB deep — parse everything
+        parser.feed(resp.text)  # YouTube buries og: tags >600KB deep - parse everything
     except Exception as exc:
         errorlogger.error(f"unfurl.fetch_link_meta | parse error | {exc}")
         return None
@@ -235,10 +235,10 @@ class UnfurlHandler(DBUtil):
     @log_timing("unfurl_handler.unfurl")
     def unfurl(self, url: str) -> tuple[int, dict | str]:
         infologger.info(f"UnfurlHandler.unfurl | url={url}")
-        # Transient preview shown before saving — don't create storage objects.
+        # Transient preview shown before saving - don't create storage objects.
         # The image is re-hosted later when the intent is actually persisted.
         meta = fetch_link_meta(url, rehost=False)
         if not meta:
-            infologger.warning(f"UnfurlHandler.unfurl | fallback — no metadata | url={url}")
+            infologger.warning(f"UnfurlHandler.unfurl | fallback - no metadata | url={url}")
             return 200, {"title": None, "image": None, "site": None}
         return 200, meta

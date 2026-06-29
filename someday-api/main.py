@@ -1,4 +1,4 @@
-"""Someday API — FastAPI entry point."""
+"""Someday API - FastAPI entry point."""
 
 import threading
 import time
@@ -48,7 +48,7 @@ async def log_requests(request: Request, call_next):
     auth = request.headers.get("authorization", "")
     user_hint = "anonymous"
     if auth.startswith("Bearer "):
-        # First 8 chars as a trace hint — never log the full token
+        # First 8 chars as a trace hint - never log the full token
         user_hint = f"token:{auth[7:15]}…"
 
     infologger.info(

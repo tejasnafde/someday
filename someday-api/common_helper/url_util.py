@@ -1,4 +1,4 @@
-"""URL safety utilities — SSRF protection for outbound HTTP calls."""
+"""URL safety utilities - SSRF protection for outbound HTTP calls."""
 
 import ipaddress
 from urllib.parse import urlparse
@@ -33,6 +33,6 @@ def validate_url(url: str) -> None:
     try:
         ip = ipaddress.ip_address(host)
     except ValueError:
-        return  # Not an IP literal — hostname, accepted (DNS rebinding is infra's problem)
+        return  # Not an IP literal - hostname, accepted (DNS rebinding is infra's problem)
     if not ip.is_global:
         raise ValueError(f"Non-routable IP address: {host!r}")
