@@ -41,7 +41,7 @@ export async function downloadAndInstall(update: ApkUpdate) {
   const result = await FileSystem.downloadAsync(update.apkUrl, dest);
   if (result.status !== 200) throw new Error(`download failed (${result.status})`);
 
-  // The package installer can't read file:// URIs on Android 7+ —
+  // The package installer can't read file:// URIs on Android 7+ -
   // FileProvider content:// URI is required.
   const contentUri = await FileSystem.getContentUriAsync(result.uri);
   await IntentLauncher.startActivityAsync("android.intent.action.INSTALL_PACKAGE", {

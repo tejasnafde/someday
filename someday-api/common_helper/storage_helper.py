@@ -1,4 +1,4 @@
-"""Supabase Storage uploads via the service key — clients never touch storage directly."""
+"""Supabase Storage uploads via the service key - clients never touch storage directly."""
 
 import hashlib
 
@@ -59,7 +59,7 @@ def rehost_remote_image(remote_url: str, bucket: str = "previews") -> str | None
     The storage path is derived from a hash of the source URL, so re-hosting
     the same image twice is idempotent (and upserts in place)."""
     if is_rehosted(remote_url):
-        return remote_url  # already ours — nothing to do
+        return remote_url  # already ours - nothing to do
     try:
         validate_url(remote_url)
     except ValueError as exc:
@@ -71,7 +71,7 @@ def rehost_remote_image(remote_url: str, bucket: str = "previews") -> str | None
         )
         resp.raise_for_status()
     except httpx.HTTPError as exc:
-        # Source already dead/expired — caller keeps the original URL.
+        # Source already dead/expired - caller keeps the original URL.
         infologger.warning(f"storage.rehost | fetch failed | {remote_url[:120]} | {exc}")
         return None
 

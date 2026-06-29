@@ -6,7 +6,7 @@
 
 **For all the things you'll do together someday.**
 
-A shared someday-list for small circles of friends — save the films, places,
+A shared someday-list for small circles of friends - save the films, places,
 restaurants and trips you keep saying *"we should do that"* about, then let the
 app decide what you're actually doing tonight.
 
@@ -14,22 +14,22 @@ app decide what you're actually doing tonight.
 
 ## What it does
 
-- **Circles** — a private space for you and the people you make plans with: movie
+- **Circles** - a private space for you and the people you make plans with: movie
   nights, the trip group, your best friend.
-- **Save anything** — links, places, films, books, conversations to have. Eight
+- **Save anything** - links, places, films, books, conversations to have. Eight
   categories: watch · eat · visit · read · play · trip · talk · other. Shared
   links unfurl with titles and thumbnails automatically.
-- **React & boost** — tap the heart when you're interested; boost to nudge the
+- **React & boost** - tap the heart when you're interested; boost to nudge the
   group. When two of you want the same thing it lands on the Shortlist.
-- **Payoff** — the answer to "what are we doing today?". *Smart-pick* scores
+- **Payoff** - the answer to "what are we doing today?". *Smart-pick* scores
   ideas by mutual interest, age and boosts; *spin* hands the decision to fate.
-- **Lifecycle** — ideas move saved → interested → planned → done, so the list
+- **Lifecycle** - ideas move saved → interested → planned → done, so the list
   stays a plan, not a graveyard.
-- **Memories** — when marking something done, add a note and photos. A little
+- **Memories** - when marking something done, add a note and photos. A little
   record of actually doing it.
-- **Notifications** — in-app activity feed for saves, reactions, and boosts
+- **Notifications** - in-app activity feed for saves, reactions, and boosts
   across your circles; web push so you don't miss anything.
-- **First-login tour** — new members get a quick spotlight tour; when features
+- **First-login tour** - new members get a quick spotlight tour; when features
   ship, returning users get a mini-tour of just what's new.
 
 ## How it's put together
@@ -54,7 +54,7 @@ Supabase session with the WebView, adds share-sheet capture (share a link from
 any app straight into a circle) and updates itself by checking GitHub Releases
 for a newer APK.
 
-Auth is Supabase magic-link OTP end to end — the API verifies Supabase JWTs via
+Auth is Supabase magic-link OTP end to end - the API verifies Supabase JWTs via
 JWKS and never sees a password.
 
 ## Getting started
@@ -101,16 +101,16 @@ npx expo start                  # or: eas build -p android
 ## Testing
 
 ```bash
-# API — route + logic tests
+# API - route + logic tests
 cd someday-api && .venv/bin/pytest
 
-# API — smoke test against a running instance
+# API - smoke test against a running instance
 python smoke_test.py
 
-# Web — screenshot/console smoke across screens
+# Web - screenshot/console smoke across screens
 cd someday-web && node ui-test.mjs
 
-# Web — onboarding tour behaviour (stubs the API, needs `npm run dev` on :3001)
+# Web - onboarding tour behaviour (stubs the API, needs `npm run dev` on :3001)
 node tour-test.mjs
 ```
 
@@ -122,7 +122,7 @@ node tour-test.mjs
 - **Android** → `eas build -p android`, attach the APK to a GitHub Release
   tagged `vX.Y.Z`; installed apps discover the release and self-update.
 - **Database** → plain SQL migrations in `someday-api/supabase/migrations/`,
-  applied with `supabase db push`. Soft deletes only — rows are never deleted.
+  applied with `supabase db push`. Soft deletes only - rows are never deleted.
 
 > [!IMPORTANT]
 > `main` is protected: every change lands through a feature branch and PR,
@@ -133,5 +133,5 @@ node tour-test.mjs
 The repo is agent-friendly: [`CLAUDE.md`](CLAUDE.md) defines the backend
 layering (router → handler → module helper/queries), logging rules and SQL
 conventions, and [`docs/style-guide.md`](docs/style-guide.md) is the single
-source of truth for the design system — tokens, glass surfaces, the one
+source of truth for the design system - tokens, glass surfaces, the one
 button gradient, and the sprite-icon system.

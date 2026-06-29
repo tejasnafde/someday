@@ -53,7 +53,7 @@ class CirclesHandler(DBUtil):
             return 403, "Not a member of this circle"
         if content_type not in {"image/webp", "image/jpeg", "image/png"}:
             return 400, "Image must be webp, jpeg, or png"
-        # Deterministic path keyed by circle id — no schema change needed;
+        # Deterministic path keyed by circle id - no schema change needed;
         # clients derive the URL and cache-bust with ?v=
         url = upload_public_image("circle-photos", circle_id, content, content_type)
         if not url:
@@ -75,7 +75,7 @@ class CirclesHandler(DBUtil):
         if not circle:
             return 404, "Circle not found or you are not a member"
         if circle["owner_id"] == user_id:
-            return 409, "Transfer ownership before leaving — promote another member first"
+            return 409, "Transfer ownership before leaving - promote another member first"
         h.leave_circle(self, circle_id, user_id)
         return 200, "Left circle"
 
@@ -83,7 +83,7 @@ class CirclesHandler(DBUtil):
     def set_member_role(self, circle_id: str, actor_id: str, target_id: str, role: str) -> tuple[int, dict | str]:
         """role ∈ {admin, member, owner}.
            'admin'/'member': only owner+admins; admins can't touch owner/other admins.
-           'owner': owner-only — transfers ownership atomically in one transaction."""
+           'owner': owner-only - transfers ownership atomically in one transaction."""
         infologger.info(
             f"CirclesHandler.set_member_role | circle_id={circle_id} actor={actor_id} target={target_id} role={role}"
         )
@@ -110,9 +110,9 @@ class CirclesHandler(DBUtil):
         if not h.can_manage_members(actor_role):
             return 403, "Only the owner or admins can change roles"
         if target_role == "owner":
-            return 403, "Cannot change the owner's role — transfer ownership first"
+            return 403, "Cannot change the owner's role - transfer ownership first"
         if actor_role == "admin" and target_role == "admin":
-            return 403, "Admins can't demote other admins — ask the owner"
+            return 403, "Admins can't demote other admins - ask the owner"
 
         updated = h.set_member_role(self, circle_id, target_id, role)
         return 200, updated or {"user_id": target_id, "role": role}
@@ -132,7 +132,7 @@ class CirclesHandler(DBUtil):
         if target_role == "owner":
             return 403, "Cannot remove the owner"
         if actor_role == "admin" and target_role == "admin":
-            return 403, "Admins can't remove other admins — ask the owner"
+            return 403, "Admins can't remove other admins - ask the owner"
         h.remove_member(self, circle_id, target_id)
         return 200, "Member removed"
 

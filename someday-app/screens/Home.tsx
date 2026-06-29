@@ -51,7 +51,7 @@ export function Home({ nextPath }: { nextPath?: string | null }) {
   }, []);
 
   useEffect(() => {
-    // The WebView gets its OWN session from the API — sharing the native
+    // The WebView gets its OWN session from the API - sharing the native
     // session's refresh token would get both revoked by rotation reuse-detection.
     (async () => {
       const { data } = await supabase.auth.getSession();
@@ -73,7 +73,7 @@ export function Home({ nextPath }: { nextPath?: string | null }) {
           `${WEB_URL}/auth/callback${nextQ}#access_token=${s.access_token}&refresh_token=${s.refresh_token}&expires_in=${expiresIn}&token_type=bearer&type=magiclink`,
         );
       } catch (e: unknown) {
-        // Bridge failed — fall back to the web app, which may already hold its
+        // Bridge failed - fall back to the web app, which may already hold its
         // own session in WebView storage; otherwise it shows its own login.
         api.clientError("webview_session", e instanceof Error ? e.message : String(e));
         setStartUrl(WEB_URL + (nextPath ?? ""));

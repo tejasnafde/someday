@@ -21,7 +21,7 @@ export function UpdateBanner() {
     try {
       await downloadAndInstall(update!);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Update failed — try again");
+      setError(e instanceof Error ? e.message : "Update failed - try again");
     } finally {
       setBusy(false);
     }

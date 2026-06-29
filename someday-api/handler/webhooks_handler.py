@@ -59,7 +59,7 @@ def upload_and_notify(version: str, apk_url: str, release_id: int) -> None:
         try:
             r = httpx.post(settings.DISCORD_WEBHOOK_URL, timeout=5, json={
                 "username": "Someday",
-                "content": f"🚀 **Someday v{version}** released — APK live on GitHub, update banner active for all users.",
+                "content": f"🚀 **Someday v{version}** released - APK live on GitHub, update banner active for all users.",
             })
             if r.status_code >= 400:
                 errorlogger.error(f"webhooks.upload_and_notify | discord notify failed | status={r.status_code} body={r.text[:200]}")
@@ -73,7 +73,7 @@ def publish_release(version: str, apk_url: str, build_id: str) -> None:
     """Create the GitHub release then call upload_and_notify."""
     infologger.info(f"webhooks.publish_release | v{version} | build={build_id}")
     if release_exists(version):
-        infologger.warning(f"webhooks.publish_release | v{version} already exists — skipping")
+        infologger.warning(f"webhooks.publish_release | v{version} already exists - skipping")
         return
     try:
         rel = github("POST", f"https://api.github.com/repos/{settings.GITHUB_REPO}/releases", json={
@@ -108,11 +108,11 @@ def recover_incomplete_releases() -> None:
             match = re.search(r"apk_url: (https://\S+)", rel.get("body", ""))
             if not match:
                 infologger.warning(
-                    f"webhooks.recover | {rel['tag_name']} has no APK and no recoverable apk_url — skipping"
+                    f"webhooks.recover | {rel['tag_name']} has no APK and no recoverable apk_url - skipping"
                 )
                 continue
             version = rel["tag_name"].lstrip("v")
-            infologger.warning(f"webhooks.recover | v{version} incomplete — resuming upload")
+            infologger.warning(f"webhooks.recover | v{version} incomplete - resuming upload")
             upload_and_notify(version, match.group(1), rel["id"])
     except Exception as exc:
         errorlogger.error(f"webhooks.recover | {exc}", exc_info=True)

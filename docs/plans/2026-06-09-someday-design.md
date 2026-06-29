@@ -1,4 +1,4 @@
-# Someday — Full Product Design
+# Someday - Full Product Design
 **Date:** 2026-06-09  
 **Status:** Approved
 
@@ -67,7 +67,7 @@ someday-api/
 ├── .env.production
 ├── .env.example                 # committed, no secrets
 │
-├── routers/                     # HTTP layer only — Pydantic validation, Depends(jwt_required)
+├── routers/                     # HTTP layer only - Pydantic validation, Depends(jwt_required)
 │   ├── auth_router.py           # POST /auth/verify
 │   ├── circles_router.py
 │   ├── intents_router.py
@@ -118,11 +118,11 @@ someday-api/
 
 **Hard rules (same as reference project):**
 - No `SELECT *`
-- No `os.environ` — always `from config.settings import settings`
-- No `print()` — always `infologger` / `errorlogger`
+- No `os.environ` - always `from config.settings import settings`
+- No `print()` - always `infologger` / `errorlogger`
 - Handlers return `(status, result)` tuples; routers wrap with `create_response()`
 - All SQL uses `:param` named params with `sqlalchemy.text()`
-- Soft deletes only — never `DELETE` from DB
+- Soft deletes only - never `DELETE` from DB
 - All queries filter `status = 1`
 
 ---
@@ -149,11 +149,11 @@ Logging is infrastructure, not an afterthought. Set up before any feature code i
 - Log level tuned via `LOG_LEVEL` env var (DEBUG in dev, INFO in prod)
 
 **`common_helper/decorators.py`**
-- `@log_timing("ENDPOINT_NAME")` — logs REQUEST_START with payload, REQUEST_END with duration_ms. Applied to every router endpoint.
-- `@log_payload` — logs Pydantic-validated request body at INFO before calling handler.
+- `@log_timing("ENDPOINT_NAME")` - logs REQUEST_START with payload, REQUEST_END with duration_ms. Applied to every router endpoint.
+- `@log_payload` - logs Pydantic-validated request body at INFO before calling handler.
 
 **`app_util/db_util.py`**  
-Every query method logs automatically — handlers never log SQL manually:
+Every query method logs automatically - handlers never log SQL manually:
 ```
 DEBUG  DB_QUERY  | SELECT id, name FROM circles WHERE owner_id = :owner_id AND status = 1
 DEBUG  DB_PARAMS | {'owner_id': 'abc-123'}
@@ -184,21 +184,21 @@ INFO  middleware        RESPONSE | 201 | 267ms
 ### CLAUDE.md rules (enforced)
 - Every handler method logs entry with key identifiers (user_id, circle_id, etc.)
 - Every router endpoint uses `@log_timing` and `@log_payload` decorators
-- DBUtil logs all queries automatically — never log SQL manually in handlers/modules
+- DBUtil logs all queries automatically - never log SQL manually in handlers/modules
 - `WARNING` for every fallback or degraded path
 - `ERROR` + full exception in every `except` block
-- Never `print()` — always `infologger` / `errorlogger`
-- Abundant logs are correct — silence with LOG_LEVEL, never by removing them
+- Never `print()` - always `infologger` / `errorlogger`
+- Abundant logs are correct - silence with LOG_LEVEL, never by removing them
 
 ---
 
 ## 6. Data Model
 
-### Status convention (universal — every table)
+### Status convention (universal - every table)
 
 | Value | Meaning |
 |---|---|
-| `1` | Active — default, included in all queries |
+| `1` | Active - default, included in all queries |
 | `0` | Soft deleted / hidden from UI |
 | `-1` | User-initiated delete / deactivated |
 | Other | Case by case (e.g. `2` = pending on circle_members) |
@@ -340,10 +340,10 @@ POST  /unfurl                      {url} → {title, image, site}
 
 ### Two modes
 
-**Smart pick** — algorithmic, reveals top-scored intent with a reason card:
+**Smart pick** - algorithmic, reveals top-scored intent with a reason card:
 > "3 of 4 interested · saved 6 weeks ago · 2 boosts"
 
-**Spin for fun** — backend returns full shortlist in random order, frontend runs the wheel/slot animation. Pure random, no weighting.
+**Spin for fun** - backend returns full shortlist in random order, frontend runs the wheel/slot animation. Pure random, no weighting.
 
 ### Scoring algorithm (smart pick)
 
@@ -388,8 +388,8 @@ LIMIT 1;
 
 ### Boost UX
 
-- ⚡ toggle button on every intent card — tap any time to signal "I really want this today"
-- When opening the Payoff screen with no active boosts: gentle prompt "Feeling anything in particular right now?" — quick-tap shortlisted items to boost before revealing the pick
+- ⚡ toggle button on every intent card - tap any time to signal "I really want this today"
+- When opening the Payoff screen with no active boosts: gentle prompt "Feeling anything in particular right now?" - quick-tap shortlisted items to boost before revealing the pick
 
 ---
 
@@ -398,11 +398,11 @@ LIMIT 1;
 | Screen | Route | Key elements |
 |---|---|---|
 | Auth | `/login` | Email input → magic link → `/verify?token=` |
-| Home | `/` | Grid of circle cards — emoji, member avatars, open intent count. + New circle |
+| Home | `/` | Grid of circle cards - emoji, member avatars, open intent count. + New circle |
 | Circle detail | `/circles/:id` | Tabs: All · Shortlist · Done. Filter chips. Intent cards with ⚡ boost. FAB: + Add |
 | Add / Edit intent | `/circles/:id/intents/new` | Title, URL (live unfurl preview), note, category picker, tags |
 | Intent detail | `/intents/:id` | Link preview card, who's interested, task_status switcher, react + boost |
-| Payoff | `/circles/:id/payoff` | Two buttons — 🎯 Best Pick / 🎡 Spin. Boost prompt if nothing boosted |
+| Payoff | `/circles/:id/payoff` | Two buttons - 🎯 Best Pick / 🎡 Spin. Boost prompt if nothing boosted |
 | Smart pick reveal | (modal) | Winning intent + reason: "3 of 4 interested · 6 weeks · 2 boosts" |
 | Spin reveal | (modal) | Animated wheel/slot → lands on random shortlisted intent |
 | Invite | `/circles/:id/invite` | Shareable link + copy |
@@ -410,7 +410,7 @@ LIMIT 1;
 
 ### Visual direction
 
-- Tone: warm, calm, personal — not productivity-grey, not loud-social
+- Tone: warm, calm, personal - not productivity-grey, not loud-social
 - Palette: soft violet/indigo accent (`#5B4B8A`) on warm off-white; per-circle emoji/color as personality
 - Type: friendly geometric sans (Inter, General Sans, or Satoshi); generous spacing; large tappable cards
 - Feel: each circle reads like a shared scrapbook of future plans, not a task tracker
@@ -418,7 +418,7 @@ LIMIT 1;
 ### Microcopy principles
 
 - "Save to circle" not "Add task"
-- Empty state: "Nothing saved yet — drop in the first thing you two should do."
+- Empty state: "Nothing saved yet - drop in the first thing you two should do."
 - Shortlist header: "When you meet, do these."
 - Payoff screen: "What are you doing today?"
 
@@ -426,47 +426,47 @@ LIMIT 1;
 
 ## 10. Android Share-Sheet (Expo)
 
-Minimal Expo app — registers as Android share target only. All other functionality is the web app.
+Minimal Expo app - registers as Android share target only. All other functionality is the web app.
 
 **Flow:** User in Instagram/YouTube/browser → Share → picks "Someday" → Expo app receives URL → calls `/unfurl` → shows preview → user picks circle → calls `POST /circles/:id/intents` → intent saved. Done.
 
-No navigation, no auth UI, no full app — just the capture flow. Web app handles everything else.
+No navigation, no auth UI, no full app - just the capture flow. Web app handles everything else.
 
 ---
 
 ## 11. Build Order
 
 ```
-PHASE 1 — FOUNDATION
+PHASE 1 - FOUNDATION
 1.  Monorepo setup: someday-api/ + someday-web/
-2.  log_util.py + decorators (@log_timing, @log_payload) — before any feature code
-3.  CLAUDE.md written — logging rules, status convention, SQL rules
-4.  Supabase projects (dev + prod) — schema migration, RLS policies
-5.  FastAPI skeleton — db_util, settings, main.py, health check endpoint
-6.  Auth — Supabase magic link → POST /auth/verify → JWT middleware → GET /me
+2.  log_util.py + decorators (@log_timing, @log_payload) - before any feature code
+3.  CLAUDE.md written - logging rules, status convention, SQL rules
+4.  Supabase projects (dev + prod) - schema migration, RLS policies
+5.  FastAPI skeleton - db_util, settings, main.py, health check endpoint
+6.  Auth - Supabase magic link → POST /auth/verify → JWT middleware → GET /me
 
-PHASE 2 — CORE LOOP
+PHASE 2 - CORE LOOP
 7.  Circles CRUD + invite/join + leave
 8.  Intents CRUD + task_status transitions
 9.  URL unfurl (httpx + opengraph-py3) wired into intent creation
 10. Reactions toggle (interested)
 
-PHASE 3 — PAYOFF
+PHASE 3 - PAYOFF
 11. intent_boosts table + toggle endpoint
 12. Smart pick algorithm + GET /circles/:id/payoff/smart
 13. Spin endpoint + GET /circles/:id/payoff/spin
 
-PHASE 4 — WEB FRONTEND
+PHASE 4 - WEB FRONTEND
 14. Next.js setup + Tailwind + Supabase auth client
 15. Auth screens (login → magic link → verify)
 16. Home + circle cards
-17. Circle detail — intent list, filters, shortlist tab
+17. Circle detail - intent list, filters, shortlist tab
 18. Add/edit intent + live unfurl preview
 19. Intent detail + react + boost
-20. Payoff screen — smart pick reveal + spin animation
+20. Payoff screen - smart pick reveal + spin animation
 
-PHASE 5 — ANDROID + POLISH
-21. Expo share-sheet — receive URL → pick circle → save
+PHASE 5 - ANDROID + POLISH
+21. Expo share-sheet - receive URL → pick circle → save
 22. Empty states, error states, brand polish
 23. End-to-end acceptance criteria run
 ```
@@ -486,7 +486,7 @@ PHASE 5 — ANDROID + POLISH
 9. Boost toggles correctly influence smart pick scoring.
 10. Filtering by task_status, category, and tag works.
 11. Data persists across sessions and devices.
-12. All endpoints log full request lifecycle — no silent paths.
+12. All endpoints log full request lifecycle - no silent paths.
 
 ---
 
@@ -505,7 +505,7 @@ that touch `someday-api/**`. Railway was never used.
 
 #### Intent memories (migration `20260617000001_intent_memories.sql`)
 
-When marking an intent done, members can attach a note and photos — a
+When marking an intent done, members can attach a note and photos - a
 lightweight record of actually doing it.
 
 New columns on `intents`:
@@ -516,21 +516,21 @@ done_photos jsonb DEFAULT '[]'
 
 New Supabase Storage bucket: `memories` (public).
 
-New endpoint: `POST /intents/:id/photos` — uploads memory photos to the
+New endpoint: `POST /intents/:id/photos` - uploads memory photos to the
 `memories` bucket and appends the URLs to `done_photos`.
 
 #### Push notifications (migrations `20260617000000_push_token.sql`, `20260618000001_web_push.sql`)
 
 Two parallel push channels:
 
-**Expo/native push** — simple per-user token stored on `users`:
+**Expo/native push** - simple per-user token stored on `users`:
 ```sql
 -- users table
 push_token text
 ```
 New endpoint: `PATCH /me/push-token`
 
-**Web Push (VAPID)** — per-device subscriptions stored in a dedicated table:
+**Web Push (VAPID)** - per-device subscriptions stored in a dedicated table:
 ```sql
 CREATE TABLE public.web_push_subscriptions (
   id         uuid PRIMARY KEY,
@@ -549,7 +549,7 @@ New modules: `routers/push_router.py`, `handler/push_handler.py`,
 
 #### In-app notifications (migration `20260618000000_notifications.sql`)
 
-Activity feed — social events (saves, reactions, boosts) stored per
+Activity feed - social events (saves, reactions, boosts) stored per
 recipient so members can see what's happening in their circles.
 
 ```sql

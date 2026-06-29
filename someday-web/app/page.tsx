@@ -29,7 +29,7 @@ export default function Home() {
       .me()
       .catch(async () => {
         // Session exists but no account row yet (e.g. signup link landed on
-        // the root instead of /auth/callback) — register, then retry.
+        // the root instead of /auth/callback) - register, then retry.
         await api.verify();
         return api.me();
       })
@@ -62,7 +62,7 @@ export default function Home() {
       setName("");
       load();
     } catch (err: unknown) {
-      setCreateError(err instanceof Error ? err.message : "Could not create circle — try again.");
+      setCreateError(err instanceof Error ? err.message : "Could not create circle - try again.");
     } finally {
       setBusy(false);
     }
@@ -114,7 +114,7 @@ export default function Home() {
 
       <div className="mt-6 flex flex-col gap-3.5">
         {circles.length === 0 && (
-          <EmptyState message="No circles yet — start one and invite someone you keep making plans with." />
+          <EmptyState message="No circles yet - start one and invite someone you keep making plans with." />
         )}
         {circles.map((c) => {
           const theme = circleTheme(c.id);

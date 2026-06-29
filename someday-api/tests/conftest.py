@@ -1,4 +1,4 @@
-"""Test configuration — env vars must be set before importing app modules."""
+"""Test configuration - env vars must be set before importing app modules."""
 
 import os
 
@@ -12,7 +12,7 @@ os.environ.setdefault("SUPABASE_JWT_SECRET", "test-jwt-secret-32-chars-minimum!!
 os.environ.setdefault("DATABASE_URL", "postgresql://test:test@localhost:5432/test")
 os.environ.setdefault("LOG_LEVEL", "WARNING")
 
-from main import app  # noqa: E402 — must come after env setup
+from main import app  # noqa: E402 - must come after env setup
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ async def client():
 
 @pytest.fixture
 def mock_jwt():
-    """Bypass JWT verification — returns a synthetic user payload.
+    """Bypass JWT verification - returns a synthetic user payload.
 
     Monkeypatching the module attribute does not work because FastAPI captures
     the dependency callable at import time; dependency_overrides is the

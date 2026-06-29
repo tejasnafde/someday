@@ -1,4 +1,4 @@
-# Onboarding Tour — Design
+# Onboarding Tour - Design
 
 **Date:** 2026-06-11
 **Status:** Approved
@@ -7,7 +7,7 @@
 ## Goal
 
 A first-login product tour using spotlight coachmarks, plus an extensible registry so
-that shipping a new feature later means appending registry entries — returning users
+that shipping a new feature later means appending registry entries - returning users
 then get a mini-tour of just the unseen features.
 
 ## Decisions
@@ -22,7 +22,7 @@ then get a mini-tour of just the unseen features.
 
 ## Frontend (someday-web)
 
-### Registry — `lib/tour/registry.ts`
+### Registry - `lib/tour/registry.ts`
 
 ```ts
 export type TourStep = {
@@ -75,7 +75,7 @@ feature's UI PR. No version math anywhere.
 
 ## Backend (someday-api)
 
-### Migration — `supabase/migrations/<ts>_add_tour_state.sql`
+### Migration - `supabase/migrations/<ts>_add_tour_state.sql`
 
 ```sql
 ALTER TABLE public.users
@@ -84,20 +84,20 @@ ALTER TABLE public.users
 
 ### New `tour` module (standard layering)
 
-- `routers/tour_router.py` — `@log_timing` + `@log_payload`, `Depends(jwt_required)`,
+- `routers/tour_router.py` - `@log_timing` + `@log_payload`, `Depends(jwt_required)`,
   wraps handler with `create_response()`.
-- `handler/tour_handler.py` — extends `DBUtil`, returns `(status_code, result)`,
+- `handler/tour_handler.py` - extends `DBUtil`, returns `(status_code, result)`,
   logs entry with `user_id`, WARNING on no-row-updated.
-- `modules/tour/tour_helper.py`, `modules/tour/tour_queries.py` — named params,
+- `modules/tour/tour_helper.py`, `modules/tour/tour_queries.py` - named params,
   `status = 1` filter, no `::` casts.
-- `schemas/tour_schema.py` — request/response models.
+- `schemas/tour_schema.py` - request/response models.
 
 Endpoints:
 
-- `POST /tour/seen` — `{"step_ids": [...]}` → set-union merge into
+- `POST /tour/seen` - `{"step_ids": [...]}` → set-union merge into
   `tour_state.seen`, returns updated `tour_state`.
-- `POST /tour/reset` — resets to `{"seen": []}`.
-- `GET /auth/me` — gains `tour_state` in its column list (only change outside the
+- `POST /tour/reset` - resets to `{"seen": []}`.
+- `GET /auth/me` - gains `tour_state` in its column list (only change outside the
   new module).
 
 ## Data flow
@@ -113,14 +113,14 @@ login → api.me() (includes tour_state)
 - `POST /tour/seen` fails (offline webview, API hiccup): pending ids parked in
   localStorage, merged into the next run computation, retried on next load. A step
   is never replayed because a server write lagged.
-- `tour_state` absent from `me()` (stale deploy ordering): tour does not run —
+- `tour_state` absent from `me()` (stale deploy ordering): tour does not run -
   fail-quiet beats re-nagging.
 
 ## Testing
 
 - Backend: merge/reset verified against dev (pytest if harness exists, else curl).
-- Web: scripted pass via the `ui-test.mjs` pattern — fresh user → tour → skip →
-  reload → no tour → settings replay → tour again — plus manual verify with
+- Web: scripted pass via the `ui-test.mjs` pattern - fresh user → tour → skip →
+  reload → no tour → settings replay → tour again - plus manual verify with
   screenshots, including a narrow viewport to simulate the APK webview.
 
 ## Delivery

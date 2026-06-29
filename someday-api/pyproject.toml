@@ -1,4 +1,4 @@
-# someday-api — FastAPI application (not a library, no build/install needed)
+# someday-api - FastAPI application (not a library, no build/install needed)
 # To install deps: pip install -r requirements.txt
 # To run:         python run.py  (or uvicorn main:app --reload)
 

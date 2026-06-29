@@ -1,5 +1,5 @@
 -- ─────────────────────────────────────────────────────────────────────────────
--- Someday — initial schema
+-- Someday - initial schema
 -- Run in Supabase SQL editor (dev project first, then prod).
 --
 -- Status convention (every table):
@@ -16,7 +16,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 
 -- ── users ────────────────────────────────────────────────────────────────────
--- Mirrors auth.users — extended with display name / avatar.
+-- Mirrors auth.users - extended with display name / avatar.
 CREATE TABLE IF NOT EXISTS public.users (
     id           uuid        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email        text        UNIQUE NOT NULL,
@@ -141,7 +141,7 @@ CREATE INDEX IF NOT EXISTS idx_boosts_intent
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Row Level Security
--- FastAPI handles authorisation — RLS is a defence-in-depth layer only.
+-- FastAPI handles authorisation - RLS is a defence-in-depth layer only.
 -- All tables: authenticated users can only read rows they have membership for.
 -- ─────────────────────────────────────────────────────────────────────────────
 

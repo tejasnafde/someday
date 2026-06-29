@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Someday — skill polish A/B</title>
+<title>Someday - skill polish A/B</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..600&family=Lora:ital,wght@0,400..600;1,400..600&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   TOKENS — straight from docs/style-guide.md.
+   TOKENS - straight from docs/style-guide.md.
    The ONLY two tokens the skill made me ADD are marked [SKILL+].
    ============================================================ */
 :root{
@@ -19,10 +19,10 @@
   --cp:#FF4B6E; --cg:#00B87A; --cb:#4A68F0;
   --glass:rgba(255,255,255,.66); --glass-lo:rgba(255,255,255,.42); --brd-h:rgba(91,75,138,.16);
   --r:20px; --rs:12px;
-  /* shc/shb — style guide already mandates token shadows. Skill = the *recipe* inside them. */
+  /* shc/shb - style guide already mandates token shadows. Skill = the *recipe* inside them. */
   --shc:0 0 0 1px rgba(0,0,0,.05), 0 1px 2px -1px rgba(0,0,0,.06), 0 4px 12px -2px rgba(0,0,0,.05);
   --shb:0 1px 2px rgba(91,75,138,.30), 0 6px 16px -4px var(--acc-glow);
-  /* [SKILL+] neutral image-edge token — tokenised so it stays "colours via tokens only" */
+  /* [SKILL+] neutral image-edge token - tokenised so it stays "colours via tokens only" */
   --img-outline:rgba(0,0,0,.10);
 }
 html.dark{
@@ -53,7 +53,7 @@ body{margin:0;background:linear-gradient(160deg,var(--bg-a),var(--bg-b) 55%,var(
 /* ============================================================
    THE APP. One markup tree. `.polished` on <body> = skill ON.
    Everything below a `.polished` selector is exactly what the
-   skill adds — read these to see the diff.
+   skill adds - read these to see the diff.
    ============================================================ */
 .screen{max-width:430px;margin:0 auto;padding:18px 22px 60px}
 h1{font-family:Lora,serif;font-weight:600;font-size:27px;margin:6px 0 2px}
@@ -143,7 +143,7 @@ h1{font-family:Lora,serif;font-weight:600;font-size:27px;margin:6px 0 2px}
   <button class="cta"><svg class="icon"><use href="#i-plus"/></svg> New circle</button>
 </div>
 
-<p class="note">Toggle <b>Polished</b> off to see your current style guide rendered as-is, then back on to see exactly what the skill adds — nothing else changes. Hover a card; press the button; flip to dark. The only new tokens are <code>--img-outline</code> (light/dark) and the layered recipe inside <code>--shc</code>/<code>--shb</code> you already mandate.</p>
+<p class="note">Toggle <b>Polished</b> off to see your current style guide rendered as-is, then back on to see exactly what the skill adds - nothing else changes. Hover a card; press the button; flip to dark. The only new tokens are <code>--img-outline</code> (light/dark) and the layered recipe inside <code>--shc</code>/<code>--shb</code> you already mandate.</p>
 
 <script>
 const b=document.body,pol=document.getElementById('t-pol'),thm=document.getElementById('t-thm');

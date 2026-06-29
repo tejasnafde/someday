@@ -11,7 +11,7 @@ class PayoffHandler(DBUtil):
         infologger.info(f"PayoffHandler.smart_pick | circle_id={circle_id} user_id={user_id}")
         result = h.smart_pick(self, circle_id, user_id)
         if not result:
-            return 404, "No shortlisted intents found — add some and react to them first"
+            return 404, "No shortlisted intents found - add some and react to them first"
         return 200, result
 
     @log_timing("payoff_handler.spin")

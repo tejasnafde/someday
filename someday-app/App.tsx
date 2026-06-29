@@ -14,7 +14,7 @@ import { registerForPush } from "./lib/push";
 import { supabase } from "./lib/supabase";
 import { useTheme } from "./lib/theme";
 
-// ErrorUtils is a React Native global — not exported by the react-native package.
+// ErrorUtils is a React Native global - not exported by the react-native package.
 declare const ErrorUtils: {
   setGlobalHandler: (handler: (error: Error, isFatal?: boolean) => void) => void;
 };
@@ -112,7 +112,7 @@ export default function App() {
     };
   }, []);
 
-  // Register push token on sign-in; ponytail: null-on-signout skipped — new user overwrites on their sign-in
+  // Register push token on sign-in; ponytail: null-on-signout skipped - new user overwrites on their sign-in
   useEffect(() => {
     if (!signedIn) return;
     registerForPush().then((token) => {

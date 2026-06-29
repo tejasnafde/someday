@@ -36,7 +36,7 @@ jobs:
         run: |
           curl -s -X POST "$DISCORD_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
-            -d "{\"username\":\"GitHub CI\",\"content\":\"🔴 **App CI failed** on \`${{ github.ref_name }}\` — ${{ github.event.head_commit.message || github.event.pull_request.title }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}>\"}"
+            -d "{\"username\":\"GitHub CI\",\"content\":\"🔴 **App CI failed** on \`${{ github.ref_name }}\` - ${{ github.event.head_commit.message || github.event.pull_request.title }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}>\"}"
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
 

@@ -1,4 +1,4 @@
-// Tour step registry — the single place new feature tours are added.
+// Tour step registry - the single place new feature tours are added.
 //
 // To ship a tour for a new feature:
 //   1. Add `data-tour="<anchor>"` to the feature's target element.
@@ -9,7 +9,7 @@
 export type TourPage = "dashboard" | "circle" | "intent" | "members" | "notifications";
 
 export interface TourStep {
-  /** Stable forever — never rename or reuse. */
+  /** Stable forever - never rename or reuse. */
   id: string;
   page: TourPage;
   /** Matches data-tour="..." on the target element. */
@@ -24,14 +24,14 @@ export const TOUR_REGISTRY: TourStep[] = [
     page: "dashboard",
     anchor: "logo",
     title: "Welcome to Someday",
-    body: "All the things you keep saying \"we should do that\" — this is where they finally get planned. Here's a quick look around.",
+    body: "All the things you keep saying \"we should do that\" - this is where they finally get planned. Here's a quick look around.",
   },
   {
     id: "dash.create",
     page: "dashboard",
     anchor: "create-circle",
     title: "Start a circle",
-    body: "A circle is you and the people you make plans with — movie nights, the trip group, your best friend.",
+    body: "A circle is you and the people you make plans with - movie nights, the trip group, your best friend.",
   },
   {
     id: "dash.settings",
@@ -45,7 +45,7 @@ export const TOUR_REGISTRY: TourStep[] = [
     page: "circle",
     anchor: "add-intent",
     title: "Save an idea",
-    body: "Drop in links, places, films — anything you should get around to together.",
+    body: "Drop in links, places, films - anything you should get around to together.",
   },
   {
     id: "circle.status",
@@ -66,14 +66,14 @@ export const TOUR_REGISTRY: TourStep[] = [
     page: "circle",
     anchor: "payoff",
     title: "Can't decide?",
-    body: "Smart-pick scores what you're all into — or spin the wheel and let fate pick tonight's plan.",
+    body: "Smart-pick scores what you're all into - or spin the wheel and let fate pick tonight's plan.",
   },
   {
     id: "circle.invite",
     page: "circle",
     anchor: "invite",
     title: "Bring them in",
-    body: "Share an invite link — ideas are better when someone else says \"yes, let's\".",
+    body: "Share an invite link - ideas are better when someone else says \"yes, let's\".",
   },
   {
     id: "circle.tags",
@@ -87,7 +87,7 @@ export const TOUR_REGISTRY: TourStep[] = [
     page: "intent",
     anchor: "intent-planned",
     title: "Set a date",
-    body: "Add a rough 'when' — next weekend, after exams — so it doesn't stay a someday forever.",
+    body: "Add a rough 'when' - next weekend, after exams - so it doesn't stay a someday forever.",
   },
   {
     id: "members.roles",
@@ -108,6 +108,6 @@ export const TOUR_REGISTRY: TourStep[] = [
     page: "dashboard",
     anchor: "notifications-bell",
     title: "Activity bell",
-    body: "Circle activity — saves, reactions, boosts — shows up here so you never miss what's happening.",
+    body: "Circle activity - saves, reactions, boosts - shows up here so you never miss what's happening.",
   },
 ];

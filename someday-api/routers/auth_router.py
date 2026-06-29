@@ -44,7 +44,7 @@ async def client_error(request: ClientErrorRequest):
     """
     Receives client-side auth errors (e.g. exchangeCodeForSession failures) that
     never reach the backend otherwise, and fires a Discord alert so they're visible.
-    No JWT required — the user can't be authenticated when sign-in fails.
+    No JWT required - the user can't be authenticated when sign-in fails.
     """
     errorlogger.error(
         f"CLIENT_AUTH_ERROR | context={request.context} | {request.message}"
@@ -60,7 +60,7 @@ async def verify(current_user: dict = Depends(jwt_required)):
     """
     Called once after Supabase magic-link auth completes on the client.
     Upserts the user row and returns the profile.
-    The JWT is already validated by jwt_required — payload contains sub + email.
+    The JWT is already validated by jwt_required - payload contains sub + email.
     """
     infologger.info(f"POST /auth/verify | user_id={current_user['sub']}")
     status, result = handler.verify(current_user["sub"], current_user.get("email", ""))

@@ -1,4 +1,4 @@
-"""Log utility — set up before any feature code."""
+"""Log utility - set up before any feature code."""
 
 import json
 import logging
@@ -22,7 +22,7 @@ ANSI = {
 class DevFormatter(logging.Formatter):
     """Coloured, human-readable output for local development."""
 
-    FMT = "{color}[{level}]{reset} {time} {module}:{line} — {msg}"
+    FMT = "{color}[{level}]{reset} {time} {module}:{line} - {msg}"
 
     def format(self, record: logging.LogRecord) -> str:
         color = ANSI.get(record.levelname, "")
