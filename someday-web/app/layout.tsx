@@ -8,8 +8,14 @@ const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans" });
 const lora = Lora({ subsets: ["latin"], variable: "--font-lora" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://someday-web-gamma.vercel.app"),
   title: "Someday",
   description: "For all the things you'll do together someday.",
+  openGraph: {
+    title: "Someday",
+    description: "For all the things you'll do together someday.",
+    images: ["/icon-512.png"],
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
