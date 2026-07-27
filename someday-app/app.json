@@ -2,7 +2,7 @@
   "expo": {
     "name": "Someday",
     "slug": "someday",
-    "version": "1.13.0",
+    "version": "1.14.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -33,6 +33,11 @@
           "action": "VIEW",
           "autoVerify": true,
           "data": [
+            {
+              "scheme": "https",
+              "host": "someday.tn07.dev",
+              "pathPrefix": "/join"
+            },
             {
               "scheme": "https",
               "host": "someday-web-gamma.vercel.app",
@@ -70,7 +75,7 @@
       "apiUrl": "https://someday-api-974343814740.asia-south1.run.app",
       "supabaseUrl": "https://hltpqcmmpddjhijqeeko.supabase.co",
       "supabaseAnonKey": "sb_publishable_pfDjPQ_rY7xyWk8GVv29lQ_FMOz8iO-",
-      "webUrl": "https://someday-web-gamma.vercel.app",
+      "webUrl": "https://someday.tn07.dev",
       "eas": {
         "projectId": "5be6e9f4-89a9-4c66-98d1-6578ef5b1681"
       }

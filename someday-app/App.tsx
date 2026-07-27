@@ -45,7 +45,8 @@ export default function App() {
   useEffect(() => {
     const handle = (url: string | null) => {
       if (!url) return;
-      // Invite link: https://someday-web-gamma.vercel.app/join/TOKEN
+      // Invite link: https://someday.tn07.dev/join/TOKEN (any host matches, so
+      // old vercel.app links still resolve).
       const inviteMatch = url.match(/https?:\/\/[^/]+(\/join\/[\w-]+)/);
       if (inviteMatch) { setPendingPath(inviteMatch[1]); return; }
       // OAuth callbacks (someday:?code=...) are handled in SignIn.tsx's local
