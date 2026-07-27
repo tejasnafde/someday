@@ -1,5 +1,12 @@
 # Someday - Agent Instructions
 
+Shared cross-project conventions (GCP accounts and the --configuration=personal
+rule, OAuth consent branding, Secret Manager inventory, writing style) live in
+`~/Desktop/projects/CLAUDE.local.md`. Read it before touching gcloud, OAuth, or
+secrets.
+
+@/Users/tejas/Desktop/projects/CLAUDE.local.md
+
 ## Design System
 
 **Before writing any UI code, read `docs/style-guide.md` in full.**
@@ -266,4 +273,3 @@ Every new user-facing feature ships with a coachmark tour step. No exceptions.
 - **main is protected - no direct pushes, even for admins.** All changes go through a feature branch + PR: `git checkout -b <branch>` → push → `gh pr create` → `gh pr merge --merge`. Zero approvals required, so you can merge your own PR immediately.
 - **Always merge, never rebase.** If a push is rejected for being behind, `git pull` (merge) then push.
 - Commit messages: short imperative subject line + body explaining the *why*, not the *what*.
-- Co-author line: `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>`
