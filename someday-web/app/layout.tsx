@@ -8,7 +8,7 @@ const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans" });
 const lora = Lora({ subsets: ["latin"], variable: "--font-lora" });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://someday-web-gamma.vercel.app"),
+  metadataBase: new URL("https://someday.tn07.dev"),
   title: "Someday",
   description: "For all the things you'll do together someday.",
   openGraph: {
