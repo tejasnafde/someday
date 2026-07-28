@@ -180,9 +180,18 @@ Set up `log_util.py` and decorators **before any feature code**. Every endpoint,
 | Env | Backend | DB |
 |---|---|---|
 | dev | local `uvicorn` (`python run.py`) | Supabase project `someday-dev` (ydjqonpciulspgzzxepw) |
-| production | GCP Cloud Run `someday-api` (project `teejayproject`, asia-south1), auto-deployed by Cloud Build on push to main touching `someday-api/**` | Supabase project `someday` (hltpqcmmpddjhijqeeko) |
+| production | GCP Cloud Run `someday-api` (project `teejayproject`, asia-south1), auto-deployed by GitHub Actions (`.github/workflows/api.yml`) on push to main touching `someday-api/**` | Supabase project `someday` (hltpqcmmpddjhijqeeko) |
 
 `APP_ENV` env var selects the environment. Default is `dev`.
+
+**The web app lives at <https://someday.tn07.dev>** (Vercel; the generated
+`someday-web-gamma.vercel.app` still resolves and is deliberately kept in the
+deep-link and CORS lists). Sign-in uses `redirectTo: location.origin`, so moving
+the app to a new hostname silently breaks Google sign-in until that origin is in
+the Supabase redirect allowlist: Supabase does not error, it falls back to
+`site_url` and lands the user on the old host. See the Supabase section in
+`~/Desktop/projects/CLAUDE.local.md` for the scriptable fix (the CLI token is in
+the macOS keychain, not Secret Manager).
 
 ---
 
