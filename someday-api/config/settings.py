@@ -18,9 +18,21 @@ def load_config_blob() -> None:
 
     Existing environment variables win, so a locally exported value or a
     per-secret ref still overrides the blob. That keeps the switch reversible.
+
+    In production the blob is mandatory. Without this check the safety net would
+    be implicit and fragile: a deploy that forgets --set-secrets only fails
+    because .dockerignore keeps .env.production out of the image, so pydantic
+    finds nothing and raises. Add .env.production to the image and that silently
+    becomes a service running on stale committed values instead. Fail here
+    instead, where the reason is stated.
     """
     raw = os.environ.get("SOMEDAY_CONFIG")
     if not raw:
+        if os.getenv("APP_ENV") == "production":
+            raise RuntimeError(
+                "SOMEDAY_CONFIG is not set but APP_ENV=production. The deploy "
+                "must pass --set-secrets SOMEDAY_CONFIG=someday-api-config:latest."
+            )
         return
     for key, value in json.loads(raw).items():
         os.environ.setdefault(key, str(value))

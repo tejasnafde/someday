@@ -20,7 +20,7 @@ from config.settings import load_config_blob
 @pytest.fixture
 def clean_env(monkeypatch):
     """Isolate the keys these tests touch."""
-    for key in ("SOMEDAY_CONFIG", "BLOB_ONLY_KEY", "ALREADY_SET_KEY"):
+    for key in ("SOMEDAY_CONFIG", "BLOB_ONLY_KEY", "ALREADY_SET_KEY", "APP_ENV"):
         monkeypatch.delenv(key, raising=False)
     return monkeypatch
 
@@ -43,15 +43,29 @@ def test_existing_env_var_wins(clean_env):
     assert os.environ["ALREADY_SET_KEY"] == "explicit"
 
 
-def test_absent_blob_is_a_no_op(clean_env):
+def test_absent_blob_is_a_no_op_outside_production(clean_env):
     """Local dev and the test suite set no blob, and must still work."""
+    clean_env.setenv("APP_ENV", "test")
     load_config_blob()
     assert "SOMEDAY_CONFIG" not in os.environ
 
 
-def test_empty_blob_is_a_no_op(clean_env):
+def test_empty_blob_is_a_no_op_outside_production(clean_env):
+    clean_env.setenv("APP_ENV", "dev")
     clean_env.setenv("SOMEDAY_CONFIG", "")
     load_config_blob()
+
+
+def test_absent_blob_in_production_raises(clean_env):
+    """The load-bearing guard.
+
+    Without it, a deploy that forgot --set-secrets would only fail because
+    .dockerignore keeps .env.production out of the image. Ship that file and the
+    same mistake silently starts the service on stale committed values.
+    """
+    clean_env.setenv("APP_ENV", "production")
+    with pytest.raises(RuntimeError, match="SOMEDAY_CONFIG is not set"):
+        load_config_blob()
 
 
 def test_malformed_blob_raises(clean_env):
