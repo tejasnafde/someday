@@ -1,5 +1,32 @@
+import json
 import os
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def load_config_blob() -> None:
+    """Expand SOMEDAY_CONFIG, one JSON secret holding every credential.
+
+    Secret Manager bills per secret version per month, not per byte, so eight
+    secrets cost eight times what one JSON object holding the same eight values
+    costs. Cloud Run can only map one secret to one env var, so the fan-out has
+    to happen here.
+
+    This must run at import time, before Settings() on the last line of this
+    module. A FastAPI startup hook is too late: pydantic validates and raises
+    there, not at first request.
+
+    Existing environment variables win, so a locally exported value or a
+    per-secret ref still overrides the blob. That keeps the switch reversible.
+    """
+    raw = os.environ.get("SOMEDAY_CONFIG")
+    if not raw:
+        return
+    for key, value in json.loads(raw).items():
+        os.environ.setdefault(key, str(value))
+
+
+load_config_blob()
 
 
 class Settings(BaseSettings):

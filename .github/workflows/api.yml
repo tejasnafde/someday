@@ -70,14 +70,14 @@ jobs:
           IMAGE="asia-south1-docker.pkg.dev/teejayproject/cloud-run-source-deploy/someday-api:${{ github.sha }}"
           gcloud builds submit someday-api --tag "$IMAGE" --project teejayproject --quiet
 
-      # --set-secrets, not --update-secrets. update MERGES, so a secret removed
-      # from the list stays attached to the running service and this file
-      # silently stops describing reality. set REPLACES, making this the source
-      # of truth. Keep identical to cloudbuild-production.yaml.
+      # Every credential is in ONE secret, someday-api-config, a JSON object that
+      # config/settings.py expands into os.environ at import time. Secret Manager
+      # bills per secret version, not per byte. See cloudbuild-production.yaml for
+      # how to add a value.
       #
-      # VAPID_PUBLIC_KEY removed 2026-08-03: public by design, someday-web gets
-      # it from Vercel's NEXT_PUBLIC_VAPID_PUBLIC_KEY, and the API only ever
-      # used the private key.
+      # --set-secrets, not --update-secrets: update MERGES, so the eight old
+      # per-value refs would stay attached and this line would stop describing
+      # reality. Keep identical to cloudbuild-production.yaml.
       - name: Deploy
         run: |
           IMAGE="asia-south1-docker.pkg.dev/teejayproject/cloud-run-source-deploy/someday-api:${{ github.sha }}"
@@ -86,5 +86,5 @@ jobs:
             --region asia-south1 \
             --project teejayproject \
             --update-env-vars "^|^APP_ENV=production|LOG_LEVEL=INFO|SUPABASE_URL=https://hltpqcmmpddjhijqeeko.supabase.co|ALLOWED_ORIGINS=https://someday.tn07.dev,https://someday-web-gamma.vercel.app" \
-            --set-secrets "DATABASE_URL=DATABASE_URL:latest,SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest,SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest,EAS_WEBHOOK_SECRET=EAS_WEBHOOK_SECRET:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest,DISCORD_WEBHOOK_URL=DISCORD_WEBHOOK_URL:latest,VAPID_PRIVATE_KEY=VAPID_PRIVATE_KEY:latest,CLOUDBUILD_ALERT_TOKEN=CLOUDBUILD_ALERT_TOKEN:latest" \
+            --set-secrets "SOMEDAY_CONFIG=someday-api-config:latest" \
             --quiet
