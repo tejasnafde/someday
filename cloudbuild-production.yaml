@@ -3,7 +3,13 @@
 # Secrets are in GCP Secret Manager - add new ones with:
 #   gcloud secrets create MY_SECRET --project=teejayproject --data-file=-
 #   gcloud secrets add-iam-policy-binding MY_SECRET --member=serviceAccount:974343814740-compute@developer.gserviceaccount.com --role=roles/secretmanager.secretAccessor
-#   then add MY_SECRET=MY_SECRET:latest to --update-secrets below.
+#   then add MY_SECRET=MY_SECRET:latest to --set-secrets below.
+#
+# VAPID_PUBLIC_KEY was removed on 2026-08-03. A VAPID public key is public by
+# design: the browser needs it, and someday-web supplies it from Vercel's
+# NEXT_PUBLIC_VAPID_PUBLIC_KEY. The API only ever used the PRIVATE key
+# (common_helper/notify.py). The field was declared in settings.py and read
+# nowhere, so it was paid-for dead config in Secret Manager.
 
 steps:
   - id: test
@@ -33,7 +39,11 @@ steps:
       - --image=${_IMAGE}
       - --region=asia-south1
       - --update-env-vars=^|^APP_ENV=production|LOG_LEVEL=INFO|SUPABASE_URL=https://hltpqcmmpddjhijqeeko.supabase.co|ALLOWED_ORIGINS=https://someday.tn07.dev,https://someday-web-gamma.vercel.app
-      - --update-secrets=DATABASE_URL=DATABASE_URL:latest,SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest,SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest,EAS_WEBHOOK_SECRET=EAS_WEBHOOK_SECRET:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest,DISCORD_WEBHOOK_URL=DISCORD_WEBHOOK_URL:latest,VAPID_PUBLIC_KEY=VAPID_PUBLIC_KEY:latest,VAPID_PRIVATE_KEY=VAPID_PRIVATE_KEY:latest,CLOUDBUILD_ALERT_TOKEN=CLOUDBUILD_ALERT_TOKEN:latest
+      # --set-secrets, not --update-secrets. update MERGES, so a secret removed
+      # from this line stays attached to the running service and this file
+      # silently stops describing reality. set REPLACES, which makes this line
+      # the source of truth. Verified against the live service before switching.
+      - --set-secrets=DATABASE_URL=DATABASE_URL:latest,SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest,SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest,EAS_WEBHOOK_SECRET=EAS_WEBHOOK_SECRET:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest,DISCORD_WEBHOOK_URL=DISCORD_WEBHOOK_URL:latest,VAPID_PRIVATE_KEY=VAPID_PRIVATE_KEY:latest,CLOUDBUILD_ALERT_TOKEN=CLOUDBUILD_ALERT_TOKEN:latest
       - --quiet
 
 substitutions:
