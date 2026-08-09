@@ -20,7 +20,7 @@ from config.settings import load_config_blob
 @pytest.fixture
 def clean_env(monkeypatch):
     """Isolate the keys these tests touch."""
-    for key in ("SOMEDAY_CONFIG", "BLOB_ONLY_KEY", "ALREADY_SET_KEY", "APP_ENV"):
+    for key in ("SOMEDAY_CONFIG", "BLOB_ONLY_KEY", "ALREADY_SET_KEY", "APP_ENV", "K_SERVICE"):
         monkeypatch.delenv(key, raising=False)
     return monkeypatch
 
@@ -43,27 +43,39 @@ def test_existing_env_var_wins(clean_env):
     assert os.environ["ALREADY_SET_KEY"] == "explicit"
 
 
-def test_absent_blob_is_a_no_op_outside_production(clean_env):
+def test_absent_blob_is_a_no_op_off_cloud_run(clean_env):
     """Local dev and the test suite set no blob, and must still work."""
     clean_env.setenv("APP_ENV", "test")
     load_config_blob()
     assert "SOMEDAY_CONFIG" not in os.environ
 
 
-def test_empty_blob_is_a_no_op_outside_production(clean_env):
+def test_empty_blob_is_a_no_op_off_cloud_run(clean_env):
     clean_env.setenv("APP_ENV", "dev")
     clean_env.setenv("SOMEDAY_CONFIG", "")
     load_config_blob()
 
 
-def test_absent_blob_in_production_raises(clean_env):
+def test_local_production_env_still_works(clean_env):
+    """APP_ENV=production off Cloud Run must NOT raise.
+
+    That is how a local script points itself at the production database, and
+    scripts/backfill_preview_images.py documents exactly that invocation. Those
+    runs get their values from .env.production, which pydantic reads after this.
+    Guarding on APP_ENV instead of K_SERVICE broke them.
+    """
+    clean_env.setenv("APP_ENV", "production")
+    load_config_blob()
+
+
+def test_absent_blob_on_cloud_run_raises(clean_env):
     """The load-bearing guard.
 
     Without it, a deploy that forgot --set-secrets would only fail because
     .dockerignore keeps .env.production out of the image. Ship that file and the
     same mistake silently starts the service on stale committed values.
     """
-    clean_env.setenv("APP_ENV", "production")
+    clean_env.setenv("K_SERVICE", "someday-api")
     with pytest.raises(RuntimeError, match="SOMEDAY_CONFIG is not set"):
         load_config_blob()
 

@@ -13,7 +13,17 @@
 #   # edit /tmp/c.json, then:
 #   gcloud --configuration=personal secrets versions add someday-api-config \
 #     --data-file=/tmp/c.json && rm /tmp/c.json
-# The service reads :latest, so no redeploy is needed for a value change.
+#
+# A new version does NOT reach a running service on its own. Cloud Run resolves
+# :latest when an INSTANCE STARTS, not per request, so instances already serving
+# keep the old value and you get a mixed fleet. After adding a version, deploy a
+# revision (gcloud run services update someday-api --region=asia-south1) or wait
+# for every instance to cycle.
+#
+# To roll back, roll back the Cloud Run REVISION, or revert the whole change.
+# Reverting only this file does not work: the deployed image still expands the
+# blob and refuses to start on Cloud Run without SOMEDAY_CONFIG, so the deploy
+# fails and the old revision keeps serving.
 #
 # VAPID_PUBLIC_KEY was dropped on 2026-08-03. A VAPID public key is public by
 # design: the browser needs it, and someday-web supplies it from Vercel's

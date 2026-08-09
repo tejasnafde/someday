@@ -19,18 +19,23 @@ def load_config_blob() -> None:
     Existing environment variables win, so a locally exported value or a
     per-secret ref still overrides the blob. That keeps the switch reversible.
 
-    In production the blob is mandatory. Without this check the safety net would
+    On Cloud Run the blob is mandatory. Without this check the safety net would
     be implicit and fragile: a deploy that forgets --set-secrets only fails
     because .dockerignore keeps .env.production out of the image, so pydantic
     finds nothing and raises. Add .env.production to the image and that silently
     becomes a service running on stale committed values instead. Fail here
     instead, where the reason is stated.
+
+    The signal is K_SERVICE, which only Cloud Run sets, NOT APP_ENV=production.
+    APP_ENV=production is also how a local script points itself at the
+    production database (scripts/backfill_preview_images.py documents exactly
+    that), and those runs read .env.production and must keep working.
     """
     raw = os.environ.get("SOMEDAY_CONFIG")
     if not raw:
-        if os.getenv("APP_ENV") == "production":
+        if os.getenv("K_SERVICE"):
             raise RuntimeError(
-                "SOMEDAY_CONFIG is not set but APP_ENV=production. The deploy "
+                "SOMEDAY_CONFIG is not set but this is Cloud Run. The deploy "
                 "must pass --set-secrets SOMEDAY_CONFIG=someday-api-config:latest."
             )
         return
