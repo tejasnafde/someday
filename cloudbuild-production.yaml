@@ -1,9 +1,35 @@
 # Production deploy: builds someday-api and rolls it out to Cloud Run.
 # Triggered on push to main when someday-api/** changes.
-# Secrets are in GCP Secret Manager - add new ones with:
-#   gcloud secrets create MY_SECRET --project=teejayproject --data-file=-
-#   gcloud secrets add-iam-policy-binding MY_SECRET --member=serviceAccount:974343814740-compute@developer.gserviceaccount.com --role=roles/secretmanager.secretAccessor
-#   then add MY_SECRET=MY_SECRET:latest to --update-secrets below.
+#
+# Every credential lives in ONE secret, someday-api-config, a JSON object.
+# Secret Manager bills per secret version per month rather than per byte, so
+# eight secrets cost eight times what one object holding the same eight values
+# costs. config/settings.py expands SOMEDAY_CONFIG into os.environ at import
+# time, before Settings() validates.
+#
+# To add a credential, edit the JSON rather than this file:
+#   gcloud --configuration=personal secrets versions access latest \
+#     --secret=someday-api-config > /tmp/c.json
+#   # edit /tmp/c.json, then:
+#   gcloud --configuration=personal secrets versions add someday-api-config \
+#     --data-file=/tmp/c.json && rm /tmp/c.json
+#
+# A new version does NOT reach a running service on its own. Cloud Run resolves
+# :latest when an INSTANCE STARTS, not per request, so instances already serving
+# keep the old value and you get a mixed fleet. After adding a version, deploy a
+# revision (gcloud run services update someday-api --region=asia-south1) or wait
+# for every instance to cycle.
+#
+# To roll back, roll back the Cloud Run REVISION, or revert the whole change.
+# Reverting only this file does not work: the deployed image still expands the
+# blob and refuses to start on Cloud Run without SOMEDAY_CONFIG, so the deploy
+# fails and the old revision keeps serving.
+#
+# VAPID_PUBLIC_KEY was dropped on 2026-08-03. A VAPID public key is public by
+# design: the browser needs it, and someday-web supplies it from Vercel's
+# NEXT_PUBLIC_VAPID_PUBLIC_KEY. The API only ever used the PRIVATE key
+# (common_helper/notify.py). The field was declared in settings.py and read
+# nowhere, so it was paid-for dead config.
 
 steps:
   - id: test
@@ -33,7 +59,10 @@ steps:
       - --image=${_IMAGE}
       - --region=asia-south1
       - --update-env-vars=^|^APP_ENV=production|LOG_LEVEL=INFO|SUPABASE_URL=https://hltpqcmmpddjhijqeeko.supabase.co|ALLOWED_ORIGINS=https://someday.tn07.dev,https://someday-web-gamma.vercel.app
-      - --update-secrets=DATABASE_URL=DATABASE_URL:latest,SUPABASE_ANON_KEY=SUPABASE_ANON_KEY:latest,SUPABASE_SERVICE_ROLE_KEY=SUPABASE_SERVICE_ROLE_KEY:latest,EAS_WEBHOOK_SECRET=EAS_WEBHOOK_SECRET:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest,DISCORD_WEBHOOK_URL=DISCORD_WEBHOOK_URL:latest,VAPID_PUBLIC_KEY=VAPID_PUBLIC_KEY:latest,VAPID_PRIVATE_KEY=VAPID_PRIVATE_KEY:latest,CLOUDBUILD_ALERT_TOKEN=CLOUDBUILD_ALERT_TOKEN:latest
+      # --set-secrets, not --update-secrets: update MERGES, so the eight old
+      # per-value refs would stay attached and this line would stop describing
+      # reality. set REPLACES, which is what detaches them.
+      - --set-secrets=SOMEDAY_CONFIG=someday-api-config:latest
       - --quiet
 
 substitutions:
