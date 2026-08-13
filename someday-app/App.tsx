@@ -11,6 +11,7 @@ import { ShareFlow } from "./screens/ShareFlow";
 import { SignIn } from "./screens/SignIn";
 import { api } from "./lib/api";
 import { registerForPush } from "./lib/push";
+import { normalizeSharePayload } from "./lib/sharePayload.cjs";
 import { supabase } from "./lib/supabase";
 import { useTheme } from "./lib/theme";
 
@@ -134,10 +135,7 @@ export default function App() {
     return () => sub.remove();
   }, []);
 
-  const sharedUrl = hasShareIntent
-    ? (shareIntent.webUrl ?? shareIntent.text?.match(/https?:\/\/\S+/)?.[0] ?? null)
-    : null;
-  const sharedText = hasShareIntent ? (shareIntent.text ?? "") : "";
+  const sharedPayload = normalizeSharePayload(hasShareIntent ? shareIntent : {});
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg, paddingTop: Platform.OS === "android" ? StatusBar.currentHeight ?? 0 : 0 }}>
@@ -145,7 +143,12 @@ export default function App() {
       {signedIn === null ? null : !signedIn ? (
         <SignIn shareIntent={hasShareIntent} />
       ) : hasShareIntent ? (
-        <ShareFlow url={sharedUrl} text={sharedText} onDone={resetShareIntent} />
+        <ShareFlow
+          url={sharedPayload.url}
+          text={sharedPayload.text}
+          needsLink={sharedPayload.needsLink}
+          onDone={resetShareIntent}
+        />
       ) : (
         <Home nextPath={pendingPath} />
       )}

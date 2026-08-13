@@ -11,7 +11,7 @@ export function useAuth() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) {
-        sessionStorage.setItem("next", location.pathname);
+        sessionStorage.setItem("next", location.pathname + location.search);
         router.replace("/login");
       } else {
         setReady(true);

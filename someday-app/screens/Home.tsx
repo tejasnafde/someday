@@ -9,6 +9,7 @@ import { useTheme } from "../lib/theme";
 const extra = Constants.expoConfig?.extra as Record<string, string>;
 const WEB_URL = extra.webUrl;
 const API_URL = extra.apiUrl;
+const APP_VERSION = Constants.expoConfig?.version ?? "unknown";
 
 // Supabase's implicit-grant URL parser REQUIRES expires_in; without it the web
 // client throws "No session defined in URL" and never establishes the session.
@@ -92,6 +93,7 @@ export function Home({ nextPath }: { nextPath?: string | null }) {
   return (
     <WebView
       ref={webRef}
+      applicationNameForUserAgent={`SomedayNative/${APP_VERSION}`}
       onNavigationStateChange={(nav) => { canGoBack.current = nav.canGoBack; }}
       source={{ uri: startUrl }}
       style={{ flex: 1, backgroundColor: t.bg }}

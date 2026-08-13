@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Sprite";
+import { InstallSomeday } from "@/components/InstallSomeday";
 import { NavBar, Spinner, ThemeToggle } from "@/components/ui";
 import { api } from "@/lib/api";
 import { resizeImage } from "@/lib/image";
@@ -132,6 +133,8 @@ export default function SettingsPage() {
           </>
         )}
       </div>
+
+      <InstallSomeday />
 
       <button onClick={replayTour} className="btn-ghost mt-5 w-full py-3.5 text-sm" style={{ color: "var(--txt-m)" }}>
         <Icon name="target" size="sm" />
