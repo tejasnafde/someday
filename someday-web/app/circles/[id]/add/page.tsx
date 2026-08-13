@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/Sprite";
 import { CATEGORY_ICONS, NavBar } from "@/components/ui";
@@ -14,9 +14,10 @@ export default function AddIntent() {
   const ready = useAuth();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [url, setUrl] = useState("");
-  const [title, setTitle] = useState("");
+  const [url, setUrl] = useState(() => searchParams.get("url") ?? "");
+  const [title, setTitle] = useState(() => searchParams.get("title") ?? "");
   const [note, setNote] = useState("");
   const [tags, setTags] = useState("");
   const [category, setCategory] = useState<Category | null>(null);

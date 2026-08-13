@@ -2,7 +2,7 @@
   "expo": {
     "name": "Someday",
     "slug": "someday",
-    "version": "1.14.0",
+    "version": "1.15.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -61,7 +61,16 @@
       "policy": "appVersion"
     },
     "plugins": [
-      "expo-share-intent",
+      [
+        "expo-share-intent",
+        {
+          "androidIntentFilters": [
+            "text/*",
+            "image/*",
+            "video/*"
+          ]
+        }
+      ],
       [
         "expo-notifications",
         {
