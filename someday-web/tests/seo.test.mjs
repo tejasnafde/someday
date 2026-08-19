@@ -10,6 +10,7 @@ test("Someday publishes canonical social metadata", async () => {
   assert.match(layout, /alternates:\s*\{\s*canonical:\s*["']\/["']/s);
   assert.match(layout, /url:\s*["']\/["']/);
   assert.match(layout, /twitter:/);
+  assert.match(layout, /4941fd7227a9490b82767bf29eb1b30b/);
 });
 
 test("Someday publishes crawler, sitemap, and agent discovery files", async () => {
