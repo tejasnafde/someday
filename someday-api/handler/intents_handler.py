@@ -1,15 +1,26 @@
 import uuid
 
 from app_util.db_util import DBUtil
-from app_util.log_util import infologger, errorlogger
+from app_util.log_util import errorlogger, infologger
 from common_helper.decorators import log_timing
 from common_helper.storage_helper import upload_public_image
 from modules.circles import circles_helper as ch
 from modules.intents import intents_helper as h
 from schemas.intents_schema import CreateIntentRequest, UpdateIntentRequest
 
+COUNT_CREATED_INTENTS = """
+    SELECT COUNT(*) AS count
+    FROM public.intents
+    WHERE created_by = :user_id AND status = 1
+"""
+
 
 class IntentsHandler(DBUtil):
+    @log_timing("intents_handler.count_created_intents")
+    def count_created_intents(self, user_id: str) -> int:
+        infologger.info(f"IntentsHandler.count_created_intents | user_id={user_id}")
+        rows = self.execute_query_with_value(COUNT_CREATED_INTENTS, {"user_id": user_id})
+        return int(rows[0]["count"]) if rows else 0
 
     @log_timing("intents_handler.list_intents")
     def list_intents(
@@ -31,7 +42,9 @@ class IntentsHandler(DBUtil):
             ch.assert_member(self, circle_id, user_id)
         except ValueError:
             return 403, "Not a member of this circle"
-        page = h.list_intents(self, circle_id, user_id, task_status, category, tag, shortlist, cursor, limit)
+        page = h.list_intents(
+            self, circle_id, user_id, task_status, category, tag, shortlist, cursor, limit
+        )
         return 200, page
 
     @log_timing("intents_handler.get_intent")
@@ -101,6 +114,7 @@ class IntentsHandler(DBUtil):
     @log_timing("intents_handler.refresh_preview")
     def refresh_preview(self, intent_id: str, user_id: str) -> tuple[int, dict | str]:
         from handler.unfurl_handler import fetch_link_meta
+
         infologger.info(f"IntentsHandler.refresh_preview | intent_id={intent_id} user_id={user_id}")
         if not h.get_intent(self, intent_id, user_id):
             return 404, "Intent not found"
@@ -110,8 +124,12 @@ class IntentsHandler(DBUtil):
         return 200, row
 
     @log_timing("intents_handler.upload_memory_photo")
-    def upload_memory_photo(self, intent_id: str, user_id: str, content: bytes, content_type: str) -> tuple[int, dict | str]:
-        infologger.info(f"IntentsHandler.upload_memory_photo | intent_id={intent_id} user_id={user_id} bytes={len(content)}")
+    def upload_memory_photo(
+        self, intent_id: str, user_id: str, content: bytes, content_type: str
+    ) -> tuple[int, dict | str]:
+        infologger.info(
+            f"IntentsHandler.upload_memory_photo | intent_id={intent_id} user_id={user_id} bytes={len(content)}"
+        )
         if not h.get_intent(self, intent_id, user_id):
             return 404, "Intent not found"
         ext = {"image/webp": "webp", "image/jpeg": "jpg", "image/png": "png"}.get(content_type)

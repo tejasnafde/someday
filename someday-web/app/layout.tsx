@@ -11,7 +11,17 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://someday.tn07.dev"),
   title: "Someday",
   description: "For all the things you'll do together someday.",
+  alternates: { canonical: "/" },
   openGraph: {
+    title: "Someday",
+    description: "For all the things you'll do together someday.",
+    url: "/",
+    siteName: "Someday",
+    type: "website",
+    images: ["/icon-512.png"],
+  },
+  twitter: {
+    card: "summary",
     title: "Someday",
     description: "For all the things you'll do together someday.",
     images: ["/icon-512.png"],
