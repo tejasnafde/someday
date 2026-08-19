@@ -42,6 +42,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <script
+          defer
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon='{"token":"4941fd7227a9490b82767bf29eb1b30b"}'
+        ></script>
       </head>
       <body className={`${dmSans.variable} ${lora.variable}`} suppressHydrationWarning>
         <Sprite />
