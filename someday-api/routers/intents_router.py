@@ -3,8 +3,9 @@ from fastapi import APIRouter, BackgroundTasks, Depends, File, Query, UploadFile
 from app_util.log_util import infologger
 from common_helper.auth_helper import jwt_required
 from common_helper.decorators import log_timing
-from common_helper.response_helper import create_response
 from common_helper.notify import Notify
+from common_helper.product_analytics import track_product_event
+from common_helper.response_helper import create_response
 from handler.intents_handler import IntentsHandler
 from handler.unfurl_handler import fetch_link_meta
 from schemas.intents_schema import CreateIntentRequest, UpdateIntentRequest
@@ -20,11 +21,11 @@ async def list_intents(
     circle_id: str,
     current_user: dict = Depends(jwt_required),
     task_status: str | None = Query(default=None),
-    category:    str | None = Query(default=None),
-    tag:         str | None = Query(default=None),
-    shortlist:   bool       = Query(default=False),
-    cursor:      str | None = Query(default=None),
-    limit:       int        = Query(default=50, ge=1, le=200),
+    category: str | None = Query(default=None),
+    tag: str | None = Query(default=None),
+    shortlist: bool = Query(default=False),
+    cursor: str | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=200),
 ):
     infologger.info(
         f"GET /circles/{circle_id}/intents | user_id={current_user['sub']} "
@@ -55,6 +56,13 @@ async def create_intent(
     status, result = handler.create_intent(circle_id, request, current_user["sub"], link_meta)
     if status == 201:
         background_tasks.add_task(notify.intent_created, result["id"], current_user["sub"])
+        background_tasks.add_task(track_product_event, "item_created", "items")
+        if handler.count_created_intents(current_user["sub"]) == 1:
+            background_tasks.add_task(
+                track_product_event,
+                "activation_milestone_reached",
+                "items",
+            )
     return create_response(status, result)
 
 
@@ -98,7 +106,9 @@ async def upload_memory_photo(
 ):
     infologger.info(f"POST /intents/{intent_id}/photos | user_id={current_user['sub']}")
     content = await file.read()
-    status, result = handler.upload_memory_photo(intent_id, current_user["sub"], content, file.content_type or "")
+    status, result = handler.upload_memory_photo(
+        intent_id, current_user["sub"], content, file.content_type or ""
+    )
     return create_response(status, result)
 
 
