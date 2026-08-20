@@ -93,7 +93,11 @@ async def _post(embed: dict) -> None:
             )
             response.raise_for_status()
     except Exception as exc:
-        errorlogger.error(f"discord_alert | delivery failed | {exc}")
+        status = getattr(getattr(exc, "response", None), "status_code", None)
+        status_hint = f" | status={status}" if status is not None else ""
+        errorlogger.error(
+            f"discord_alert | delivery failed | type={type(exc).__name__}{status_hint}"
+        )
 
 
 async def send_build_alert(build_id: str, status: str, log_url: str, commit: str) -> None:

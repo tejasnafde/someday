@@ -37,11 +37,6 @@ def token_diagnostics(token: str) -> dict:
     except (PyJWTError, TypeError, ValueError):
         return diagnostics
 
-    for claim, label in (("sub", "subject"), ("email", "email")):
-        value = payload.get(claim)
-        if isinstance(value, str) and value:
-            diagnostics[label] = value[:256]
-
     try:
         expires_at = datetime.fromtimestamp(float(payload["exp"]), UTC)
     except (KeyError, TypeError, ValueError, OverflowError, OSError):

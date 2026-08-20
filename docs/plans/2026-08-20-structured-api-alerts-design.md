@@ -25,9 +25,10 @@ JWT verification will attach sanitized authentication context to the request:
 
 - On success: verified user ID and email, when present.
 - On failure: a stable SHA-256 token fingerprint, token length and segment
-  count, safe unverified claims such as subject and expiry when parseable, and
-  a classified failure reason such as expired, malformed, invalid signature,
-  unknown signing key, or JWKS failure.
+  count, expiry when parseable, and a classified failure reason such as
+  expired, malformed, invalid signature, unknown signing key, or JWKS failure.
+  Identity claims from failed tokens are never forwarded because they are
+  attacker-controlled until signature verification succeeds.
 
 The native and web API clients will identify themselves with a small
 `X-Someday-Client` header. The native value includes the configured app
@@ -46,7 +47,8 @@ valid embed. Alerts will include:
 All attacker-controlled strings will be neutralized for Discord mentions and
 bounded to Discord's embed limits. Authorization headers, cookies, request
 bodies, raw tokens, and sensitive query parameters will never be included.
-Webhook responses will be checked so rejected Discord payloads are logged.
+Webhook responses will be checked so rejected Discord payloads are logged by
+status and exception type without logging the credential-bearing webhook URL.
 
 ## Alternatives Considered
 

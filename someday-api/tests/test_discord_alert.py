@@ -104,6 +104,7 @@ async def test_discord_delivery_disables_mentions_and_logs_rejected_payloads(mon
     assert requests[0]["allowed_mentions"] == {"parse": []}
     assert len(errors) == 1
     assert "400" in errors[0]
+    assert "https://example.test/hook" not in errors[0]
 
 
 def test_error_embed_stays_within_discords_total_size_limit():

@@ -25,8 +25,6 @@ def test_token_diagnostics_are_correlatable_and_secret_safe():
         "fingerprint": f"sha256:{hashlib.sha256(token.encode()).hexdigest()[:12]}",
         "token_length": len(token),
         "segments": 3,
-        "subject": "user-123",
-        "email": "person@example.com",
         "expires_at": "2026-08-19T10:00:00+00:00",
     }
     assert token not in str(diagnostics)
