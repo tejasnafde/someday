@@ -12,6 +12,8 @@ The preflight check is only an optimization and a transient or malformed lookup 
 
 GitHub upload failures should include a bounded, secret-scrubbed response summary in server diagnostics. The upload URL itself contains no credential, but the GitHub bearer token must never be logged.
 
+Startup recovery may repair multiple recent releases independently, but it never sends release notifications: only the live EAS webhook may announce a version. A name-occupying `someday.apk` that is not fully uploaded requires manual deletion; recovery records that condition and skips it instead of re-downloading the full artifact on every instance boot.
+
 ## Tests
 
 - An already uploaded asset with the same size skips the upload and duplicate notifications.
@@ -24,6 +26,8 @@ GitHub upload failures should include a bounded, secret-scrubbed response summar
 - Unexpected JSON error shapes, control characters, and empty artifacts remain safe diagnostic failures.
 - The upload request has the exact APK `Content-Length` and consumes every streamed byte.
 - One broken release does not prevent recovery from attempting later releases.
+- Recovery never sends stale historical-version notifications.
+- Malformed release entries are isolated, and name-occupying incomplete assets are not retried forever.
 - Existing webhook and API tests remain green.
 
 ## Deployment

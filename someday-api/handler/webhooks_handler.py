@@ -11,6 +11,7 @@ import httpx
 
 from app_util.log_util import errorlogger, infologger
 from common_helper.decorators import log_timing
+from common_helper.discord_alert import safe_alert_text
 from common_helper.notify import Notify
 from config.settings import settings
 
@@ -61,25 +62,24 @@ def apk_chunks(apk: BinaryIO) -> Iterator[bytes]:
         yield chunk
 
 
-def safe_diagnostic_value(value: object, limit: int) -> str:
-    return re.sub(r"[\x00-\x1f\x7f]+", " ", str(value))[:limit]
-
-
 def raise_upload_error(response: httpx.Response) -> None:
     try:
         payload = response.json()
     except ValueError:
         payload = {}
+        fallback_message = response.text or "unknown error"
+    else:
+        fallback_message = "unknown error"
     if not isinstance(payload, dict):
         payload = {}
-    message = safe_diagnostic_value(payload.get("message", "unknown error"), 160)
+    message = safe_alert_text(payload.get("message", fallback_message), 160)
     errors = payload.get("errors")
     if not isinstance(errors, list):
         errors = []
     codes = ",".join(
-        safe_diagnostic_value(error.get("code", "unknown"), 80)
+        safe_alert_text(error.get("code", "unknown"), 80)
         if isinstance(error, dict)
-        else safe_diagnostic_value(error, 80)
+        else safe_alert_text(error, 80)
         for error in errors[:5]
     )
     detail = f"GitHub APK upload failed | status={response.status_code} | message={message}"
@@ -93,7 +93,13 @@ def raise_upload_error(response: httpx.Response) -> None:
     raise RuntimeError(detail) from cause
 
 
-def upload_and_notify(version: str, apk_url: str, release_id: int) -> None:
+def upload_and_notify(
+    version: str,
+    apk_url: str,
+    release_id: int,
+    *,
+    send_notifications: bool = True,
+) -> None:
     """Download the APK from apk_url, upload it to the GitHub release, then push + Discord."""
     with tempfile.NamedTemporaryFile(suffix=".apk") as tmp:
         with httpx.stream("GET", apk_url, timeout=300, follow_redirects=True) as resp:
@@ -159,6 +165,8 @@ def upload_and_notify(version: str, apk_url: str, release_id: int) -> None:
                 return
             raise_upload_error(up)
     infologger.info(f"webhooks.upload_and_notify | v{version} published with someday.apk")
+    if not send_notifications:
+        return
     Notify().update_released(version)
     if settings.DISCORD_WEBHOOK_URL:
         try:
@@ -167,11 +175,16 @@ def upload_and_notify(version: str, apk_url: str, release_id: int) -> None:
                 "content": f"🚀 **Someday v{version}** released - APK live on GitHub, update banner active for all users.",
             })
             if r.status_code >= 400:
-                errorlogger.error(f"webhooks.upload_and_notify | discord notify failed | status={r.status_code} body={r.text[:200]}")
+                errorlogger.error(
+                    "webhooks.upload_and_notify | discord notify failed "
+                    f"| status={r.status_code} body={safe_alert_text(r.text, 200)}"
+                )
             else:
                 infologger.info(f"webhooks.upload_and_notify | discord notified | v{version}")
         except Exception as exc:
-            errorlogger.error(f"webhooks.upload_and_notify | discord notify failed | {exc}")
+            errorlogger.error(
+                f"webhooks.upload_and_notify | discord notify failed | type={type(exc).__name__}"
+            )
 
 
 def publish_release(version: str, apk_url: str, build_id: str) -> None:
@@ -193,7 +206,10 @@ def publish_release(version: str, apk_url: str, build_id: str) -> None:
         rel.raise_for_status()
         upload_and_notify(version, apk_url, rel.json()["id"])
     except Exception as exc:
-        errorlogger.error(f"webhooks.publish_release | failed | v{version} | {exc}", exc_info=True)
+        errorlogger.error(
+            f"webhooks.publish_release | failed | v{version} | type={type(exc).__name__}",
+            exc_info=True,
+        )
         raise
 
 
@@ -207,13 +223,30 @@ def recover_incomplete_releases() -> None:
     try:
         r = github("GET", f"https://api.github.com/repos/{settings.GITHUB_REPO}/releases?per_page=5")
         r.raise_for_status()
-        for rel in r.json():
+        releases = r.json()
+        if not isinstance(releases, list):
+            raise RuntimeError("GitHub releases response was not a list")
+        for rel in releases:
+            if not isinstance(rel, dict):
+                infologger.warning("webhooks.recover | malformed release entry - skipping")
+                continue
             try:
-                if any(
-                    a.get("name") == "someday.apk" and a.get("state") == "uploaded"
-                    for a in rel.get("assets", [])
-                    if isinstance(a, dict)
-                ):
+                assets = rel.get("assets") or []
+                named_apk = next(
+                    (
+                        asset
+                        for asset in assets
+                        if isinstance(asset, dict) and asset.get("name") == "someday.apk"
+                    ),
+                    None,
+                )
+                if named_apk and named_apk.get("state") == "uploaded":
+                    continue
+                if named_apk:
+                    infologger.warning(
+                        f"webhooks.recover | {rel.get('tag_name', 'unknown')} has a non-uploaded "
+                        "someday.apk asset - manual deletion required"
+                    )
                     continue
                 match = re.search(r"apk_url: (https://\S+)", rel.get("body", ""))
                 if not match:
@@ -223,9 +256,14 @@ def recover_incomplete_releases() -> None:
                     continue
                 version = rel["tag_name"].lstrip("v")
                 infologger.warning(f"webhooks.recover | v{version} incomplete - resuming upload")
-                upload_and_notify(version, match.group(1), rel["id"])
+                upload_and_notify(
+                    version,
+                    match.group(1),
+                    rel["id"],
+                    send_notifications=False,
+                )
             except Exception as exc:
-                tag = rel.get("tag_name", "unknown")
+                tag = safe_alert_text(rel.get("tag_name", "unknown"), 80)
                 errorlogger.error(
                     f"webhooks.recover | {tag} failed | type={type(exc).__name__}",
                     exc_info=True,

@@ -1,3 +1,5 @@
+from io import BytesIO
+
 import httpx
 import pytest
 
@@ -17,6 +19,34 @@ class ResponseContext:
 
 def response(status_code: int, url: str, **kwargs) -> httpx.Response:
     return httpx.Response(status_code, request=httpx.Request("GET", url), **kwargs)
+
+
+def test_github_transport_preserves_content_length_for_stream(monkeypatch):
+    apk = b"streamed apk"
+    captured = {}
+
+    def fake_request(method, url, *, headers, content, **kwargs):
+        request = httpx.Request(method, url, headers=headers, content=content)
+        captured["headers"] = request.headers
+        captured["body"] = request.read()
+        return response(201, url, json={"state": "uploaded"})
+
+    monkeypatch.setattr(webhooks_handler.httpx, "request", fake_request)
+
+    webhooks_handler.github(
+        "POST",
+        "https://uploads.github.test/assets",
+        headers={
+            "Content-Type": "application/vnd.android.package-archive",
+            "Content-Length": str(len(apk)),
+        },
+        content=webhooks_handler.apk_chunks(BytesIO(apk)),
+        upload=True,
+    )
+
+    assert captured["headers"]["content-length"] == str(len(apk))
+    assert "transfer-encoding" not in captured["headers"]
+    assert captured["body"] == apk
 
 
 def test_duplicate_upload_race_does_not_repeat_release_notifications(monkeypatch):
@@ -318,6 +348,7 @@ def test_malformed_race_verification_preserves_upload_diagnostic(monkeypatch):
         ["bad gateway"],
         {"message": "Validation Failed", "errors": None},
         {"message": "bad\rforged", "errors": ["already_exists"]},
+        {"message": "bad\u2028forged", "errors": ["already_exists"]},
     ],
 )
 def test_upload_diagnostics_handle_unexpected_json_shapes(payload):
@@ -327,6 +358,20 @@ def test_upload_diagnostics_handle_unexpected_json_shapes(payload):
         webhooks_handler.raise_upload_error(upload_response)
 
     assert "\r" not in str(raised.value)
+    assert "\u2028" not in str(raised.value)
+
+
+def test_non_json_upload_diagnostic_is_bounded_and_secret_safe():
+    upload_response = response(
+        502,
+        "https://uploads.github.test/assets",
+        content=b"upstream failed Authorization: Bearer super-secret-token",
+    )
+
+    with pytest.raises(RuntimeError, match="upstream failed") as raised:
+        webhooks_handler.raise_upload_error(upload_response)
+
+    assert "super-secret-token" not in str(raised.value)
 
 
 def test_empty_artifact_is_rejected_before_github_calls(monkeypatch):
@@ -354,7 +399,7 @@ def test_recovery_continues_after_one_release_fails(monkeypatch):
             "id": 1,
             "tag_name": "v1.15.0",
             "body": "apk_url: https://expo.test/one.apk",
-            "assets": [{"name": "someday.apk", "state": "new"}],
+            "assets": [],
         },
         {
             "id": 2,
@@ -371,8 +416,8 @@ def test_recovery_continues_after_one_release_fails(monkeypatch):
         lambda *args, **kwargs: response(200, releases_url, json=releases),
     )
 
-    def fake_upload(version, apk_url, release_id):
-        attempted.append(release_id)
+    def fake_upload(version, apk_url, release_id, *, send_notifications=True):
+        attempted.append((release_id, send_notifications))
         if release_id == 1:
             raise RuntimeError("stuck asset")
 
@@ -380,4 +425,58 @@ def test_recovery_continues_after_one_release_fails(monkeypatch):
 
     webhooks_handler.recover_incomplete_releases()
 
-    assert attempted == [1, 2]
+    assert attempted == [(1, False), (2, False)]
+
+
+def test_recovery_ignores_malformed_entries_and_continues(monkeypatch):
+    releases_url = "https://api.github.test/releases"
+    releases = [
+        "junk",
+        {
+            "id": 99,
+            "tag_name": "v1.16.0",
+            "body": "apk_url: https://expo.test/app.apk",
+            "assets": [],
+        },
+    ]
+    attempted = []
+
+    monkeypatch.setattr(
+        webhooks_handler,
+        "github",
+        lambda *args, **kwargs: response(200, releases_url, json=releases),
+    )
+    monkeypatch.setattr(
+        webhooks_handler,
+        "upload_and_notify",
+        lambda version, apk_url, release_id, **kwargs: attempted.append(release_id),
+    )
+
+    webhooks_handler.recover_incomplete_releases()
+
+    assert attempted == [99]
+
+
+def test_recovery_does_not_retry_name_occupying_incomplete_asset(monkeypatch):
+    releases_url = "https://api.github.test/releases"
+    releases = [
+        {
+            "id": 1,
+            "tag_name": "v1.16.0",
+            "body": "apk_url: https://expo.test/app.apk",
+            "assets": [{"name": "someday.apk", "state": "new"}],
+        }
+    ]
+
+    monkeypatch.setattr(
+        webhooks_handler,
+        "github",
+        lambda *args, **kwargs: response(200, releases_url, json=releases),
+    )
+    monkeypatch.setattr(
+        webhooks_handler,
+        "upload_and_notify",
+        lambda *args, **kwargs: pytest.fail("stuck named assets require manual intervention"),
+    )
+
+    webhooks_handler.recover_incomplete_releases()
