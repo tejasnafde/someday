@@ -144,3 +144,20 @@ def test_error_embed_redacts_common_secret_shapes():
     assert "sk_live_secret" not in rendered
     assert "dbpass" not in rendered
     assert rendered.count("[REDACTED]") >= 3
+
+
+def test_error_embed_preserves_intentional_traceback_and_auth_line_breaks():
+    try:
+        raise RuntimeError("multi-line diagnostic")
+    except RuntimeError as exc:
+        embed = discord_alert.build_error_embed(
+            status=500,
+            method="POST",
+            path="/webhooks/eas-build",
+            auth_context={"verification": "failed", "reason": "malformed"},
+            exc=exc,
+        )
+
+    assert embed["description"].count("\n") > 2
+    auth = next(field["value"] for field in embed["fields"] if field["name"] == "auth")
+    assert auth == "verification: failed\nreason: malformed"

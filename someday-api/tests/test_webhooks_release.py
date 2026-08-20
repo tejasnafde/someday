@@ -457,6 +457,39 @@ def test_recovery_ignores_malformed_entries_and_continues(monkeypatch):
     assert attempted == [99]
 
 
+def test_recovery_treats_null_release_body_as_missing(monkeypatch):
+    releases_url = "https://api.github.test/releases"
+    releases = [
+        {
+            "id": 1,
+            "tag_name": "v1.16.0",
+            "body": None,
+            "assets": [],
+        }
+    ]
+    errors = []
+
+    monkeypatch.setattr(
+        webhooks_handler,
+        "github",
+        lambda *args, **kwargs: response(200, releases_url, json=releases),
+    )
+    monkeypatch.setattr(
+        webhooks_handler,
+        "upload_and_notify",
+        lambda *args, **kwargs: pytest.fail("a bodyless release has no recoverable artifact URL"),
+    )
+    monkeypatch.setattr(
+        webhooks_handler.errorlogger,
+        "error",
+        lambda message, **kwargs: errors.append(message),
+    )
+
+    webhooks_handler.recover_incomplete_releases()
+
+    assert errors == []
+
+
 def test_recovery_does_not_retry_name_occupying_incomplete_asset(monkeypatch):
     releases_url = "https://api.github.test/releases"
     releases = [

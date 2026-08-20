@@ -248,7 +248,7 @@ def recover_incomplete_releases() -> None:
                         "someday.apk asset - manual deletion required"
                     )
                     continue
-                match = re.search(r"apk_url: (https://\S+)", rel.get("body", ""))
+                match = re.search(r"apk_url: (https://\S+)", rel.get("body") or "")
                 if not match:
                     infologger.warning(
                         f"webhooks.recover | {rel['tag_name']} has no APK and no recoverable apk_url - skipping"

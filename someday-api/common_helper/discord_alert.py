@@ -20,12 +20,21 @@ NAMED_SECRET_RE = re.compile(
 )
 
 
-def safe_alert_text(value: object, limit: int = 1024) -> str:
+def safe_alert_text(
+    value: object,
+    limit: int = 1024,
+    *,
+    preserve_newlines: bool = False,
+) -> str:
     safe = BEARER_RE.sub(r"\1[REDACTED]", str(value))
     safe = JWT_RE.sub("[JWT REDACTED]", safe)
     safe = CREDENTIAL_URL_RE.sub(r"\1[REDACTED]\2", safe)
     safe = NAMED_SECRET_RE.sub(r"\1\2[REDACTED]", safe)
-    safe = re.sub(r"[\x00-\x1f\x7f\x85\u2028\u2029]+", " ", safe)
+    if preserve_newlines:
+        safe = re.sub(r"\r\n?|\x85|\u2028|\u2029", "\n", safe)
+        safe = re.sub(r"[\x00-\x08\x0b-\x1f\x7f]+", " ", safe)
+    else:
+        safe = re.sub(r"[\x00-\x1f\x7f\x85\u2028\u2029]+", " ", safe)
     safe = safe.replace("@everyone", "@\u200beveryone").replace("@here", "@\u200bhere")
     return safe if len(safe) <= limit else f"{safe[: limit - 1]}…"
 
@@ -78,13 +87,19 @@ def build_error_embed(
             f"{key}: {safe_alert_text(value)}" for key, value in auth_context.items()
         )
         fields.append(
-            {"name": "auth", "value": safe_alert_text(auth_value, 1000), "inline": False}
+            {
+                "name": "auth",
+                "value": safe_alert_text(auth_value, 1000, preserve_newlines=True),
+                "inline": False,
+            }
         )
 
     description = ""
     if exc:
         tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
-        description = f"```\n{safe_alert_text(tb[-2000:], 2000)}\n```"
+        description = (
+            f"```\n{safe_alert_text(tb[-2000:], 2000, preserve_newlines=True)}\n```"
+        )
 
     return {
         "title": safe_alert_text(f"{env_label} `{status}` {method} {path}", 256),
