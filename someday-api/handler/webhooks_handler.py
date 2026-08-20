@@ -12,6 +12,7 @@ from common_helper.decorators import log_timing
 from common_helper.notify import Notify
 from config.settings import settings
 
+
 def verify_signature(body: bytes, signature: str) -> bool:
     expected = "sha1=" + hmac.new(
         settings.EAS_WEBHOOK_SECRET.encode(), body, hashlib.sha1
@@ -35,6 +36,40 @@ def release_exists(version: str) -> bool:
     return r.status_code == 200
 
 
+def release_has_matching_apk(release_id: int, expected_size: int) -> bool:
+    r = github(
+        "GET",
+        f"https://api.github.com/repos/{settings.GITHUB_REPO}/releases/{release_id}/assets",
+    )
+    r.raise_for_status()
+    return any(
+        asset.get("name") == "someday.apk"
+        and asset.get("state") == "uploaded"
+        and asset.get("size") == expected_size
+        for asset in r.json()
+    )
+
+
+def raise_upload_error(response: httpx.Response) -> None:
+    try:
+        payload = response.json()
+    except ValueError:
+        payload = {}
+    message = str(payload.get("message", "unknown error")).replace("\n", " ")[:160]
+    codes = ",".join(
+        str(error.get("code", "unknown")).replace("\n", " ")[:80]
+        for error in payload.get("errors", [])[:5]
+        if isinstance(error, dict)
+    )
+    detail = f"GitHub APK upload failed | status={response.status_code} | message={message}"
+    if codes:
+        detail += f" | codes={codes}"
+    try:
+        response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        raise RuntimeError(detail) from exc
+
+
 def upload_and_notify(version: str, apk_url: str, release_id: int) -> None:
     """Download the APK from apk_url, upload it to the GitHub release, then push + Discord."""
     with tempfile.NamedTemporaryFile(suffix=".apk") as tmp:
@@ -44,15 +79,28 @@ def upload_and_notify(version: str, apk_url: str, release_id: int) -> None:
                 tmp.write(chunk)
         tmp.flush()
         infologger.info(f"webhooks.upload_and_notify | artifact downloaded | {tmp.tell()} bytes")
-        tmp.seek(0)
-        up = github(
-            "POST",
-            f"https://uploads.github.com/repos/{settings.GITHUB_REPO}/releases/{release_id}/assets?name=someday.apk",
-            headers={"Content-Type": "application/vnd.android.package-archive"},
-            content=tmp.read(),
-            upload=True,
-        )
-        up.raise_for_status()
+        apk_size = tmp.tell()
+        if release_has_matching_apk(release_id, apk_size):
+            infologger.info(
+                f"webhooks.upload_and_notify | matching someday.apk already uploaded | {apk_size} bytes"
+            )
+        else:
+            tmp.seek(0)
+            up = github(
+                "POST",
+                f"https://uploads.github.com/repos/{settings.GITHUB_REPO}/releases/{release_id}/assets?name=someday.apk",
+                headers={"Content-Type": "application/vnd.android.package-archive"},
+                content=tmp.read(),
+                upload=True,
+            )
+            if up.is_success:
+                pass
+            elif up.status_code == 422 and release_has_matching_apk(release_id, apk_size):
+                infologger.info(
+                    "webhooks.upload_and_notify | concurrent someday.apk upload completed"
+                )
+            else:
+                raise_upload_error(up)
     infologger.info(f"webhooks.upload_and_notify | v{version} published with someday.apk")
     Notify().update_released(version)
     if settings.DISCORD_WEBHOOK_URL:
