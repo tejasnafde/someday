@@ -13,5 +13,5 @@ test("share intent plugin accepts text, image, and video without advertising eve
   assert.ok(plugin, "expo-share-intent must use explicit configuration");
   assert.deepEqual(plugin[1].androidIntentFilters, ["text/*", "image/*", "video/*"]);
   assert.equal(plugin[1].androidIntentFilters.includes("*/*"), false);
-  assert.equal(appConfig.expo.version, "1.15.0", "native share-filter changes require a new binary version");
+  assert.equal(appConfig.expo.version, "1.16.0", "native changes require a new binary version");
 });
