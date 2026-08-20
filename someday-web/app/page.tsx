@@ -7,11 +7,109 @@ import { Tour } from "@/components/Tour";
 import { CircleAvatar, EmptyState, MemberDot, Skeleton, ThemeToggle, circleTheme, memberColor } from "@/components/ui";
 import { getCached, setCached } from "@/lib/cache";
 import { api } from "@/lib/api";
-import { useAuth } from "@/lib/useAuth";
+import { supabase } from "@/lib/supabase";
 import type { Circle, User } from "@/lib/types";
 
+function PublicLanding() {
+  const steps = [
+    {
+      icon: "users",
+      title: "Create a circle",
+      copy: "Bring together the people you keep making plans with.",
+    },
+    {
+      icon: "heart",
+      title: "Save what sounds good",
+      copy: "Add the films, trips, meals, and small plans you want to remember.",
+    },
+    {
+      icon: "check",
+      title: "Choose a real someday",
+      copy: "See what everyone wants, make a plan, and keep the memory when it happens.",
+    },
+  ];
+
+  return (
+    <main className="flex min-h-screen flex-col py-5">
+      <nav className="flex items-center justify-between" aria-label="Primary">
+        <a href="#top" className="font-serif text-xs font-medium uppercase tracking-[.18em]" style={{ color: "var(--acc)" }}>
+          Someday
+        </a>
+        <div className="flex items-center gap-2.5">
+          <ThemeToggle />
+          <Link href="/login" className="btn-ghost min-h-11 px-4 text-sm">
+            Sign in
+          </Link>
+        </div>
+      </nav>
+
+      <section id="top" className="flex min-h-[70vh] flex-col justify-center py-16 text-center">
+        <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-[18px] text-white"
+          style={{ background: "linear-gradient(135deg, var(--acc), var(--acc-m))", boxShadow: "var(--shb)" }}>
+          <Icon name="star" size="lg" />
+        </div>
+        <h1 className="font-serif text-[42px] font-medium leading-[1.08] tracking-[-.025em]">
+          Save the things you want to do together.
+        </h1>
+        <p className="mx-auto mt-5 max-w-sm text-[15px] leading-7" style={{ color: "var(--txt-m)" }}>
+          Someday keeps recommendations, plans, and small promises in one shared place, until you are ready to make them happen.
+        </p>
+        <Link href="/login" className="btn-primary mx-auto mt-8 min-h-12 w-full max-w-xs px-6 text-sm">
+          Create your first circle
+        </Link>
+        <a href="#how-it-works" className="mt-4 text-xs font-medium" style={{ color: "var(--txt-m)" }}>
+          See how it works
+        </a>
+      </section>
+
+      <section id="how-it-works" className="pb-16 pt-6">
+        <div className="mb-5">
+          <div className="text-[11px] font-semibold uppercase tracking-[.16em]" style={{ color: "var(--acc)" }}>
+            How it works
+          </div>
+          <h2 className="mt-2 font-serif text-2xl font-medium">From “we should” to “we did.”</h2>
+        </div>
+        <ol className="flex flex-col gap-3.5">
+          {steps.map((step, index) => (
+            <li key={step.title} className="glass flex gap-4 rounded-[var(--r)] p-4" style={{ boxShadow: "var(--shc)" }}>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px]"
+                style={{ background: "var(--acc-l)", color: "var(--acc)" }}>
+                <Icon name={step.icon} />
+              </div>
+              <div className="min-w-0 pt-0.5">
+                <div className="flex items-baseline gap-2">
+                  <span className="tnum text-[10px] font-semibold" style={{ color: "var(--txt-l)" }}>0{index + 1}</span>
+                  <h3 className="font-serif text-base font-semibold">{step.title}</h3>
+                </div>
+                <p className="mt-1 text-[13px] leading-5" style={{ color: "var(--txt-m)" }}>{step.copy}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="glass-hi rounded-[var(--r)] p-6 text-center" style={{ boxShadow: "var(--shc)" }}>
+        <h2 className="font-serif text-2xl font-medium">What have you been meaning to do?</h2>
+        <p className="mt-2 text-sm leading-6" style={{ color: "var(--txt-m)" }}>
+          Start a circle, invite someone, and save the first thing you keep saying you will do.
+        </p>
+        <Link href="/login" className="btn-primary mt-5 min-h-12 w-full px-6 text-sm">
+          Start with Someday
+        </Link>
+      </section>
+
+      <footer className="flex items-center justify-between py-8 text-[11px]" style={{ color: "var(--txt-l)" }}>
+        <span>Someday</span>
+        <a href="https://tn07.dev/" className="underline decoration-transparent underline-offset-4 hover:decoration-current">
+          Built by Tejas Nafde
+        </a>
+      </footer>
+    </main>
+  );
+}
+
 export default function Home() {
-  const ready = useAuth();
+  const [ready, setReady] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [circles, setCircles] = useState<Circle[] | null>(null);
   const [creating, setCreating] = useState(false);
@@ -38,17 +136,27 @@ export default function Home() {
         setUser(user);
         setCircles(circles);
       })
-      .catch(() => {});
+      .catch(() => {
+        setUser(null);
+        setCircles(null);
+      })
+      .finally(() => setReady(true));
   }, []);
 
   useEffect(() => {
-    if (ready) load();
-  }, [ready, load]);
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      if (data.session) load();
+      else setReady(true);
+    });
+    return () => { active = false; };
+  }, [load]);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!user) return;
     api.notifications().then((feed) => setUnseen(feed.unseen)).catch(() => {});
-  }, [ready]);
+  }, [user]);
 
   const [createError, setCreateError] = useState("");
 
@@ -68,7 +176,13 @@ export default function Home() {
     }
   }
 
-  if (!ready || !circles)
+  if (!ready)
+    return <PublicLanding />;
+
+  if (!user)
+    return <PublicLanding />;
+
+  if (!circles)
     return (
       <main className="py-5">
         <div className="mb-8 mt-16"><Skeleton height={96} count={3} /></div>

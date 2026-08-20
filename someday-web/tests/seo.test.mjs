@@ -25,3 +25,14 @@ test("Someday publishes crawler, sitemap, and agent discovery files", async () =
   assert.match(llms, /^# Someday$/m);
   assert.match(sitemap, /https:\/\/someday\.tn07\.dev/);
 });
+
+test("signed-out visitors get a meaningful public product introduction", async () => {
+  const homepage = await source("app/page.tsx");
+
+  assert.match(homepage, /Save the things you want to do together/);
+  assert.match(homepage, /Create a circle/);
+  assert.match(homepage, /Add the films, trips, meals, and small plans/);
+  assert.match(homepage, /Sign in/);
+  assert.match(homepage, /if \(!ready\)/);
+  assert.match(homepage, /if \(!user\)/);
+});
