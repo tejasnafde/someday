@@ -64,7 +64,10 @@ export function Home({ nextPath }: { nextPath?: string | null }) {
       try {
         const res = await fetch(`${API_URL}/auth/webview-session`, {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "X-Someday-Client": `native/${APP_VERSION}`,
+          },
         });
         if (!res.ok) throw new Error(`webview-session ${res.status}`);
         const s = await res.json();

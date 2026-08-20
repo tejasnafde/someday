@@ -8,12 +8,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app_util.db_util import DBUtil
 from app_util.log_util import errorlogger, infologger
-from common_helper.discord_alert import alert as discord_alert
+from common_helper.error_alert import StructuredErrorAlertMiddleware
 from config.settings import settings
 from handler.webhooks_handler import recover_incomplete_releases
 from routers import (
     auth_router,
-    webhooks_router,
     circles_router,
     intents_router,
     notifications_router,
@@ -21,6 +20,7 @@ from routers import (
     push_router,
     tour_router,
     unfurl_router,
+    webhooks_router,
 )
 
 app = FastAPI(
@@ -45,29 +45,21 @@ app.add_middleware(
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     t0 = time.perf_counter()
-    auth = request.headers.get("authorization", "")
-    user_hint = "anonymous"
-    if auth.startswith("Bearer "):
-        # First 8 chars as a trace hint - never log the full token
-        user_hint = f"token:{auth[7:15]}…"
-
-    infologger.info(
-        f"REQUEST | {request.method} {request.url.path} | user={user_hint}"
-    )
+    infologger.info(f"REQUEST | {request.method} {request.url.path}")
 
     try:
         response = await call_next(request)
     except Exception as exc:
         ms = (time.perf_counter() - t0) * 1000
         errorlogger.error(f"REQUEST_UNHANDLED | {request.url.path} | {ms:.1f}ms | {exc}", exc_info=True)
-        discord_alert(500, request.method, request.url.path, user_hint, exc=exc)
         raise
 
     ms = (time.perf_counter() - t0) * 1000
     infologger.info(f"RESPONSE | {response.status_code} | {ms:.1f}ms")
-    if response.status_code >= 400:
-        discord_alert(response.status_code, request.method, request.url.path, user_hint)
     return response
+
+
+app.add_middleware(StructuredErrorAlertMiddleware)
 
 # ── Startup ───────────────────────────────────────────────────────────────────
 

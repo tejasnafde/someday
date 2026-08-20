@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Request, UploadFile
 from pydantic import BaseModel, field_validator
 
 from app_util.log_util import errorlogger, infologger
@@ -41,17 +41,27 @@ class UpdateMeRequest(BaseModel):
 
 @router.post("/client-error")
 @log_timing("POST /auth/client-error")
-async def client_error(request: ClientErrorRequest):
+async def client_error(payload: ClientErrorRequest, request: Request):
     """
     Receives client-side auth errors (e.g. exchangeCodeForSession failures) that
     never reach the backend otherwise, and fires a Discord alert so they're visible.
     No JWT required - the user can't be authenticated when sign-in fails.
     """
     errorlogger.error(
-        f"CLIENT_AUTH_ERROR | context={request.context} | {request.message}"
-        + (f" | {request.detail}" if request.detail else "")
+        f"CLIENT_AUTH_ERROR | context={payload.context} | {payload.message}"
+        + (f" | {payload.detail}" if payload.detail else "")
     )
-    discord_alert(400, "CLIENT", f"/auth/{request.context}", request.message)
+    message = f"{payload.context}: {payload.message}"
+    if payload.detail:
+        message = f"{message} | {payload.detail}"
+    discord_alert(
+        400,
+        "CLIENT",
+        "/auth/client-error",
+        error_message=message,
+        client=request.headers.get("x-someday-client", ""),
+        user_agent=request.headers.get("user-agent", ""),
+    )
     return create_response(200, "logged")
 
 

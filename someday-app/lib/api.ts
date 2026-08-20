@@ -2,6 +2,9 @@ import Constants from "expo-constants";
 import { supabase } from "./supabase";
 
 const BASE = (Constants.expoConfig?.extra as Record<string, string>).apiUrl;
+const CLIENT_HEADERS = {
+  "X-Someday-Client": `native/${Constants.expoConfig?.version ?? "unknown"}`,
+};
 
 export interface Circle {
   id: string;
@@ -39,6 +42,7 @@ function request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const res = await fetch(`${BASE}${path}`, {
       method,
       headers: {
+        ...CLIENT_HEADERS,
         Authorization: `Bearer ${token}`,
         ...(body ? { "Content-Type": "application/json" } : {}),
       },
@@ -55,7 +59,7 @@ export const api = {
   clientError: (context: string, message: string, detail?: string) =>
     fetch(`${BASE}/auth/client-error`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { ...CLIENT_HEADERS, "Content-Type": "application/json" },
       body: JSON.stringify({ context, message, detail }),
     }).catch(() => {}), // fire-and-forget, never throws
   circles: () => request<Circle[]>("GET", "/circles"),
