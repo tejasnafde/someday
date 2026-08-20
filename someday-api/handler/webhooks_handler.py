@@ -107,8 +107,14 @@ def upload_and_notify(version: str, apk_url: str, release_id: int) -> None:
             raise RuntimeError("EAS artifact download returned an empty APK")
         try:
             already_uploaded = release_has_matching_apk(release_id, apk_size)
-        except httpx.HTTPError as exc:
-            status = exc.response.status_code if isinstance(exc, httpx.HTTPStatusError) else "network"
+        except (httpx.HTTPError, ValueError) as exc:
+            status = (
+                exc.response.status_code
+                if isinstance(exc, httpx.HTTPStatusError)
+                else "invalid_json"
+                if isinstance(exc, ValueError)
+                else "network"
+            )
             infologger.warning(
                 f"webhooks.upload_and_notify | APK preflight unavailable | status={status}"
             )
@@ -122,7 +128,10 @@ def upload_and_notify(version: str, apk_url: str, release_id: int) -> None:
         up = github(
             "POST",
             f"https://uploads.github.com/repos/{settings.GITHUB_REPO}/releases/{release_id}/assets?name=someday.apk",
-            headers={"Content-Type": "application/vnd.android.package-archive"},
+            headers={
+                "Content-Type": "application/vnd.android.package-archive",
+                "Content-Length": str(apk_size),
+            },
             content=apk_chunks(tmp),
             upload=True,
         )
@@ -131,10 +140,12 @@ def upload_and_notify(version: str, apk_url: str, release_id: int) -> None:
             if up.status_code == 422:
                 try:
                     concurrent_upload_completed = release_has_matching_apk(release_id, apk_size)
-                except httpx.HTTPError as exc:
+                except (httpx.HTTPError, ValueError) as exc:
                     status = (
                         exc.response.status_code
                         if isinstance(exc, httpx.HTTPStatusError)
+                        else "invalid_json"
+                        if isinstance(exc, ValueError)
                         else "network"
                     )
                     infologger.warning(
@@ -197,21 +208,28 @@ def recover_incomplete_releases() -> None:
         r = github("GET", f"https://api.github.com/repos/{settings.GITHUB_REPO}/releases?per_page=5")
         r.raise_for_status()
         for rel in r.json():
-            if any(
-                a.get("name") == "someday.apk" and a.get("state") == "uploaded"
-                for a in rel.get("assets", [])
-                if isinstance(a, dict)
-            ):
-                continue
-            match = re.search(r"apk_url: (https://\S+)", rel.get("body", ""))
-            if not match:
-                infologger.warning(
-                    f"webhooks.recover | {rel['tag_name']} has no APK and no recoverable apk_url - skipping"
+            try:
+                if any(
+                    a.get("name") == "someday.apk" and a.get("state") == "uploaded"
+                    for a in rel.get("assets", [])
+                    if isinstance(a, dict)
+                ):
+                    continue
+                match = re.search(r"apk_url: (https://\S+)", rel.get("body", ""))
+                if not match:
+                    infologger.warning(
+                        f"webhooks.recover | {rel['tag_name']} has no APK and no recoverable apk_url - skipping"
+                    )
+                    continue
+                version = rel["tag_name"].lstrip("v")
+                infologger.warning(f"webhooks.recover | v{version} incomplete - resuming upload")
+                upload_and_notify(version, match.group(1), rel["id"])
+            except Exception as exc:
+                tag = rel.get("tag_name", "unknown")
+                errorlogger.error(
+                    f"webhooks.recover | {tag} failed | type={type(exc).__name__}",
+                    exc_info=True,
                 )
-                continue
-            version = rel["tag_name"].lstrip("v")
-            infologger.warning(f"webhooks.recover | v{version} incomplete - resuming upload")
-            upload_and_notify(version, match.group(1), rel["id"])
     except Exception as exc:
         errorlogger.error(f"webhooks.recover | {exc}", exc_info=True)
 

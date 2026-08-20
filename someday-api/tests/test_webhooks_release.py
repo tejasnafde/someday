@@ -116,6 +116,8 @@ def test_successful_upload_completes_release_notifications(monkeypatch):
         if method == "GET" and url.endswith("/assets?per_page=100"):
             return response(200, url, json=[])
         if method == "POST" and "uploads.github.com" in url:
+            assert kwargs["headers"]["Content-Length"] == str(len(apk))
+            assert b"".join(kwargs["content"]) == apk
             return response(201, url, json={"name": "someday.apk", "state": "uploaded"})
         raise AssertionError(f"Unexpected GitHub request: {method} {url}")
 
@@ -147,6 +149,38 @@ def test_transient_preflight_failure_does_not_block_upload(monkeypatch):
     def fake_github(method, url, **kwargs):
         if method == "GET" and url.endswith("/assets?per_page=100"):
             return response(503, url, json={"message": "temporarily unavailable"})
+        if method == "POST" and "uploads.github.com" in url:
+            return response(201, url, json={"name": "someday.apk", "state": "uploaded"})
+        raise AssertionError(f"Unexpected GitHub request: {method} {url}")
+
+    class FakeNotify:
+        def update_released(self, version):
+            notified.append(version)
+
+    monkeypatch.setattr(webhooks_handler, "github", fake_github)
+    monkeypatch.setattr(webhooks_handler, "Notify", FakeNotify)
+    monkeypatch.setattr(webhooks_handler.settings, "DISCORD_WEBHOOK_URL", "")
+
+    webhooks_handler.upload_and_notify("1.16.0", "https://expo.test/app.apk", 123)
+
+    assert notified == ["1.16.0"]
+
+
+def test_malformed_preflight_response_does_not_block_upload(monkeypatch):
+    apk = b"upload despite malformed preflight"
+    notified = []
+
+    monkeypatch.setattr(
+        webhooks_handler.httpx,
+        "stream",
+        lambda *args, **kwargs: ResponseContext(
+            response(200, "https://expo.test/app.apk", content=apk)
+        ),
+    )
+
+    def fake_github(method, url, **kwargs):
+        if method == "GET" and "/assets" in url:
+            return response(200, url, content=b"<html>bad gateway</html>")
         if method == "POST" and "uploads.github.com" in url:
             return response(201, url, json={"name": "someday.apk", "state": "uploaded"})
         raise AssertionError(f"Unexpected GitHub request: {method} {url}")
@@ -244,6 +278,40 @@ def test_failed_race_verification_preserves_upload_diagnostic(monkeypatch):
         webhooks_handler.upload_and_notify("1.16.0", "https://expo.test/app.apk", 123)
 
 
+def test_malformed_race_verification_preserves_upload_diagnostic(monkeypatch):
+    apk = b"apk bytes"
+    asset_checks = 0
+
+    monkeypatch.setattr(
+        webhooks_handler.httpx,
+        "stream",
+        lambda *args, **kwargs: ResponseContext(
+            response(200, "https://expo.test/app.apk", content=apk)
+        ),
+    )
+
+    def fake_github(method, url, **kwargs):
+        nonlocal asset_checks
+        if method == "GET" and "/assets" in url:
+            asset_checks += 1
+            if asset_checks == 1:
+                return response(200, url, json=[])
+            return response(200, url, content=b"<html>bad gateway</html>")
+        if method == "POST" and "uploads.github.com" in url:
+            return response(
+                422,
+                url,
+                json={"message": "Validation Failed", "errors": [{"code": "already_exists"}]},
+            )
+        raise AssertionError(f"Unexpected GitHub request: {method} {url}")
+
+    monkeypatch.setattr(webhooks_handler, "github", fake_github)
+    monkeypatch.setattr(webhooks_handler.settings, "DISCORD_WEBHOOK_URL", "")
+
+    with pytest.raises(RuntimeError, match=r"status=422.*already_exists"):
+        webhooks_handler.upload_and_notify("1.16.0", "https://expo.test/app.apk", 123)
+
+
 @pytest.mark.parametrize(
     "payload",
     [
@@ -277,3 +345,39 @@ def test_empty_artifact_is_rejected_before_github_calls(monkeypatch):
 
     with pytest.raises(RuntimeError, match="empty APK"):
         webhooks_handler.upload_and_notify("1.16.0", "https://expo.test/app.apk", 123)
+
+
+def test_recovery_continues_after_one_release_fails(monkeypatch):
+    releases_url = "https://api.github.test/releases"
+    releases = [
+        {
+            "id": 1,
+            "tag_name": "v1.15.0",
+            "body": "apk_url: https://expo.test/one.apk",
+            "assets": [{"name": "someday.apk", "state": "new"}],
+        },
+        {
+            "id": 2,
+            "tag_name": "v1.16.0",
+            "body": "apk_url: https://expo.test/two.apk",
+            "assets": [],
+        },
+    ]
+    attempted = []
+
+    monkeypatch.setattr(
+        webhooks_handler,
+        "github",
+        lambda *args, **kwargs: response(200, releases_url, json=releases),
+    )
+
+    def fake_upload(version, apk_url, release_id):
+        attempted.append(release_id)
+        if release_id == 1:
+            raise RuntimeError("stuck asset")
+
+    monkeypatch.setattr(webhooks_handler, "upload_and_notify", fake_upload)
+
+    webhooks_handler.recover_incomplete_releases()
+
+    assert attempted == [1, 2]
