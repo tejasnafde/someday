@@ -20,11 +20,21 @@ NAMED_SECRET_RE = re.compile(
 )
 
 
-def _safe(value: object, limit: int = 1024) -> str:
+def safe_alert_text(
+    value: object,
+    limit: int = 1024,
+    *,
+    preserve_newlines: bool = False,
+) -> str:
     safe = BEARER_RE.sub(r"\1[REDACTED]", str(value))
     safe = JWT_RE.sub("[JWT REDACTED]", safe)
     safe = CREDENTIAL_URL_RE.sub(r"\1[REDACTED]\2", safe)
     safe = NAMED_SECRET_RE.sub(r"\1\2[REDACTED]", safe)
+    if preserve_newlines:
+        safe = re.sub(r"\r\n?|\x85|\u2028|\u2029", "\n", safe)
+        safe = re.sub(r"[\x00-\x08\x0b-\x1f\x7f]+", " ", safe)
+    else:
+        safe = re.sub(r"[\x00-\x1f\x7f\x85\u2028\u2029]+", " ", safe)
     safe = safe.replace("@everyone", "@\u200beveryone").replace("@here", "@\u200bhere")
     return safe if len(safe) <= limit else f"{safe[: limit - 1]}…"
 
@@ -47,32 +57,52 @@ def build_error_embed(
     fields = []
 
     if error_message:
-        fields.append({"name": "error", "value": _safe(error_message, 1000), "inline": False})
+        fields.append(
+            {"name": "error", "value": safe_alert_text(error_message, 1000), "inline": False}
+        )
 
     request_parts = []
     if duration_ms is not None:
         request_parts.append(f"{duration_ms:.1f} ms")
     if request_id:
-        request_parts.append(_safe(request_id))
+        request_parts.append(safe_alert_text(request_id))
     if request_parts:
-        fields.append({"name": "request", "value": _safe(" · ".join(request_parts), 500), "inline": True})
+        fields.append(
+            {
+                "name": "request",
+                "value": safe_alert_text(" · ".join(request_parts), 500),
+                "inline": True,
+            }
+        )
 
     client_parts = [part for part in (client, user_agent) if part]
     if client_parts:
-        client_value = " · ".join(map(_safe, client_parts))
-        fields.append({"name": "client", "value": _safe(client_value, 750), "inline": True})
+        client_value = " · ".join(map(safe_alert_text, client_parts))
+        fields.append(
+            {"name": "client", "value": safe_alert_text(client_value, 750), "inline": True}
+        )
 
     if auth_context:
-        auth_value = "\n".join(f"{key}: {_safe(value)}" for key, value in auth_context.items())
-        fields.append({"name": "auth", "value": _safe(auth_value, 1000), "inline": False})
+        auth_value = "\n".join(
+            f"{key}: {safe_alert_text(value)}" for key, value in auth_context.items()
+        )
+        fields.append(
+            {
+                "name": "auth",
+                "value": safe_alert_text(auth_value, 1000, preserve_newlines=True),
+                "inline": False,
+            }
+        )
 
     description = ""
     if exc:
         tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
-        description = f"```\n{_safe(tb[-2000:], 2000)}\n```"
+        description = (
+            f"```\n{safe_alert_text(tb[-2000:], 2000, preserve_newlines=True)}\n```"
+        )
 
     return {
-        "title": _safe(f"{env_label} `{status}` {method} {path}", 256),
+        "title": safe_alert_text(f"{env_label} `{status}` {method} {path}", 256),
         "description": description,
         "color": 0xE53E3E if status >= 500 else 0xDD6B20,
         "fields": fields,
