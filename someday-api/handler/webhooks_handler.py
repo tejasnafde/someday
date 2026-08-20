@@ -4,6 +4,8 @@ import hashlib
 import hmac
 import re
 import tempfile
+from collections.abc import Iterator
+from typing import BinaryIO
 
 import httpx
 
@@ -39,15 +41,28 @@ def release_exists(version: str) -> bool:
 def release_has_matching_apk(release_id: int, expected_size: int) -> bool:
     r = github(
         "GET",
-        f"https://api.github.com/repos/{settings.GITHUB_REPO}/releases/{release_id}/assets",
+        f"https://api.github.com/repos/{settings.GITHUB_REPO}/releases/{release_id}/assets?per_page=100",
     )
     r.raise_for_status()
+    assets = r.json()
+    if not isinstance(assets, list):
+        return False
     return any(
-        asset.get("name") == "someday.apk"
+        isinstance(asset, dict)
+        and asset.get("name") == "someday.apk"
         and asset.get("state") == "uploaded"
         and asset.get("size") == expected_size
-        for asset in r.json()
+        for asset in assets
     )
+
+
+def apk_chunks(apk: BinaryIO) -> Iterator[bytes]:
+    while chunk := apk.read(1024 * 1024):
+        yield chunk
+
+
+def safe_diagnostic_value(value: object, limit: int) -> str:
+    return re.sub(r"[\x00-\x1f\x7f]+", " ", str(value))[:limit]
 
 
 def raise_upload_error(response: httpx.Response) -> None:
@@ -55,19 +70,27 @@ def raise_upload_error(response: httpx.Response) -> None:
         payload = response.json()
     except ValueError:
         payload = {}
-    message = str(payload.get("message", "unknown error")).replace("\n", " ")[:160]
+    if not isinstance(payload, dict):
+        payload = {}
+    message = safe_diagnostic_value(payload.get("message", "unknown error"), 160)
+    errors = payload.get("errors")
+    if not isinstance(errors, list):
+        errors = []
     codes = ",".join(
-        str(error.get("code", "unknown")).replace("\n", " ")[:80]
-        for error in payload.get("errors", [])[:5]
+        safe_diagnostic_value(error.get("code", "unknown"), 80)
         if isinstance(error, dict)
+        else safe_diagnostic_value(error, 80)
+        for error in errors[:5]
     )
     detail = f"GitHub APK upload failed | status={response.status_code} | message={message}"
     if codes:
         detail += f" | codes={codes}"
+    cause = None
     try:
         response.raise_for_status()
     except httpx.HTTPStatusError as exc:
-        raise RuntimeError(detail) from exc
+        cause = exc
+    raise RuntimeError(detail) from cause
 
 
 def upload_and_notify(version: str, apk_url: str, release_id: int) -> None:
@@ -78,29 +101,52 @@ def upload_and_notify(version: str, apk_url: str, release_id: int) -> None:
             for chunk in resp.iter_bytes(1024 * 1024):
                 tmp.write(chunk)
         tmp.flush()
-        infologger.info(f"webhooks.upload_and_notify | artifact downloaded | {tmp.tell()} bytes")
         apk_size = tmp.tell()
-        if release_has_matching_apk(release_id, apk_size):
+        infologger.info(f"webhooks.upload_and_notify | artifact downloaded | {apk_size} bytes")
+        if apk_size == 0:
+            raise RuntimeError("EAS artifact download returned an empty APK")
+        try:
+            already_uploaded = release_has_matching_apk(release_id, apk_size)
+        except httpx.HTTPError as exc:
+            status = exc.response.status_code if isinstance(exc, httpx.HTTPStatusError) else "network"
+            infologger.warning(
+                f"webhooks.upload_and_notify | APK preflight unavailable | status={status}"
+            )
+            already_uploaded = False
+        if already_uploaded:
             infologger.info(
                 f"webhooks.upload_and_notify | matching someday.apk already uploaded | {apk_size} bytes"
             )
-        else:
-            tmp.seek(0)
-            up = github(
-                "POST",
-                f"https://uploads.github.com/repos/{settings.GITHUB_REPO}/releases/{release_id}/assets?name=someday.apk",
-                headers={"Content-Type": "application/vnd.android.package-archive"},
-                content=tmp.read(),
-                upload=True,
-            )
-            if up.is_success:
-                pass
-            elif up.status_code == 422 and release_has_matching_apk(release_id, apk_size):
+            return
+        tmp.seek(0)
+        up = github(
+            "POST",
+            f"https://uploads.github.com/repos/{settings.GITHUB_REPO}/releases/{release_id}/assets?name=someday.apk",
+            headers={"Content-Type": "application/vnd.android.package-archive"},
+            content=apk_chunks(tmp),
+            upload=True,
+        )
+        if not up.is_success:
+            concurrent_upload_completed = False
+            if up.status_code == 422:
+                try:
+                    concurrent_upload_completed = release_has_matching_apk(release_id, apk_size)
+                except httpx.HTTPError as exc:
+                    status = (
+                        exc.response.status_code
+                        if isinstance(exc, httpx.HTTPStatusError)
+                        else "network"
+                    )
+                    infologger.warning(
+                        "webhooks.upload_and_notify | APK race verification unavailable "
+                        f"| status={status}"
+                    )
+            if concurrent_upload_completed:
                 infologger.info(
                     "webhooks.upload_and_notify | concurrent someday.apk upload completed"
                 )
-            else:
-                raise_upload_error(up)
+                return
+            raise_upload_error(up)
     infologger.info(f"webhooks.upload_and_notify | v{version} published with someday.apk")
     Notify().update_released(version)
     if settings.DISCORD_WEBHOOK_URL:
@@ -151,7 +197,11 @@ def recover_incomplete_releases() -> None:
         r = github("GET", f"https://api.github.com/repos/{settings.GITHUB_REPO}/releases?per_page=5")
         r.raise_for_status()
         for rel in r.json():
-            if any(a["name"] == "someday.apk" for a in rel.get("assets", [])):
+            if any(
+                a.get("name") == "someday.apk" and a.get("state") == "uploaded"
+                for a in rel.get("assets", [])
+                if isinstance(a, dict)
+            ):
                 continue
             match = re.search(r"apk_url: (https://\S+)", rel.get("body", ""))
             if not match:
