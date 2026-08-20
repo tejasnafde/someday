@@ -2,6 +2,7 @@ import { supabase } from "./supabase";
 import type { AppNotification, Circle, CircleDetail, Intent, LinkMeta, NotificationFeed, SmartPick, SpinItem, TourState, User } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const CLIENT_HEADERS = { "X-Someday-Client": "web" };
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -32,7 +33,7 @@ function upload<T>(path: string, blob: Blob, filename: string): Promise<T> {
     form.append("file", blob, filename);
     const res = await fetch(`${BASE}${path}`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { ...CLIENT_HEADERS, Authorization: `Bearer ${token}` },
       body: form,
     });
     const json = await res.json().catch(() => ({}));
@@ -50,6 +51,7 @@ function request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const res = await fetch(`${BASE}${path}`, {
       method,
       headers: {
+        ...CLIENT_HEADERS,
         Authorization: `Bearer ${token}`,
         ...(body ? { "Content-Type": "application/json" } : {}),
       },
@@ -98,7 +100,7 @@ export const api = {
   clientError: (context: string, message: string, detail?: string) =>
     fetch(`${BASE}/auth/client-error`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { ...CLIENT_HEADERS, "Content-Type": "application/json" },
       body: JSON.stringify({ context, message, detail }),
     }).catch(() => {}), // fire-and-forget, never throws
   circleTags: (circleId: string) => request<string[]>("GET", `/circles/${circleId}/tags`),
