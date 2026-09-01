@@ -11,7 +11,8 @@ from app_util.db_util import DBUtil
 from app_util.log_util import infologger, errorlogger
 from common_helper.decorators import log_timing
 from common_helper.storage_helper import rehost_remote_image
-from common_helper.url_util import validate_url
+from common_helper.url_util import BlockedURLError, get_capped, safe_client, validate_url
+from config.settings import settings
 
 TIMEOUT = 8.0
 HEADERS = {
@@ -62,14 +63,16 @@ def resolve_shortlink(url: str) -> str:
     if urlparse(url).netloc.lower() not in SHORTLINK_HOSTS:
         return url
     try:
-        resp = httpx.get(url, timeout=TIMEOUT, follow_redirects=True, headers=HEADERS)
-        final = str(resp.url)
-        validate_url(final)  # guard against open-redirect to private IPs
+        # safe_client validates every redirect hop at connect time; the body
+        # is never read - only the final URL matters here.
+        with safe_client(timeout=TIMEOUT, headers=HEADERS) as client:
+            with client.stream("GET", url) as resp:
+                final = str(resp.url)
         if final != url:
             infologger.info(f"unfurl.resolve_shortlink | {url} -> {final[:120]}")
         return final
-    except ValueError as exc:
-        infologger.warning(f"unfurl.resolve_shortlink | blocked redirect | {exc}")
+    except BlockedURLError as exc:
+        errorlogger.error(f"unfurl.resolve_shortlink | blocked redirect | {exc}")
         return url
     except Exception as exc:
         infologger.warning(f"unfurl.resolve_shortlink | failed | {exc}")
@@ -80,11 +83,11 @@ MAPS_HOSTS = {"maps.app.goo.gl", "goo.gl", "maps.google.com", "www.google.com", 
 def fetch_youtube_meta(url: str) -> dict | None:
     """YouTube serves stripped pages to datacenter IPs - oEmbed is reliable and keyless."""
     try:
-        resp = httpx.get(
-            "https://www.youtube.com/oembed",
-            params={"url": url, "format": "json"},
-            timeout=TIMEOUT,
-        )
+        with safe_client(timeout=TIMEOUT) as client:
+            resp = client.get(
+                "https://www.youtube.com/oembed",
+                params={"url": url, "format": "json"},
+            )
         resp.raise_for_status()
         d = resp.json()
         meta = {"title": d.get("title"), "image": d.get("thumbnail_url"), "site": "YouTube"}
@@ -179,7 +182,7 @@ def fetch_link_meta(url: str, rehost: bool = True) -> dict | None:
     try:
         validate_url(url)
     except ValueError as exc:
-        infologger.warning(f"unfurl.fetch_link_meta | blocked URL | {exc} | url={url}")
+        errorlogger.error(f"unfurl.fetch_link_meta | blocked URL | {exc} | url={url}")
         return None
     finish = rehost_meta_image if rehost else (lambda m: m)
     url = resolve_shortlink(url)
@@ -195,8 +198,14 @@ def fetch_link_meta(url: str, rehost: bool = True) -> dict | None:
     if meta:
         return finish(meta)
     try:
-        resp = httpx.get(url, headers=HEADERS, timeout=TIMEOUT, follow_redirects=True)
-        resp.raise_for_status()
+        # YouTube buries og: tags >600KB deep, so the cap has to stay generous.
+        resp = get_capped(url, settings.MAX_FETCH_BYTES, headers=HEADERS, timeout=TIMEOUT)
+    except BlockedURLError as exc:
+        errorlogger.error(f"unfurl.fetch_link_meta | blocked URL | url={url} | {exc}")
+        return None
+    except ValueError as exc:
+        infologger.warning(f"unfurl.fetch_link_meta | oversized body | url={url} | {exc}")
+        return None
     except httpx.HTTPError as exc:
         errorlogger.error(f"unfurl.fetch_link_meta | HTTP error | url={url} | {exc}")
         return None
@@ -211,7 +220,7 @@ def fetch_link_meta(url: str, rehost: bool = True) -> dict | None:
 
     parser = OGParser()
     try:
-        parser.feed(resp.text)  # YouTube buries og: tags >600KB deep - parse everything
+        parser.feed(resp.text)
     except Exception as exc:
         errorlogger.error(f"unfurl.fetch_link_meta | parse error | {exc}")
         return None
