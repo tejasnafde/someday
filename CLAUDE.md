@@ -101,17 +101,20 @@ LIMIT :limit
 
 ### SSRF protection on all outbound HTTP
 
-Any code that makes an outbound HTTP call with a URL from user input (unfurl, image re-host, webhook, etc.) **must call `common_helper.url_util.validate_url(url)` before the request**:
+Any code that makes an outbound HTTP call with a URL from user input (unfurl, image re-host, webhook, etc.) **must fetch it through `common_helper.url_util.get_capped()` or `safe_client()`**. Never `httpx.get(user_url)`, even after validating.
 
 ```python
-from common_helper.url_util import validate_url
-validate_url(url)  # raises ValueError on private IPs, file://, metadata hosts
+from common_helper.url_util import BlockedURLError, get_capped
+resp = get_capped(url, settings.MAX_FETCH_BYTES, timeout=8.0)   # httpx.Response
 ```
 
-- `validate_url` blocks: non-http/https schemes, IP literals in private/loopback/link-local ranges, known cloud metadata hostnames (169.254.169.254, etc.).
-- Catch `ValueError` and log at ERROR level; return `None` or 400 to the caller.
-- After following redirects (e.g. shortlink resolution), validate the final URL too.
-- Note: full DNS-rebinding protection requires infra-level egress controls and is out of scope for application code.
+`validate_url(url)` alone is NOT sufficient and never was: it is a static pre-check, so it cannot see redirect hops and cannot stop DNS from changing between the check and the connect. The enforcement lives in `SSRFSafeTransport`, which runs per request underneath both helpers. It re-vets every hop, resolves the hostname, rejects the host if ANY resolved address is non-routable, and pins the connection to one vetted IP. The Host header and TLS SNI keep the hostname, so virtual hosts and certificate verification still work.
+
+- Blocks: non-http/https schemes, malformed URLs, IP literals in private/loopback/link-local ranges, metadata hostnames, and hostnames that resolve into those ranges.
+- `get_capped` also caps the body while streaming, so an oversized or endless response is abandoned rather than downloaded. Pass `settings.MAX_FETCH_BYTES` unless you have a reason not to.
+- Catch `BlockedURLError` and log at ERROR (a security signal); catch plain `ValueError` for the size cap and log at WARNING. `BlockedURLError` subclasses `ValueError`, so order the except blocks accordingly.
+- Call `validate_url` directly only to reject early with a clear log line. It is not the protection.
+- Still out of scope: egress control at the infra layer. The pin closes rebinding for these call paths, not for the whole service.
 
 ### Pinned dependencies
 

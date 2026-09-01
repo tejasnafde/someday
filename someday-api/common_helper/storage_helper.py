@@ -5,10 +5,10 @@ import hashlib
 import httpx
 
 from app_util.log_util import errorlogger, infologger
-from common_helper.url_util import validate_url
+from common_helper.url_util import BlockedURLError, get_capped
 from config.settings import settings
 
-MAX_BYTES = 5 * 1024 * 1024
+MAX_BYTES = settings.MAX_FETCH_BYTES
 ALLOWED_TYPES = {"image/webp", "image/jpeg", "image/png"}
 # Source CDNs label JPEGs inconsistently; normalise to a type the bucket accepts.
 CONTENT_TYPE_ALIASES = {"image/jpg": "image/jpeg", "image/pjpeg": "image/jpeg"}
@@ -61,15 +61,13 @@ def rehost_remote_image(remote_url: str, bucket: str = "previews") -> str | None
     if is_rehosted(remote_url):
         return remote_url  # already ours - nothing to do
     try:
-        validate_url(remote_url)
-    except ValueError as exc:
-        infologger.warning(f"storage.rehost | blocked URL | {exc} | {remote_url[:120]}")
+        resp = get_capped(remote_url, MAX_BYTES, headers=REHOST_FETCH_HEADERS, timeout=15)
+    except BlockedURLError as exc:
+        errorlogger.error(f"storage.rehost | blocked URL | {remote_url[:120]} | {exc}")
         return None
-    try:
-        resp = httpx.get(
-            remote_url, headers=REHOST_FETCH_HEADERS, timeout=15, follow_redirects=True
-        )
-        resp.raise_for_status()
+    except ValueError as exc:
+        infologger.warning(f"storage.rehost | oversized body | {remote_url[:120]} | {exc}")
+        return None
     except httpx.HTTPError as exc:
         # Source already dead/expired - caller keeps the original URL.
         infologger.warning(f"storage.rehost | fetch failed | {remote_url[:120]} | {exc}")

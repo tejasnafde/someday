@@ -81,6 +81,10 @@ class Settings(BaseSettings):
     # GitHub - used by the EAS build webhook to publish releases
     GITHUB_REPO: str = "tejasnafde/someday"
 
+    # Largest remote body we accept when fetching an untrusted URL (unfurl HTML,
+    # re-hosted og:image). Enforced while streaming by url_util.get_capped.
+    MAX_FETCH_BYTES: int = 5 * 1024 * 1024
+
     model_config = SettingsConfigDict(
         env_file=f".env.{os.getenv('APP_ENV', 'dev')}",
         env_file_encoding="utf-8",
