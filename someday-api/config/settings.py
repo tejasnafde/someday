@@ -85,6 +85,18 @@ class Settings(BaseSettings):
     # re-hosted og:image). Enforced while streaming by url_util.get_capped.
     MAX_FETCH_BYTES: int = 5 * 1024 * 1024
 
+    # Auto-tagging. TAGGER_ENABLED gates the background task on intent create;
+    # TAGGER_LLM_ENABLED gates only the Vertex call (heuristics always run), so
+    # the LLM can be switched off without losing domain-based tags. On Cloud Run
+    # the Vertex call authenticates via the service account (no key needed);
+    # the SA needs roles/aiplatform.user on GCP_PROJECT. Locally it uses ADC.
+    TAGGER_ENABLED: bool = True
+    TAGGER_LLM_ENABLED: bool = True
+    TAGGER_MODEL: str = "gemini-2.5-flash-lite"  # cheapest lite tier still served
+    TAGGER_MAX_TAGS: int = 3
+    GCP_PROJECT: str = "teejayproject"
+    GCP_LOCATION: str = "global"
+
     model_config = SettingsConfigDict(
         env_file=f".env.{os.getenv('APP_ENV', 'dev')}",
         env_file_encoding="utf-8",

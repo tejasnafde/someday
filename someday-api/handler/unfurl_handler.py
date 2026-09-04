@@ -90,7 +90,7 @@ def fetch_youtube_meta(url: str) -> dict | None:
             )
         resp.raise_for_status()
         d = resp.json()
-        meta = {"title": d.get("title"), "image": d.get("thumbnail_url"), "site": "YouTube"}
+        meta = {"title": d.get("title"), "image": d.get("thumbnail_url"), "site": "YouTube", "description": None}
         infologger.info(f"unfurl.fetch_youtube_meta | success | title={meta['title']!r}")
         return meta
     except Exception as exc:
@@ -128,7 +128,7 @@ def fetch_maps_meta(url: str) -> dict | None:
             infologger.warning(f"unfurl.fetch_maps_meta | no place name in URL | {url[:120]}")
             return None
 
-        meta = {"title": name, "image": None, "site": "Google Maps"}
+        meta = {"title": name, "image": None, "site": "Google Maps", "description": None}
         infologger.info(f"unfurl.fetch_maps_meta | success | title={name!r}")
         return meta
     except Exception as exc:
@@ -153,7 +153,7 @@ def fetch_search_meta(url: str) -> dict | None:
     q = parse_qs(p.query).get("q", [None])[0]
     if not q:
         return None
-    meta = {"title": unquote_plus(q), "image": None, "site": "Google"}
+    meta = {"title": unquote_plus(q), "image": None, "site": "Google", "description": None}
     infologger.info(f"unfurl.fetch_search_meta | success | title={meta['title']!r}")
     return meta
 
@@ -172,7 +172,7 @@ def rehost_meta_image(meta: dict | None) -> dict | None:
 
 
 def fetch_link_meta(url: str, rehost: bool = True) -> dict | None:
-    """Returns {"title": ..., "image": ..., "site": ...} or None on failure.
+    """Returns {"title": ..., "image": ..., "site": ..., "description": ...} or None on failure.
 
     When rehost is True (default - used when the result is persisted on an
     intent) the og:image is downloaded and re-hosted in Supabase Storage so it
@@ -229,12 +229,18 @@ def fetch_link_meta(url: str, rehost: bool = True) -> dict | None:
     title = og.get("title") or parser.fallback_title()
     image = og.get("image")
     site  = og.get("site_name") or urlparse(url).netloc.replace("www.", "")
+    description = og.get("description")
 
     if not title and not image:
         infologger.warning(f"unfurl.fetch_link_meta | no OG data found | url={url}")
         return None
 
-    meta = {"title": title, "image": image, "site": site}
+    # Cap the description: some sites stuff whole articles into og:description,
+    # and this value is persisted in link_meta and fed to the auto-tagger.
+    if description and len(description) > 500:
+        description = description[:500]
+
+    meta = {"title": title, "image": image, "site": site, "description": description}
     infologger.info(f"unfurl.fetch_link_meta | success | title={title!r} site={site!r}")
     return finish(meta)
 
@@ -249,5 +255,5 @@ class UnfurlHandler(DBUtil):
         meta = fetch_link_meta(url, rehost=False)
         if not meta:
             infologger.warning(f"UnfurlHandler.unfurl | fallback - no metadata | url={url}")
-            return 200, {"title": None, "image": None, "site": None}
+            return 200, {"title": None, "image": None, "site": None, "description": None}
         return 200, meta

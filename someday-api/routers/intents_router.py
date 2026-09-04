@@ -6,12 +6,15 @@ from common_helper.decorators import log_timing
 from common_helper.notify import Notify
 from common_helper.product_analytics import track_product_event
 from common_helper.response_helper import create_response
+from config.settings import settings
 from handler.intents_handler import IntentsHandler
+from handler.tagging_handler import TaggingHandler
 from handler.unfurl_handler import fetch_link_meta
 from schemas.intents_schema import CreateIntentRequest, UpdateIntentRequest
 
 router = APIRouter()
 handler = IntentsHandler()
+tagging = TaggingHandler()
 notify = Notify()
 
 
@@ -57,6 +60,10 @@ async def create_intent(
     if status == 201:
         background_tasks.add_task(notify.intent_created, result["id"], current_user["sub"])
         background_tasks.add_task(track_product_event, "item_created", "items")
+        # Share-sheet captures arrive with no tags - fill them in after the
+        # response returns so capture latency is unchanged.
+        if settings.TAGGER_ENABLED and not result["tags"]:
+            background_tasks.add_task(tagging.auto_tag_intent, result["id"])
         if handler.count_created_intents(current_user["sub"]) == 1:
             background_tasks.add_task(
                 track_product_event,

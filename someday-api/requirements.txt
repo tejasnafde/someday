@@ -10,3 +10,4 @@ python-multipart==0.0.32
 certifi==2026.5.20
 pandas==3.0.3
 pywebpush==2.3.0
+google-genai==2.14.0

@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Someday - UX Improvement Mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..600&family=DM+Sans:opsz,wght@9..40,400..700&display=swap" rel="stylesheet">
+<style>
+/* ==== Someday design tokens (verbatim from someday-web/app/globals.css) ==== */
+:root {
+  --bg-a: #F3EEF9; --bg-b: #EBF6F1; --bg-c: #F9EDF3;
+  --glass: rgba(255,255,255,.60);
+  --glass-hi: rgba(255,255,255,.80);
+  --glass-lo: rgba(255,255,255,.34);
+  --glass-nav: rgba(248,244,254,.84);
+  --brd: rgba(255,255,255,.72);
+  --brd-s: rgba(200,188,224,.22);
+  --brd-h: rgba(150,128,186,.18);
+  --txt: #1C1525; --txt-m: #5A4E72; --txt-l: #9B90B4;
+  --acc: #5B4B8A; --acc-l: rgba(91,75,138,.10);
+  --acc-m: #8B78C0; --acc-glow: rgba(91,75,138,.22);
+  --cp: #FF4B6E; --cp-l: rgba(255,75,110,.10);
+  --ss: rgba(91,75,138,.09); --ss-t: #7264AA;
+  --si: rgba(234,147,0,.10); --si-t: #A86600;
+  --sp: rgba(0,184,122,.10); --sp-t: #007A52;
+  --shc: 0 4px 24px rgba(91,75,138,.09), 0 1px 4px rgba(91,75,138,.05);
+  --shb: 0 6px 24px rgba(91,75,138,.28);
+  --r: 20px; --rs: 12px;
+  --img-outline: rgba(0,0,0,.10);
+}
+html.dark {
+  --bg-a: #101010; --bg-b: #131313; --bg-c: #0E0E0E;
+  --glass: rgba(22,22,22,.80);
+  --glass-hi: rgba(30,30,30,.92);
+  --glass-lo: rgba(18,18,18,.42);
+  --glass-nav: rgba(12,12,12,.90);
+  --brd: rgba(255,255,255,.07);
+  --brd-s: rgba(255,255,255,.04);
+  --brd-h: rgba(255,255,255,.11);
+  --txt: #EEEEEE; --txt-m: #888888; --txt-l: #444444;
+  --acc: #9B8DC4; --acc-l: rgba(155,141,196,.11);
+  --acc-m: #BDB0E0; --acc-glow: rgba(155,141,196,.14);
+  --cp: #E8607A; --cp-l: rgba(232,96,122,.10);
+  --ss: rgba(255,255,255,.05); --ss-t: #666666;
+  --si: rgba(200,150,0,.10); --si-t: #B89000;
+  --sp: rgba(45,191,138,.10); --sp-t: #2DBF8A;
+  --shc: 0 4px 24px rgba(0,0,0,.38), 0 1px 4px rgba(0,0,0,.24);
+  --shb: 0 6px 24px rgba(0,0,0,.44);
+  --img-outline: rgba(255,255,255,.10);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  color: var(--txt);
+  background: linear-gradient(148deg, var(--bg-a), var(--bg-b) 50%, var(--bg-c)) fixed;
+  -webkit-font-smoothing: antialiased;
+  text-wrap: pretty;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+.serif { font-family: 'Lora', serif; text-wrap: balance; }
+.tnum { font-variant-numeric: tabular-nums; }
+
+.glass, .gcrd { background: var(--glass); backdrop-filter: blur(18px) saturate(155%); border: 1px solid var(--brd); }
+.glass-hi, .gcrd-hi { background: var(--glass-hi); backdrop-filter: blur(18px) saturate(155%); border: 1px solid var(--brd); }
+@supports not (backdrop-filter: blur(1px)) { .glass, .gcrd, .glass-hi, .gcrd-hi { background: var(--glass-hi); } }
+
+.icon { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+.icon-sm { width:13px; height:13px; }
+.icon-xl { width:38px; height:38px; }
+.icon-fill { fill: currentColor; stroke: none; }
+
+/* ==== page scaffolding ==== */
+.wrap { max-width: 1060px; margin: 0 auto; padding: 40px 22px 120px; }
+header.page { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:14px; }
+h1 { font-family:'Lora',serif; font-size: 30px; font-weight:600; letter-spacing:-.01em; }
+.sub { color: var(--txt-m); max-width: 620px; margin-top: 8px; }
+.section { margin-top: 58px; }
+.section > h2 { font-family:'Lora',serif; font-size:21px; font-weight:600; display:flex; align-items:center; gap:10px; }
+.section > .desc { color: var(--txt-m); margin: 6px 0 20px; max-width: 680px; }
+.stepnum { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%;
+  background: linear-gradient(135deg, var(--acc), var(--acc-m)); color:#fff; font-family:'DM Sans'; font-size:12px; font-weight:700; flex:none; }
+.cols { display:grid; grid-template-columns: 1fr 1fr; gap: 26px; align-items:start; }
+@media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
+.panel-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.12em; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+.panel-label.before { color: var(--txt-l); }
+.panel-label.after { color: var(--acc); }
+.note { font-size: 12px; color: var(--txt-m); background: var(--glass-lo); border: 1px solid var(--brd-s);
+  border-radius: var(--rs); padding: 10px 12px; margin-top: 14px; }
+.note b { color: var(--txt); }
+.callouts { list-style:none; margin-top:16px; display:flex; flex-direction:column; gap:8px; }
+.callouts li { display:flex; gap:9px; font-size:12.5px; color:var(--txt-m); align-items:baseline; }
+.callouts .k { display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; border-radius:50%;
+  background: var(--acc-l); color: var(--acc); font-size:10.5px; font-weight:700; flex:none; transform: translateY(2px); }
+.effort { font-size:10px; font-weight:700; color:var(--ss-t); background:var(--ss); border-radius:99px; padding:1px 7px; margin-left:4px; }
+
+.btn-primary { font-family:'DM Sans'; font-weight:600; font-size:13px; border:none; cursor:pointer;
+  background: linear-gradient(135deg, var(--acc), var(--acc-m)); color:#fff; border-radius: var(--r);
+  box-shadow: var(--shb); padding: 10px 18px;
+  transition-property: transform, box-shadow; transition-duration:.15s; }
+.btn-primary:active { transform: scale(.96); }
+.btn-ghost { font-family:'DM Sans'; font-weight:500; font-size:13px; cursor:pointer;
+  background: var(--glass); border:1px solid var(--brd-h); color: var(--txt); border-radius: var(--r);
+  backdrop-filter: blur(10px); padding: 10px 18px; transition-property: transform; transition-duration:.15s; }
+.btn-ghost:active { transform: scale(.96); }
+
+/* ==== intent card ==== */
+.icard { border-radius: var(--r); box-shadow: var(--shc); overflow:hidden; max-width: 340px; }
+.icard .preview { position:relative; display:block; height:106px; width:100%;
+  display:flex; align-items:center; justify-content:center; color: rgba(255,255,255,.3); cursor:pointer; text-decoration:none; }
+.icard .body { background: var(--glass-hi); backdrop-filter: blur(18px) saturate(155%); padding: 14px; }
+.site { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--txt-l); margin-bottom:4px; }
+.ititle { font-family:'Lora',serif; font-size:14px; font-weight:600; line-height:1.35; color:var(--txt); }
+.meta-row { margin-top:10px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.badge { border-radius:99px; padding:4px 10px; font-size:10px; font-weight:600; text-transform:capitalize; }
+.badge.saved { background:var(--ss); color:var(--ss-t); border:1.5px solid color-mix(in srgb, var(--ss-t) 20%, transparent); }
+.badge.planned { background:var(--sp); color:var(--sp-t); border:1.5px solid color-mix(in srgb, var(--sp-t) 20%, transparent); }
+.badge.done { background:var(--sp); color:var(--sp-t); border:1.5px solid color-mix(in srgb, var(--sp-t) 20%, transparent); opacity:.85; }
+.react-btn { display:flex; align-items:center; gap:4px; border-radius:99px; cursor:pointer;
+  background: var(--glass-lo); color: var(--txt-m); border:1px solid var(--brd-s); font-size:12px; font-weight:600;
+  transition-property: transform; transition-duration:.12s; }
+.react-btn:active { transform: scale(.96); }
+.react-btn.sm { height:32px; padding:0 10px; }
+.react-btn.lg { height:44px; min-width:44px; padding:0 14px; }
+.boost-btn { display:flex; align-items:center; justify-content:center; border-radius:50%; cursor:pointer;
+  background: rgba(234,165,0,.08); border:1.5px solid rgba(234,165,0,.22); color: rgba(180,120,0,.9);
+  transition-property: transform; transition-duration:.12s; }
+.boost-btn:active { transform: scale(.96); }
+.boost-btn.sm { height:32px; width:32px; }
+.boost-btn.lg { height:44px; width:44px; }
+
+/* AFTER card: two-zone */
+.zone-link { position:relative; display:block; cursor:pointer; text-decoration:none; color:inherit; }
+.zone-link .open-pill { position:absolute; top:10px; right:10px; display:inline-flex; align-items:center; gap:5px;
+  background: rgba(12,10,20,.55); color:#fff; backdrop-filter: blur(8px);
+  border-radius:99px; padding:4px 10px; font-size:10.5px; font-weight:700;
+  opacity:0; transform: translateY(-3px);
+  transition-property: opacity, transform; transition-duration:.18s; }
+.zone-link:hover .open-pill, .zone-link:focus-visible .open-pill { opacity:1; transform:none; }
+.zone-link:hover .ititle { text-decoration: underline; text-decoration-color: var(--acc-m); text-underline-offset: 3px; }
+.zone-details { cursor:pointer; border-radius: var(--rs); margin: 8px -6px -6px; padding: 6px;
+  transition-property: background; transition-duration:.15s; }
+.zone-details:hover { background: var(--acc-l); }
+.zone-details .hint { font-size:10.5px; color: var(--txt-l); display:none; align-items:center; gap:3px; margin-top:6px; }
+.zone-details:hover .hint { display:inline-flex; }
+@media (prefers-reduced-motion: reduce) { .zone-link .open-pill, .zone-details, .react-btn, .boost-btn, .btn-primary, .btn-ghost { transition:none; } }
+
+/* tag chips */
+.tags-line { display:flex; flex-wrap:wrap; gap:6px; margin-top:9px; }
+.tagchip { display:inline-flex; align-items:center; gap:5px; border-radius:99px; padding:3px 10px;
+  font-size:10.5px; font-weight:600; background: var(--acc-l); color: var(--acc);
+  border:1px solid color-mix(in srgb, var(--acc) 18%, transparent); cursor:pointer; }
+.tagchip.suggested { background: transparent; border:1px dashed color-mix(in srgb, var(--acc) 45%, transparent); color: var(--acc); }
+.tagchip.suggested .tick, .tagchip.suggested .cross { display:inline-flex; opacity:.7; }
+.tagchip.suggested .tick:hover, .tagchip.suggested .cross:hover { opacity:1; }
+
+/* filter row */
+.filter-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.fchip { border-radius:99px; padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer;
+  background: var(--glass-lo); color: var(--txt-m); border:1px solid var(--brd-s);
+  transition-property: transform, background, color; transition-duration:.12s; }
+.fchip:active { transform: scale(.96); }
+.fchip[aria-pressed="true"] { background: linear-gradient(135deg, var(--acc), var(--acc-m)); color:#fff; border-color:transparent; box-shadow: var(--shb); }
+.fchip .x { display:none; margin-left:4px; }
+.fchip[aria-pressed="true"] .x { display:inline; }
+.filter-count { font-size:11.5px; color: var(--txt-m); }
+.mini-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:12px; margin-top:16px; }
+.mini-card { border-radius: var(--rs); background: var(--glass-hi); border:1px solid var(--brd); box-shadow: var(--shc);
+  padding: 12px; transition-property: opacity, transform; transition-duration:.2s; }
+.mini-card.hidden-out { opacity:.18; transform: scale(.97); pointer-events:none; }
+.mini-card .t { font-family:'Lora',serif; font-size:13px; font-weight:600; margin-bottom:6px; }
+
+/* phone frame / share flow */
+.phone { width: 300px; border-radius: 34px; border: 1px solid var(--brd-h); background: var(--glass-hi);
+  backdrop-filter: blur(18px) saturate(155%); box-shadow: var(--shc); padding: 18px 16px 20px; }
+.phone .notch { width: 84px; height: 5px; border-radius: 99px; background: var(--brd-h); margin: 0 auto 16px; }
+.timeline { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+.tl-step { display:flex; gap:10px; align-items:flex-start; font-size:12px; color: var(--txt-m);
+  opacity:.35; transition-property: opacity; transition-duration:.3s; }
+.tl-step.active { opacity:1; }
+.tl-step .dot { width:8px; height:8px; border-radius:50%; background: var(--txt-l); margin-top:5px; flex:none; }
+.tl-step.active .dot { background: var(--acc); box-shadow: 0 0 0 4px var(--acc-l); }
+
+/* input + chip builder */
+.field-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.09em; color: var(--txt-m); margin-bottom:7px; display:block; }
+.chipbuilder { position:relative; border-radius: var(--rs); background: var(--glass); border:1px solid var(--brd-h);
+  padding: 8px 10px; display:flex; flex-wrap:wrap; gap:6px; align-items:center; cursor:text; }
+.chipbuilder:focus-within { border-color: color-mix(in srgb, var(--acc) 40%, transparent); box-shadow: 0 0 0 3px var(--acc-l); }
+.chipbuilder input { border:none; outline:none; background:transparent; color:var(--txt); font-family:'DM Sans'; font-size:13px; flex:1; min-width:110px; padding:4px 2px; }
+.chipbuilder input::placeholder { color: var(--txt-l); }
+.autocomplete { position:absolute; left:0; right:0; top: calc(100% + 6px); z-index:5; border-radius: var(--rs);
+  background: var(--glass-hi); backdrop-filter: blur(18px) saturate(155%); border:1px solid var(--brd);
+  box-shadow: var(--shc); padding:6px; display:none; }
+.autocomplete.open { display:block; }
+.autocomplete button { display:flex; width:100%; align-items:center; gap:8px; border:none; background:transparent;
+  color: var(--txt); font-family:'DM Sans'; font-size:13px; padding:8px 10px; border-radius:8px; cursor:pointer; text-align:left; }
+.autocomplete button:hover { background: var(--acc-l); }
+.autocomplete .hintline { font-size:10.5px; color:var(--txt-l); padding:4px 10px 2px; }
+
+/* unfurl states */
+.unfurl-demo { border-radius: var(--rs); border:1px solid var(--brd-s); background: var(--glass-lo); padding:14px; min-height:120px; }
+.state-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+.spinner { width:15px; height:15px; border-radius:50%; border:2px solid var(--acc-l); border-top-color: var(--acc);
+  animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.ufail { display:flex; align-items:center; gap:8px; border-radius: var(--rs); padding:10px 12px;
+  background: var(--cp-l); border:1px dashed color-mix(in srgb, var(--cp) 27%, transparent); color: var(--cp); font-size:12px; }
+.ufail button { margin-left:auto; border-radius:8px; padding:4px 10px; font-size:11px; font-weight:700; cursor:pointer;
+  background: var(--glass); color: var(--cp); border:1px solid color-mix(in srgb, var(--cp) 27%, transparent); }
+.urestrict { display:flex; align-items:flex-start; gap:8px; border-radius: var(--rs); padding:10px 12px;
+  background: var(--si); border:1px solid color-mix(in srgb, var(--si-t) 20%, transparent); color: var(--si-t); font-size:12px; }
+.upreview { display:flex; gap:12px; align-items:center; }
+.upreview .thumb { width:74px; height:56px; border-radius:10px; outline:1px solid var(--img-outline); outline-offset:-1px;
+  background: linear-gradient(135deg,#1a1a2e,#3d2c8d); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.35); flex:none; }
+
+/* status stepper */
+.stepper { display:flex; align-items:center; gap:0; margin: 14px 0 6px; }
+.step { display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; cursor:pointer; background:none; border:none; font-family:'DM Sans'; }
+.step .pip { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background: var(--glass-lo); border:1.5px solid var(--brd-s); color: var(--txt-l);
+  transition-property: background, color, border-color, box-shadow; transition-duration:.2s; }
+.step .lbl { font-size:10.5px; font-weight:600; color: var(--txt-l); text-transform:capitalize; }
+.step.reached .pip { background: var(--acc-l); border-color: color-mix(in srgb, var(--acc) 35%, transparent); color: var(--acc); }
+.step.current .pip { background: linear-gradient(135deg, var(--acc), var(--acc-m)); color:#fff; border-color:transparent; box-shadow: var(--shb); }
+.step.current .lbl, .step.reached .lbl { color: var(--txt-m); }
+.step.current .lbl { color: var(--acc); font-weight:700; }
+.connector { height:1.5px; flex:1; max-width:46px; background: var(--brd-h); margin-bottom:20px; }
+.archive-line { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:16px;
+  border-top:1px dashed var(--brd-h); padding-top:14px; font-size:12px; color: var(--txt-m); }
+.link-quiet { background:none; border:none; cursor:pointer; font-family:'DM Sans'; font-size:12px; font-weight:600;
+  color: var(--ss-t); display:inline-flex; align-items:center; gap:5px; }
+
+.theme-toggle { display:inline-flex; align-items:center; gap:7px; }
+footer { margin-top: 70px; font-size: 11.5px; color: var(--txt-l); border-top: 1px solid var(--brd-s); padding-top: 18px; }
+</style>
+</head>
+<body>
+
+<!-- SVG sprite: stroke-based, 1.8 width, matching components/Sprite.tsx conventions -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></symbol>
+    <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></symbol>
+    <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v18"/><path d="M17 3v18"/><path d="M3 8h4"/><path d="M3 16h4"/><path d="M17 8h4"/><path d="M17 16h4"/></symbol>
+    <symbol id="i-utensils" viewBox="0 0 24 24"><path d="M3 2v7a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V2"/><path d="M6 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6a2 2 0 0 0 2 2h3z"/><path d="M18 15v7"/></symbol>
+    <symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-plane" viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></symbol>
+    <symbol id="i-message-circle" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3v3"/><path d="M12 18v3"/><path d="M3 12h3"/><path d="M18 12h3"/><path d="M12 8.5 13.2 11l2.5 1-2.5 1L12 15.5 10.8 13l-2.5-1 2.5-1z"/></symbol>
+    <symbol id="i-archive" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+<header class="page">
+  <div>
+    <h1>Someday, improved</h1>
+    <p class="sub">Interactive mock of the proposed UX changes. Everything here uses the production design tokens from <code>globals.css</code>. Hover, click, and toggle things - each section demonstrates one flow, before and after.</p>
+  </div>
+  <button class="btn-ghost theme-toggle" id="themeBtn"><svg class="icon icon-sm"><use href="#i-moon"/></svg> Dark</button>
+</header>
+
+<!-- ============ 1. CARD CLICK ============ -->
+<section class="section" id="s1">
+  <h2><span class="stepnum">1</span> Card click opens the link</h2>
+  <p class="desc">Today every click on a card lands on the internal detail page, and the saved link needs a second click from there. The fix splits the card into two zones.</p>
+  <div class="cols">
+    <div>
+      <div class="panel-label before">Before - one zone, wrong destination</div>
+      <div class="icard">
+        <a class="preview" style="background:linear-gradient(135deg,#1a1a2e,#3d2c8d)" onclick="fakeNav(event,'detail')">
+          <svg class="icon icon-xl"><use href="#i-film"/></svg>
+        </a>
+        <div class="body">
+          <a style="text-decoration:none;color:inherit;cursor:pointer" onclick="fakeNav(event,'detail')">
+            <div class="site">YOUTUBE.COM</div>
+            <div class="ititle">Studio Ghibli marathon: where to start</div>
+          </a>
+          <div class="meta-row">
+            <span class="badge saved">saved</span>
+            <div style="display:flex;gap:8px">
+              <button class="react-btn sm"><svg class="icon icon-sm"><use href="#i-heart"/></svg><span class="tnum">2</span></button>
+              <button class="boost-btn sm"><svg class="icon icon-sm"><use href="#i-zap"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="note" id="navnote-before">Click the image or title. <b id="navdest">Nothing clicked yet.</b></div>
+    </div>
+    <div>
+      <div class="panel-label after">After - two zones, honest affordances</div>
+      <div class="icard">
+        <a class="preview zone-link" style="background:linear-gradient(135deg,#1a1a2e,#3d2c8d)" onclick="fakeNav(event,'link')">
+          <svg class="icon icon-xl"><use href="#i-film"/></svg>
+          <span class="open-pill"><svg class="icon icon-sm"><use href="#i-link"/></svg> Open</span>
+        </a>
+        <div class="body">
+          <a class="zone-link" style="display:block" onclick="fakeNav(event,'link')">
+            <div class="site" style="display:flex;align-items:center;gap:5px">YOUTUBE.COM <svg class="icon icon-sm" style="width:10px;height:10px"><use href="#i-link"/></svg></div>
+            <div class="ititle">Studio Ghibli marathon: where to start</div>
+          </a>
+          <div class="tags-line">
+            <span class="tagchip">movies</span>
+            <span class="tagchip">cozy night</span>
+          </div>
+          <div class="zone-details" onclick="fakeNav(event,'detail')">
+            <div class="meta-row" style="margin-top:0">
+              <span class="badge saved">saved</span>
+              <div style="display:flex;gap:8px">
+                <button class="react-btn lg" onclick="event.stopPropagation()"><svg class="icon icon-sm"><use href="#i-heart"/></svg><span class="tnum">2</span></button>
+                <button class="boost-btn lg" onclick="event.stopPropagation()"><svg class="icon icon-sm"><use href="#i-zap"/></svg></button>
+              </div>
+            </div>
+            <span class="hint">Details <svg class="icon icon-sm" style="width:10px;height:10px"><use href="#i-chevron-right"/></svg></span>
+          </div>
+        </div>
+      </div>
+      <div class="note" id="navnote-after">Hover the image for the Open pill. Click image or title to open the link. Click the bottom strip for details. <b id="navdest2">Nothing clicked yet.</b></div>
+    </div>
+  </div>
+  <ul class="callouts">
+    <li><span class="k">a</span> Preview and title open <code>intent.url</code> in a new tab. Cards with no URL keep the old behavior. <span class="effort">M</span></li>
+    <li><span class="k">b</span> "Open" pill on hover plus a link glyph next to the site name: link cards now look different from text-only ideas. <span class="effort">S</span></li>
+    <li><span class="k">c</span> Heart and boost grow to 44px tap targets on mobile. <span class="effort">S</span></li>
+    <li><span class="k">d</span> Tag chips surface on the card for the first time. Clicking one filters the list (section 2). <span class="effort">S</span></li>
+  </ul>
+</section>
+
+<!-- ============ 2. MULTI-SELECT TAG FILTER ============ -->
+<section class="section" id="s2">
+  <h2><span class="stepnum">2</span> Multi-select tag filter</h2>
+  <p class="desc">The current filter row allows one tag at a time. Chips become toggles with OR semantics: pick "food" and "date night" and see everything that matches either.</p>
+  <div class="gcrd" style="border-radius:var(--r); padding:18px;">
+    <div class="filter-row" id="filterRow">
+      <span style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-l)">Tags</span>
+    </div>
+    <div class="mini-grid" id="miniGrid"></div>
+    <div class="note" style="margin-top:16px">API: <code>?tags=food&amp;tags=date+night</code> → <code>i.tags &amp;&amp; CAST(:tags AS text[])</code>. Selected chips show a dismiss glyph; empty selection shows everything.</div>
+  </div>
+  <ul class="callouts">
+    <li><span class="k">a</span> Chips toggle instead of replace; count updates live. <span class="effort">M</span></li>
+    <li><span class="k">b</span> When a circle has zero tags the row stays visible with a cue: "No tags yet - they appear automatically when you save links." <span class="effort">S</span></li>
+  </ul>
+</section>
+
+<!-- ============ 3. AUTO-TAGGING ============ -->
+<section class="section" id="s3">
+  <h2><span class="stepnum">3</span> Auto-tags from share-sheet capture</h2>
+  <p class="desc">Almost every intent arrives through the Android share sheet, where nobody types tags. The share sheet stays untouched. Tags are generated server-side after the unfurl (domain heuristics first, then Gemini Flash on Vertex) and land as <em>suggestions</em> the user can confirm or dismiss.</p>
+  <div class="cols">
+    <div>
+      <div class="panel-label after">Share sheet (unchanged, still instant)</div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px">
+          <svg class="icon"><use href="#i-share"/></svg>
+          <span class="serif" style="font-size:15px;font-weight:600">Save to Someday</span>
+        </div>
+        <div class="upreview" style="margin-bottom:12px">
+          <div class="thumb" style="background:linear-gradient(135deg,#2c1810,#7a3010)"><svg class="icon"><use href="#i-utensils"/></svg></div>
+          <div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--txt-l)">ZOMATO.COM</div>
+            <div class="serif" style="font-size:13px;font-weight:600;line-height:1.3">Comorin - Gurugram, best kebabs list</div>
+          </div>
+        </div>
+        <button class="btn-primary" style="width:100%" id="shareSaveBtn" onclick="runAutotag()">Save to Us two</button>
+        <div style="margin-top:9px;font-size:10.5px;color:var(--txt-l);text-align:center">No tag field here. Capture stays one tap.</div>
+      </div>
+    </div>
+    <div>
+      <div class="panel-label after">What happens next (press Save to run it)</div>
+      <div class="timeline" id="autotagTimeline">
+        <div class="tl-step" data-step="0"><span class="dot"></span><span>Intent created via <code>POST /intents</code>. Response returns immediately.</span></div>
+        <div class="tl-step" data-step="1"><span class="dot"></span><span><code>BackgroundTasks</code>: heuristic pass. <code>zomato.com</code> → <b>food</b>. Zero LLM cost.</span></div>
+        <div class="tl-step" data-step="2"><span class="dot"></span><span>Gemini Flash on Vertex reads title + og:description → <b>date night</b>, <b>north indian</b> (from the circle's closed vocabulary).</span></div>
+        <div class="tl-step" data-step="3"><span class="dot"></span><span>Tags stored as suggestions. Card updates in the web app:</span></div>
+      </div>
+      <div class="icard" id="autotagCard" style="margin-top:14px; opacity:.45; transition: opacity .3s">
+        <div class="body" style="border-radius:var(--r)">
+          <div class="site">ZOMATO.COM</div>
+          <div class="ititle">Comorin - Gurugram, best kebabs list</div>
+          <div class="tags-line" id="autotagChips">
+            <span style="font-size:11px;color:var(--txt-l)" id="noTagsYet">no tags yet</span>
+          </div>
+          <div class="meta-row"><span class="badge saved">saved</span></div>
+        </div>
+      </div>
+      <div class="note">Dashed chips are unconfirmed suggestions. A tap on <b>the check</b> keeps one, <b>the cross</b> discards it. Confirming any suggestion converts it to a normal tag. They count as real tags for filtering either way, so zero-effort users still get organization.</div>
+    </div>
+  </div>
+  <ul class="callouts">
+    <li><span class="k">a</span> Keep <code>og:description</code> during unfurl - parsed today, then thrown away. Best free signal. <span class="effort">S</span></li>
+    <li><span class="k">b</span> Tagger runs as a background task next to <code>notify.intent_created</code>; capture latency unchanged. <span class="effort">M</span></li>
+    <li><span class="k">c</span> Closed vocabulary: existing circle tags + a small canonical set. No "movie" vs "film" drift. Tags normalized to lowercase on insert. <span class="effort">S</span></li>
+    <li><span class="k">d</span> Backfill script (clone of <code>backfill_preview_images.py</code>) tags the existing library in one batch. <span class="effort">S</span></li>
+  </ul>
+</section>
+
+<!-- ============ 4. ADD FLOW ============ -->
+<section class="section" id="s4">
+  <h2><span class="stepnum">4</span> Add flow: chip builder + honest unfurl states</h2>
+  <p class="desc">For the times tags are typed by hand, the fragile comma-separated input becomes a chip builder with autocomplete. And the unfurl finally tells you what it is doing.</p>
+  <div class="cols">
+    <div>
+      <div class="panel-label after">Tag input with autocomplete</div>
+      <label class="field-label">Tags</label>
+      <div class="chipbuilder" id="chipBuilder" onclick="document.getElementById('chipInput').focus()">
+        <span class="tagchip">food <svg class="icon icon-sm" style="width:10px;height:10px;cursor:pointer" onclick="this.parentElement.remove()"><use href="#i-x"/></svg></span>
+        <input id="chipInput" placeholder="Type to add..." autocomplete="off">
+        <div class="autocomplete" id="autoList">
+          <div class="hintline">In this circle</div>
+        </div>
+      </div>
+      <div class="note">Comma, Tab, or Enter commits a chip. Suggestions come from <code>GET /circles/{id}/tags</code>. Typing something new creates it. No more "Design" next to "design".</div>
+    </div>
+    <div>
+      <div class="panel-label after">Unfurl feedback (click a state)</div>
+      <div class="state-tabs">
+        <button class="fchip" data-ustate="loading" aria-pressed="true">Loading</button>
+        <button class="fchip" data-ustate="success" aria-pressed="false">Success</button>
+        <button class="fchip" data-ustate="failed" aria-pressed="false">Failed</button>
+        <button class="fchip" data-ustate="restricted" aria-pressed="false">Restricted site</button>
+      </div>
+      <div class="unfurl-demo" id="unfurlDemo"></div>
+    </div>
+  </div>
+  <ul class="callouts">
+    <li><span class="k">a</span> Spinner during the debounced unfurl on web; mobile already has one. <span class="effort">S</span></li>
+    <li><span class="k">b</span> Failure shows a banner with retry instead of silent nothing. <span class="effort">S</span></li>
+    <li><span class="k">c</span> Known preview-blocking domains (TikTok, X, LinkedIn) get an upfront notice via a <code>restricted_platform</code> flag from the unfurl handler. <span class="effort">M</span></li>
+  </ul>
+</section>
+
+<!-- ============ 5. STATUS LIFECYCLE ============ -->
+<section class="section" id="s5">
+  <h2><span class="stepnum">5</span> Status lifecycle: bidirectional, with an exit</h2>
+  <p class="desc">Today the detail page allows jumps in any direction but no clear model, and "archived" exists in the type system with no UI at all. The stepper makes state legible, moves both ways, and gives archive a home.</p>
+  <div class="gcrd" style="border-radius:var(--r); padding: 20px 22px; max-width: 560px;">
+    <div class="serif" style="font-size:16px;font-weight:600">Weekend trip to Alibaug</div>
+    <div class="stepper" id="stepper"></div>
+    <div style="font-size:12px;color:var(--txt-m)" id="stepperHint">Click any step. Moving backward is allowed - changing your mind is normal.</div>
+    <div class="archive-line">
+      <span>Done with this idea entirely?</span>
+      <button class="link-quiet" id="archiveBtn"><svg class="icon icon-sm"><use href="#i-archive"/></svg> <span>Archive</span></button>
+    </div>
+  </div>
+  <ul class="callouts">
+    <li><span class="k">a</span> Archived tab appears after Done; archive and unarchive from the detail page. Soft state, not delete. <span class="effort">M</span></li>
+    <li><span class="k">b</span> Done cards get a memory indicator (camera glyph) when <code>done_note</code> or <code>done_photos</code> exist. <span class="effort">S</span></li>
+    <li><span class="k">c</span> Payoff page stops recommending intents that are already planned. <span class="effort">S</span></li>
+  </ul>
+</section>
+
+<footer>
+  Someday UX mock - generated from the four scout reviews + codebase scan. Tokens copied verbatim from <code>someday-web/app/globals.css</code>; card anatomy mirrors <code>components/ui.tsx</code>. This file is a design artifact, not production code.
+</footer>
+
+</div>
+
+<script>
+/* ---------- theme ---------- */
+document.getElementById('themeBtn').addEventListener('click', () => {
+  document.documentElement.classList.toggle('dark');
+});
+
+/* ---------- section 1: fake nav ---------- */
+function fakeNav(e, dest) {
+  e.preventDefault();
+  const isAfter = e.currentTarget.closest('.icard').parentElement.querySelector('.panel-label').classList.contains('after');
+  const el = document.getElementById(isAfter ? 'navdest2' : 'navdest');
+  el.textContent = dest === 'link' ? 'Opened youtube.com in a new tab.' : 'Navigated to /intents/{id} (detail page).';
+  el.style.color = dest === 'link' ? 'var(--sp-t)' : 'var(--si-t)';
+}
+
+/* ---------- section 2: multi-select filter ---------- */
+const TAGS = ['food', 'date night', 'movies', 'outdoors', 'trip'];
+const ITEMS = [
+  { t: 'Comorin kebabs list', tags: ['food', 'date night'] },
+  { t: 'Studio Ghibli marathon', tags: ['movies', 'date night'] },
+  { t: 'Sunrise trek, Rajmachi', tags: ['outdoors', 'trip'] },
+  { t: 'New ramen place, Khar', tags: ['food'] },
+  { t: 'Drive-in cinema night', tags: ['movies', 'outdoors', 'date night'] },
+  { t: 'Alibaug weekend plan', tags: ['trip'] },
+];
+const selected = new Set();
+const row = document.getElementById('filterRow');
+const grid = document.getElementById('miniGrid');
+TAGS.forEach(tag => {
+  const b = document.createElement('button');
+  b.className = 'fchip';
+  b.setAttribute('aria-pressed', 'false');
+  b.innerHTML = tag + '<span class="x">&times;</span>';
+  b.addEventListener('click', () => {
+    selected.has(tag) ? selected.delete(tag) : selected.add(tag);
+    b.setAttribute('aria-pressed', selected.has(tag));
+    renderGrid();
+  });
+  row.appendChild(b);
+});
+const countEl = document.createElement('span');
+countEl.className = 'filter-count tnum';
+row.appendChild(countEl);
+function renderGrid() {
+  grid.innerHTML = '';
+  let shown = 0;
+  ITEMS.forEach(item => {
+    const match = selected.size === 0 || item.tags.some(t => selected.has(t));
+    if (match) shown++;
+    const d = document.createElement('div');
+    d.className = 'mini-card' + (match ? '' : ' hidden-out');
+    d.innerHTML = '<div class="t">' + item.t + '</div><div class="tags-line" style="margin-top:2px">' +
+      item.tags.map(t => '<span class="tagchip">' + t + '</span>').join('') + '</div>';
+    grid.appendChild(d);
+  });
+  countEl.textContent = selected.size === 0 ? 'showing all ' + ITEMS.length : shown + ' of ' + ITEMS.length + ' match';
+}
+renderGrid();
+
+/* ---------- section 3: autotag simulation ---------- */
+let autotagRunning = false;
+function runAutotag() {
+  if (autotagRunning) return;
+  autotagRunning = true;
+  const btn = document.getElementById('shareSaveBtn');
+  btn.textContent = 'Saved';
+  const steps = document.querySelectorAll('#autotagTimeline .tl-step');
+  const card = document.getElementById('autotagCard');
+  const chips = document.getElementById('autotagChips');
+  steps.forEach(s => s.classList.remove('active'));
+  const seq = [
+    [300, () => { steps[0].classList.add('active'); card.style.opacity = 1; }],
+    [1100, () => { steps[1].classList.add('active'); addChip('food', false); document.getElementById('noTagsYet')?.remove(); }],
+    [2300, () => { steps[2].classList.add('active'); addChip('date night', true); addChip('north indian', true); }],
+    [3100, () => { steps[3].classList.add('active'); }],
+  ];
+  seq.forEach(([t, fn]) => setTimeout(fn, t));
+  setTimeout(() => { btn.textContent = 'Save to Us two'; autotagRunning = false; }, 4200);
+  function addChip(label, suggested) {
+    document.getElementById('noTagsYet')?.remove();
+    const c = document.createElement('span');
+    c.className = 'tagchip' + (suggested ? ' suggested' : '');
+    if (suggested) {
+      c.innerHTML = '<svg class="icon icon-sm" style="width:10px;height:10px"><use href="#i-sparkle"/></svg>' + label +
+        '<span class="tick" title="Keep"><svg class="icon icon-sm" style="width:10px;height:10px"><use href="#i-check"/></svg></span>' +
+        '<span class="cross" title="Discard"><svg class="icon icon-sm" style="width:10px;height:10px"><use href="#i-x"/></svg></span>';
+      c.querySelector('.tick').addEventListener('click', () => { c.className = 'tagchip'; c.innerHTML = label; });
+      c.querySelector('.cross').addEventListener('click', () => c.remove());
+    } else {
+      c.textContent = label;
+    }
+    chips.appendChild(c);
+  }
+}
+
+/* ---------- section 4: chip builder ---------- */
+const CIRCLE_TAGS = ['food', 'date night', 'movies', 'outdoors', 'trip', 'north indian', 'cozy night'];
+const chipInput = document.getElementById('chipInput');
+const autoList = document.getElementById('autoList');
+const builder = document.getElementById('chipBuilder');
+function currentChips() {
+  return [...builder.querySelectorAll('.tagchip')].map(c => c.textContent.trim());
+}
+function commitChip(label) {
+  label = label.trim().toLowerCase().replace(/,+$/, '');
+  if (!label || currentChips().includes(label)) { chipInput.value = ''; return; }
+  const c = document.createElement('span');
+  c.className = 'tagchip';
+  c.innerHTML = label + ' <svg class="icon icon-sm" style="width:10px;height:10px;cursor:pointer"><use href="#i-x"/></svg>';
+  c.querySelector('svg').addEventListener('click', () => c.remove());
+  builder.insertBefore(c, chipInput);
+  chipInput.value = '';
+  renderAuto();
+}
+function renderAuto() {
+  const q = chipInput.value.trim().toLowerCase();
+  const matches = CIRCLE_TAGS.filter(t => !currentChips().includes(t) && (!q || t.includes(q)));
+  autoList.innerHTML = '<div class="hintline">In this circle</div>';
+  matches.slice(0, 5).forEach(t => {
+    const b = document.createElement('button');
+    b.innerHTML = '<svg class="icon icon-sm"><use href="#i-plus"/></svg>' + t;
+    b.addEventListener('mousedown', e => { e.preventDefault(); commitChip(t); });
+    autoList.appendChild(b);
+  });
+  if (q && !CIRCLE_TAGS.includes(q)) {
+    const b = document.createElement('button');
+    b.innerHTML = '<svg class="icon icon-sm"><use href="#i-plus"/></svg>Create "' + q + '"';
+    b.addEventListener('mousedown', e => { e.preventDefault(); commitChip(q); });
+    autoList.appendChild(b);
+  }
+  autoList.classList.toggle('open', document.activeElement === chipInput && (matches.length > 0 || !!q));
+}
+chipInput.addEventListener('focus', renderAuto);
+chipInput.addEventListener('blur', () => setTimeout(() => autoList.classList.remove('open'), 120));
+chipInput.addEventListener('input', renderAuto);
+chipInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === 'Tab' || e.key === ',') {
+    if (chipInput.value.trim()) { e.preventDefault(); commitChip(chipInput.value); }
+  } else if (e.key === 'Backspace' && !chipInput.value) {
+    const chipsEls = builder.querySelectorAll('.tagchip');
+    chipsEls[chipsEls.length - 1]?.remove();
+  }
+});
+
+/* ---------- section 4: unfurl states ---------- */
+const unfurlDemo = document.getElementById('unfurlDemo');
+const USTATES = {
+  loading: '<div style="display:flex;align-items:center;gap:10px;color:var(--txt-m);font-size:12.5px"><div class="spinner"></div> Fetching preview&hellip;</div>',
+  success: '<div class="upreview"><div class="thumb"><svg class="icon"><use href="#i-film"/></svg></div><div><div style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--txt-l)">YOUTUBE.COM</div><div class="serif" style="font-size:13.5px;font-weight:600">Studio Ghibli marathon: where to start</div><div style="font-size:11.5px;color:var(--txt-m);margin-top:2px">Ranked viewing order for first-timers&hellip;</div></div></div><div class="note" style="margin-top:12px">og:description now captured into <code>link_meta</code> - shown here and fed to the auto-tagger.</div>',
+  failed: '<div class="ufail"><svg class="icon icon-sm"><use href="#i-x"/></svg> Could not fetch a preview. <button>Retry</button></div><div class="note" style="margin-top:12px">Previously: silent empty metadata, user proceeds unaware.</div>',
+  restricted: '<div class="urestrict"><svg class="icon icon-sm" style="margin-top:1px"><use href="#i-link"/></svg><span><b>TikTok does not share previews publicly.</b> You can still save this - the title you see is what gets stored.</span></div><div class="note" style="margin-top:12px">Backend sets <code>link_meta.restricted_platform: true</code> for known blocking domains.</div>',
+};
+document.querySelectorAll('[data-ustate]').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('[data-ustate]').forEach(x => x.setAttribute('aria-pressed', 'false'));
+    b.setAttribute('aria-pressed', 'true');
+    unfurlDemo.innerHTML = USTATES[b.dataset.ustate];
+  });
+});
+unfurlDemo.innerHTML = USTATES.loading;
+
+/* ---------- section 5: stepper ---------- */
+const STATES = ['saved', 'interested', 'planned', 'done'];
+let current = 1;
+let archived = false;
+const stepper = document.getElementById('stepper');
+const hint = document.getElementById('stepperHint');
+function renderStepper() {
+  stepper.innerHTML = '';
+  STATES.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i < current ? ' reached' : '') + (i === current ? ' current' : '');
+    b.innerHTML = '<span class="pip">' + (i < current
+      ? '<svg class="icon icon-sm"><use href="#i-check"/></svg>'
+      : (i + 1)) + '</span><span class="lbl">' + s + '</span>';
+    b.addEventListener('click', () => {
+      const prev = current;
+      current = i;
+      archived = false;
+      renderStepper();
+      hint.textContent = i < prev
+        ? 'Moved back to "' + s + '". Backward moves were impossible before.'
+        : 'Moved to "' + s + '".';
+    });
+    stepper.appendChild(b);
+    if (i < STATES.length - 1) {
+      const c = document.createElement('div');
+      c.className = 'connector';
+      stepper.appendChild(c);
+    }
+  });
+  const ab = document.getElementById('archiveBtn');
+  ab.querySelector('span:last-child').textContent = archived ? 'Unarchive' : 'Archive';
+}
+document.getElementById('archiveBtn').addEventListener('click', () => {
+  archived = !archived;
+  hint.textContent = archived
+    ? 'Archived. Hidden from active tabs, visible in the new Archived tab. Reversible.'
+    : 'Restored from archive.';
+  renderStepper();
+});
+renderStepper();
+</script>
+</body>
+</html>
