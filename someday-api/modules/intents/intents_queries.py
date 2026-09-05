@@ -10,6 +10,7 @@ LIST_INTENTS = """
         i.note,
         i.category,
         i.tags,
+        i.auto_tags,
         i.task_status,
         i.link_meta,
         i.planned_for,
@@ -45,6 +46,7 @@ LIST_INTENTS_SHORTLIST = """
         i.note,
         i.category,
         i.tags,
+        i.auto_tags,
         i.task_status,
         i.link_meta,
         i.planned_for,
@@ -78,6 +80,7 @@ GET_INTENT_BY_ID = """
         i.note,
         i.category,
         i.tags,
+        i.auto_tags,
         i.task_status,
         i.link_meta,
         i.planned_for,
@@ -108,7 +111,7 @@ INSERT_INTENT = """
         WHERE cm.circle_id = :circle_id AND cm.user_id = :created_by AND cm.status = 1
     )
     RETURNING
-        id, circle_id, created_by, title, url, note, category, tags,
+        id, circle_id, created_by, title, url, note, category, tags, auto_tags,
         task_status, link_meta, planned_for, done_note, done_photos,
         created_at::text, updated_at::text
 """
@@ -120,13 +123,18 @@ UPDATE_INTENT = """
         note        = COALESCE(:note,        note),
         category    = COALESCE(:category,    category),
         tags        = COALESCE(:tags, tags),
+        -- A manual tag CHANGE takes ownership: suggestions kept in the edited
+        -- list count as accepted, so provenance is cleared. An update that
+        -- resends the same tags (the web edit form always sends tags, even for
+        -- a note-only edit) keeps the suggestion provenance intact.
+        auto_tags   = CASE WHEN :tags IS NULL OR :tags = tags THEN auto_tags ELSE '{}' END,
         task_status  = COALESCE(:task_status, task_status),
         planned_for  = COALESCE(:planned_for, planned_for),
         done_note    = COALESCE(:done_note, done_note),
         done_photos  = COALESCE(CAST(:done_photos AS jsonb), done_photos)
     WHERE id = :intent_id AND status = 1
     RETURNING
-        id, circle_id, created_by, title, url, note, category, tags,
+        id, circle_id, created_by, title, url, note, category, tags, auto_tags,
         task_status, link_meta, planned_for, done_note, done_photos,
         created_at::text, updated_at::text
 """

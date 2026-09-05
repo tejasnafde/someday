@@ -41,6 +41,7 @@ export interface LinkMeta {
   title: string | null;
   image: string | null;
   site: string | null;
+  description?: string | null;
 }
 
 export interface Intent {
@@ -52,6 +53,7 @@ export interface Intent {
   note: string | null;
   category: Category | null;
   tags: string[];
+  auto_tags?: string[];
   task_status: TaskStatus;
   link_meta: LinkMeta | null;
   planned_for: string | null;
