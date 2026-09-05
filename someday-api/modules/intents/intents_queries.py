@@ -123,9 +123,11 @@ UPDATE_INTENT = """
         note        = COALESCE(:note,        note),
         category    = COALESCE(:category,    category),
         tags        = COALESCE(:tags, tags),
-        -- A manual tag edit takes ownership: suggestions still present in the
-        -- new list count as accepted, so provenance is cleared either way.
-        auto_tags   = CASE WHEN :tags IS NULL THEN auto_tags ELSE '{}' END,
+        -- A manual tag CHANGE takes ownership: suggestions kept in the edited
+        -- list count as accepted, so provenance is cleared. An update that
+        -- resends the same tags (the web edit form always sends tags, even for
+        -- a note-only edit) keeps the suggestion provenance intact.
+        auto_tags   = CASE WHEN :tags IS NULL OR :tags = tags THEN auto_tags ELSE '{}' END,
         task_status  = COALESCE(:task_status, task_status),
         planned_for  = COALESCE(:planned_for, planned_for),
         done_note    = COALESCE(:done_note, done_note),

@@ -1,4 +1,11 @@
-from modules.tagging.tagging_helper import CANONICAL_TAGS, DOMAIN_TAGS, build_prompt, heuristic_tags
+from handler.unfurl_handler import strip_nul
+from modules.tagging.tagging_helper import (
+    CANONICAL_TAGS,
+    DOMAIN_TAGS,
+    build_prompt,
+    build_vocabulary,
+    heuristic_tags,
+)
 
 
 def test_domain_match():
@@ -56,3 +63,41 @@ def test_build_prompt_tolerates_string_link_meta():
 def test_build_prompt_tolerates_invalid_link_meta():
     prompt = build_prompt({"title": "t", "link_meta": "not json"}, ["food"])
     assert "Title: t" in prompt
+
+
+def test_port_in_url_still_matches_domain():
+    assert heuristic_tags("https://www.zomato.com:443/x", None) == ["food"]
+
+
+class VocabStubDB:
+    def __init__(self, tags):
+        self.tags = tags
+
+    def execute_query_with_value(self, query, params):
+        return [{"tag": t} for t in self.tags]
+
+
+def test_vocabulary_normalizes_legacy_mixed_case_tags():
+    vocab = build_vocabulary(VocabStubDB(["Design", "design", "Date  Night"]), "c1")
+    assert "design" in vocab
+    assert "date night" in vocab
+    assert "Design" not in vocab
+    assert vocab.count("design") == 1
+
+
+def test_vocabulary_is_not_capped():
+    many = [f"circletag{i}" for i in range(30)]
+    vocab = build_vocabulary(VocabStubDB(many), "c1")
+    assert len(vocab) == len(CANONICAL_TAGS) + 30
+
+
+def test_strip_nul_removes_nul_bytes():
+    meta = {"title": "a\x00b", "image": None, "site": "x", "description": "\x00"}
+    out = strip_nul(meta)
+    assert out["title"] == "ab"
+    assert out["description"] == ""
+    assert out["image"] is None
+
+
+def test_strip_nul_passes_none_through():
+    assert strip_nul(None) is None

@@ -158,6 +158,15 @@ def fetch_search_meta(url: str) -> dict | None:
     return meta
 
 
+def strip_nul(meta: dict | None) -> dict | None:
+    """Remove NUL bytes from all string values. json.dumps renders \\x00 as
+    \\u0000, which Postgres jsonb rejects - a page with a NUL in its metadata
+    would otherwise 500 the intent create after a successful unfurl."""
+    if not meta:
+        return meta
+    return {k: (v.replace("\x00", "") if isinstance(v, str) else v) for k, v in meta.items()}
+
+
 def rehost_meta_image(meta: dict | None) -> dict | None:
     """Re-host meta['image'] into our own storage so the preview survives the
     source CDN's signed-URL expiry. Falls back to the original URL on failure."""
@@ -184,7 +193,10 @@ def fetch_link_meta(url: str, rehost: bool = True) -> dict | None:
     except ValueError as exc:
         errorlogger.error(f"unfurl.fetch_link_meta | blocked URL | {exc} | url={url}")
         return None
-    finish = rehost_meta_image if rehost else (lambda m: m)
+    def finish(meta: dict | None) -> dict | None:
+        meta = strip_nul(meta)
+        return rehost_meta_image(meta) if rehost else meta
+
     url = resolve_shortlink(url)
     if urlparse(url).netloc.lower() in YOUTUBE_HOSTS:
         meta = fetch_youtube_meta(url)

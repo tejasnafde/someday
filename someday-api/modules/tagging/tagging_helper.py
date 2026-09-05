@@ -22,7 +22,7 @@ from google.genai import types as genai_types
 from app_util.log_util import errorlogger, infologger
 from config.settings import settings
 from modules.tagging import tagging_queries as q
-from schemas.intents_schema import normalize_tags
+from schemas.intents_schema import MAX_TAG_LENGTH, normalize_tags
 
 # Small on purpose. Every tag the model may emit must be defensible as a filter
 # chip. Circle-specific tags get merged in at call time.
@@ -82,6 +82,9 @@ def get_genai_client() -> genai.Client:
             vertexai=True,
             project=settings.GCP_PROJECT,
             location=settings.GCP_LOCATION,
+            # Milliseconds. A hung Vertex call must not pin a background task
+            # for the whole Cloud Run request timeout.
+            http_options=genai_types.HttpOptions(timeout=15_000),
         )
     return GENAI_CLIENT
 
@@ -89,7 +92,9 @@ def get_genai_client() -> genai.Client:
 def heuristic_tags(url: str | None, link_meta: dict | None) -> list[str]:
     tags: list[str] = []
     if url:
-        host = urlparse(url).netloc.lower()
+        # hostname, not netloc: a port or userinfo in the URL must not defeat
+        # the domain match.
+        host = (urlparse(url).hostname or "").lower()
         for domain, domain_tags in DOMAIN_TAGS.items():
             if host == domain or host.endswith("." + domain):
                 tags.extend(domain_tags)
@@ -144,11 +149,17 @@ def fetch_llm_tags(intent: dict, vocabulary: list[str]) -> list[str]:
 
 
 def build_vocabulary(db, circle_id: str) -> list[str]:
+    """Canonical tags plus the circle's existing tags, in canonical form.
+
+    Legacy rows predate normalization and may hold mixed case ("Design"); the
+    LLM output is normalized before the allowlist check, so the vocabulary must
+    be normalized the same way or those tags could never be returned. Done
+    per-tag here (not via normalize_tags, which caps the list at MAX_TAGS)."""
     rows = db.execute_query_with_value(q.LIST_CIRCLE_TAG_VOCAB, {"circle_id": circle_id})
-    merged: list[str] = list(CANONICAL_TAGS)
-    for r in rows:
-        tag = r["tag"]
-        if tag not in merged:
+    merged: list[str] = []
+    for raw in CANONICAL_TAGS + [r["tag"] for r in rows]:
+        tag = " ".join(raw.strip().lower().split())[:MAX_TAG_LENGTH]
+        if tag and tag not in merged:
             merged.append(tag)
     return merged
 
