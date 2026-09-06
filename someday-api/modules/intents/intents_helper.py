@@ -26,7 +26,9 @@ def list_intents(
     )
     params = {"circle_id": circle_id, "user_id": user_id, "cursor": cursor, "limit": limit}
     if shortlist:
-        items = db.execute_query_with_value(q.LIST_INTENTS_SHORTLIST, params)
+        items = db.execute_query_with_value(
+            q.LIST_INTENTS_SHORTLIST, {**params, "tags": tags or None}
+        )
     else:
         items = db.execute_query_with_value(
             q.LIST_INTENTS,

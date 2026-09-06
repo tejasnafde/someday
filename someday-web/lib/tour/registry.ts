@@ -97,6 +97,20 @@ export const TOUR_REGISTRY: TourStep[] = [
     body: "New saves get tagged automatically - dashed tags are suggestions. Pick a few tags here to combine filters.",
   },
   {
+    id: "circle.archived",
+    page: "circle",
+    anchor: "status-tabs",
+    title: "Shelve, don't delete",
+    body: "Ideas you archive land in the Archived tab. Bring one back anytime from its page.",
+  },
+  {
+    id: "intent.archive",
+    page: "intent",
+    anchor: "intent-archive",
+    title: "Done with this one?",
+    body: "Archive hides it from the active tabs without deleting it.",
+  },
+  {
     id: "intent.planned",
     page: "intent",
     anchor: "intent-planned",
