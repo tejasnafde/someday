@@ -13,7 +13,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
 import type { Category, CircleDetail, Intent } from "@/lib/types";
 
-const TABS = ["All", "Shortlist", "Done"] as const;
+const TABS = ["All", "Shortlist", "Done", "Archived"] as const;
 const CATEGORIES: (Category | "All")[] = ["All", "watch", "eat", "visit", "read", "play", "trip", "talk"];
 
 export default function CirclePage() {
@@ -52,11 +52,10 @@ export default function CirclePage() {
     const params: Parameters<typeof api.intents>[1] =
       tab === "Shortlist" ? { shortlist: true }
       : tab === "Done" ? { task_status: "done" }
+      : tab === "Archived" ? { task_status: "archived" }
       : {};
-    if (tab === "All") {
-      if (category !== "All") params!.category = category;
-      if (selectedTags.length > 0) params!.tags = selectedTags;
-    }
+    if (tab === "All" && category !== "All") params!.category = category;
+    if ((tab === "All" || tab === "Shortlist") && selectedTags.length > 0) params!.tags = selectedTags;
     api.intents(id, params).then((res) => {
       // Tolerate a bare-array response (older API shape): degrade to empty, never stick.
       const items = Array.isArray(res) ? res : (res?.items ?? []);
@@ -78,11 +77,10 @@ export default function CirclePage() {
     const params: Parameters<typeof api.intents>[1] =
       tab === "Shortlist" ? { shortlist: true }
       : tab === "Done" ? { task_status: "done" }
+      : tab === "Archived" ? { task_status: "archived" }
       : {};
-    if (tab === "All") {
-      if (category !== "All") params!.category = category;
-      if (selectedTags.length > 0) params!.tags = selectedTags;
-    }
+    if (tab === "All" && category !== "All") params!.category = category;
+    if ((tab === "All" || tab === "Shortlist") && selectedTags.length > 0) params!.tags = selectedTags;
     try {
       const { items, next_cursor } = await api.intents(id, { ...params, cursor: nextCursor });
       setIntents((prev) => {
@@ -257,13 +255,15 @@ export default function CirclePage() {
             }}>
             {t === "Shortlist" && <Icon name="star" size="sm" />}
             {t === "Done" && <Icon name="check" size="sm" />}
+            {t === "Archived" && <Icon name="archive" size="sm" />}
             {t}
           </button>
         ))}
       </div>
 
-      {tab === "All" && (
+      {(tab === "All" || tab === "Shortlist") && (
         <>
+          {tab === "All" && (
           <div className="-mx-5 flex gap-2 overflow-x-auto px-5 py-3 [scrollbar-width:none]">
             {CATEGORIES.map((c) => (
               <button key={c} onClick={() => setCategory(c)}
@@ -277,6 +277,7 @@ export default function CirclePage() {
               </button>
             ))}
           </div>
+          )}
           {tags.length > 0 && (
             <div data-tour="tag-filter" className="-mx-5 flex items-center gap-2 overflow-x-auto px-5 pb-2 [scrollbar-width:none]">
               <span className="shrink-0" style={{ color: "var(--txt-l)" }}>
@@ -324,7 +325,9 @@ export default function CirclePage() {
                 ? "Nothing here yet - when two of you are interested in the same thing, it shows up here."
                 : tab === "Done"
                   ? "No memories yet. Mark something done after you do it together."
-                  : "Nothing saved yet - drop in the first thing you should do together."
+                  : tab === "Archived"
+                    ? "Nothing archived. Shelve ideas you are done with from their page - nothing gets deleted."
+                    : "Nothing saved yet - drop in the first thing you should do together."
             }
           />
         ) : (

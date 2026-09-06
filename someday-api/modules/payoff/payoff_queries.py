@@ -39,7 +39,7 @@ SMART_PICK = """
            ON b.intent_id = i.id AND b.status = 1
     WHERE i.circle_id   = :circle_id
       AND i.status      = 1
-      AND i.task_status NOT IN ('done', 'archived')
+      AND i.task_status NOT IN ('planned', 'done', 'archived')
       AND EXISTS (
           SELECT 1 FROM public.circle_members cm
           WHERE cm.circle_id = :circle_id AND cm.user_id = :user_id AND cm.status = 1
@@ -62,7 +62,7 @@ SHORTLIST_FOR_SPIN = """
            ON r.intent_id = i.id AND r.kind = 'interested' AND r.status = 1
     WHERE i.circle_id   = :circle_id
       AND i.status      = 1
-      AND i.task_status NOT IN ('done', 'archived')
+      AND i.task_status NOT IN ('planned', 'done', 'archived')
       AND EXISTS (
           SELECT 1 FROM public.circle_members cm
           WHERE cm.circle_id = :circle_id AND cm.user_id = :user_id AND cm.status = 1

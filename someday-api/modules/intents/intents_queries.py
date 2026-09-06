@@ -66,6 +66,7 @@ LIST_INTENTS_SHORTLIST = """
     WHERE i.circle_id   = :circle_id
       AND i.status      = 1
       AND i.task_status NOT IN ('done', 'archived')
+      AND (:tags         IS NULL OR i.tags && CAST(:tags AS text[]))
       AND (:cursor       IS NULL OR i.created_at < CAST(:cursor AS timestamptz))
     GROUP BY i.id
     HAVING COUNT(DISTINCT r.user_id) FILTER (WHERE r.status = 1) >= 2

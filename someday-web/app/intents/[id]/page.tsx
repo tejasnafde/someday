@@ -137,6 +137,12 @@ export default function IntentPage() {
     router.push(`/circles/${intent!.circle_id}`);
   }
 
+  function toggleArchive() {
+    const next: TaskStatus = intent!.task_status === "archived" ? "saved" : "archived";
+    setIntent((prev) => (prev ? { ...prev, task_status: next } : prev));
+    api.updateIntent(id, { task_status: next }).catch(() => load());
+  }
+
   const label = "mb-2 block text-[11px] font-semibold uppercase tracking-wider";
   const input = "glass w-full rounded-[var(--rs)] px-3.5 py-3 text-sm outline-none";
   const hasMemory =
@@ -272,6 +278,19 @@ export default function IntentPage() {
               </button>
             </span>
           ))}
+        </div>
+        <div className="mt-2.5 flex items-center justify-between border-t pt-2.5 text-[11px]"
+          style={{ borderColor: "var(--brd-s)", color: "var(--txt-m)" }}>
+          <span>
+            {intent.task_status === "archived"
+              ? "Archived - hidden from the active tabs."
+              : "Done with this idea entirely?"}
+          </span>
+          <button onClick={toggleArchive} data-tour="intent-archive"
+            className="flex items-center gap-1.5 font-semibold" style={{ color: "var(--ss-t)" }}>
+            <Icon name="archive" size="sm" />
+            {intent.task_status === "archived" ? "Unarchive" : "Archive"}
+          </button>
         </div>
       </div>
 
