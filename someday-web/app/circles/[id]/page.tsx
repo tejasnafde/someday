@@ -26,7 +26,7 @@ export default function CirclePage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [tab, setTab] = useState<(typeof TABS)[number]>("All");
   const [category, setCategory] = useState<Category | "All">("All");
-  const [tag, setTag] = useState<string | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [userId, setUserId] = useState("");
   const [intentsError, setIntentsError] = useState<string | null>(null);
@@ -37,7 +37,7 @@ export default function CirclePage() {
   const [copied, setCopied] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
-  const intentsKey = `intents:${id}:${tab}:${category}:${tag ?? ""}`;
+  const intentsKey = `intents:${id}:${tab}:${category}:${selectedTags.join(",")}`;
 
   const load = useCallback(() => {
     const cachedCircle = getCached<CircleDetail>(`circle:${id}`);
@@ -55,7 +55,7 @@ export default function CirclePage() {
       : {};
     if (tab === "All") {
       if (category !== "All") params!.category = category;
-      if (tag) params!.tag = tag;
+      if (selectedTags.length > 0) params!.tags = selectedTags;
     }
     api.intents(id, params).then((res) => {
       // Tolerate a bare-array response (older API shape): degrade to empty, never stick.
@@ -70,7 +70,7 @@ export default function CirclePage() {
       setNextCursor(null);
       setIntentsError(e?.message ?? "Could not load");
     });
-  }, [id, tab, category, tag, intentsKey, router]);
+  }, [id, tab, category, selectedTags, intentsKey, router]);
 
   async function loadMore() {
     if (!nextCursor || loadingMore) return;
@@ -81,7 +81,7 @@ export default function CirclePage() {
       : {};
     if (tab === "All") {
       if (category !== "All") params!.category = category;
-      if (tag) params!.tag = tag;
+      if (selectedTags.length > 0) params!.tags = selectedTags;
     }
     try {
       const { items, next_cursor } = await api.intents(id, { ...params, cursor: nextCursor });
@@ -282,18 +282,28 @@ export default function CirclePage() {
               <span className="shrink-0" style={{ color: "var(--txt-l)" }}>
                 <Icon name="settings" size="sm" />
               </span>
-              {tags.map((tg) => (
-                <button key={tg} onClick={() => setTag(tag === tg ? null : tg)}
-                  className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold"
-                  style={{
-                    background: tag === tg ? "var(--cp-l)" : "var(--glass-lo)",
-                    border: `1px solid ${tag === tg ? "var(--cp)44" : "var(--brd-s)"}`,
-                    color: tag === tg ? "var(--cp)" : "var(--txt-m)",
-                  }}>
-                  {tg}
-                  {tag === tg && <Icon name="x" size="sm" />}
+              {tags.map((tg) => {
+                const on = selectedTags.includes(tg);
+                return (
+                  <button key={tg} aria-pressed={on}
+                    onClick={() => setSelectedTags((prev) => on ? prev.filter((t) => t !== tg) : [...prev, tg])}
+                    className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold"
+                    style={{
+                      background: on ? "var(--cp-l)" : "var(--glass-lo)",
+                      border: `1px solid ${on ? "var(--cp)44" : "var(--brd-s)"}`,
+                      color: on ? "var(--cp)" : "var(--txt-m)",
+                    }}>
+                    {tg}
+                    {on && <Icon name="x" size="sm" />}
+                  </button>
+                );
+              })}
+              {selectedTags.length > 1 && (
+                <button onClick={() => setSelectedTags([])} className="shrink-0 whitespace-nowrap text-[11px] font-semibold"
+                  style={{ color: "var(--txt-l)" }}>
+                  Clear
                 </button>
-              ))}
+              )}
             </div>
           )}
         </>
@@ -320,7 +330,16 @@ export default function CirclePage() {
         ) : (
           visible.map((i, idx) => (
             <div key={i.id} data-tour={idx === 0 ? "intent-card" : undefined}>
-              <IntentCard intent={i} onReact={() => react(i.id)} onBoost={() => boost(i.id)} onRetryPreview={retryPreview} />
+              <IntentCard
+                intent={i}
+                onReact={() => react(i.id)}
+                onBoost={() => boost(i.id)}
+                onRetryPreview={retryPreview}
+                onTagClick={(tg) => {
+                  setTab("All");
+                  setSelectedTags((prev) => (prev.includes(tg) ? prev : [...prev, tg]));
+                }}
+              />
             </div>
           ))
         )}

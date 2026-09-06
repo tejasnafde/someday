@@ -13,6 +13,7 @@ def list_intents(
     task_status: str | None = None,
     category: str | None = None,
     tag: str | None = None,
+    tags: list[str] | None = None,
     shortlist: bool = False,
     cursor: str | None = None,
     limit: int = DEFAULT_PAGE_SIZE,
@@ -20,7 +21,7 @@ def list_intents(
     """Returns {items: [...], next_cursor: str | None}."""
     infologger.info(
         f"intents_helper.list_intents | circle_id={circle_id} "
-        f"task_status={task_status} category={category} tag={tag} "
+        f"task_status={task_status} category={category} tag={tag} tags={tags} "
         f"shortlist={shortlist} cursor={cursor!r} limit={limit}"
     )
     params = {"circle_id": circle_id, "user_id": user_id, "cursor": cursor, "limit": limit}
@@ -29,7 +30,14 @@ def list_intents(
     else:
         items = db.execute_query_with_value(
             q.LIST_INTENTS,
-            {**params, "task_status": task_status, "category": category, "tag": tag},
+            {
+                **params,
+                "task_status": task_status,
+                "category": category,
+                "tag": tag,
+                # An empty list must read as "no filter", not "match nothing".
+                "tags": tags or None,
+            },
         )
     next_cursor = items[-1]["created_at"] if len(items) == limit else None
     return {"items": items, "next_cursor": next_cursor}

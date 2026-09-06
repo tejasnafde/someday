@@ -30,20 +30,21 @@ class IntentsHandler(DBUtil):
         task_status: str | None,
         category: str | None,
         tag: str | None,
+        tags: list[str] | None,
         shortlist: bool,
         cursor: str | None = None,
         limit: int = 50,
     ) -> tuple[int, dict | str]:
         infologger.info(
             f"IntentsHandler.list_intents | circle_id={circle_id} "
-            f"shortlist={shortlist} task_status={task_status} cursor={cursor!r}"
+            f"shortlist={shortlist} task_status={task_status} tags={tags} cursor={cursor!r}"
         )
         try:
             ch.assert_member(self, circle_id, user_id)
         except ValueError:
             return 403, "Not a member of this circle"
         page = h.list_intents(
-            self, circle_id, user_id, task_status, category, tag, shortlist, cursor, limit
+            self, circle_id, user_id, task_status, category, tag, tags, shortlist, cursor, limit
         )
         return 200, page
 

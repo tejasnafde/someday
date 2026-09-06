@@ -29,6 +29,9 @@ LIST_INTENTS = """
       AND (:task_status  IS NULL OR i.task_status = :task_status)
       AND (:category     IS NULL OR i.category    = :category)
       AND (:tag          IS NULL OR :tag = ANY(i.tags))
+      -- Multi-select, OR semantics: && is array overlap. :tag stays for
+      -- backward compatibility with cached WebView bundles.
+      AND (:tags         IS NULL OR i.tags && CAST(:tags AS text[]))
       AND (:cursor       IS NULL OR i.created_at < CAST(:cursor AS timestamptz))
     GROUP BY i.id
     ORDER BY i.created_at DESC

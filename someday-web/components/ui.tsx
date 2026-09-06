@@ -180,32 +180,93 @@ function RetryPreviewBanner({ intentId, onRetry }: { intentId: string; onRetry: 
   );
 }
 
-export function IntentCard({ intent, onReact, onBoost, onRetryPreview }: {
+export function IntentCard({ intent, onReact, onBoost, onRetryPreview, onTagClick }: {
   intent: Intent;
   onReact?: () => void;
   onBoost?: () => void;
   onRetryPreview?: (id: string) => Promise<void> | void;
+  onTagClick?: (tag: string) => void;
 }) {
   const previewMissing = !!intent.url && !intent.link_meta?.title;
+  const detailHref = `/intents/${intent.id}`;
+  const autoTags = intent.auto_tags ?? [];
+  // Two-zone card: the preview and title open the saved link directly (the
+  // whole point of saving it); the bottom strip goes to the detail page.
+  // Cards without a URL keep the old behavior everywhere.
+  const openZone = (children: React.ReactNode, block = false) =>
+    intent.url ? (
+      <a href={intent.url} target="_blank" rel="noreferrer" className={`group relative ${block ? "block" : ""}`}>
+        {children}
+      </a>
+    ) : (
+      <Link href={detailHref} className={block ? "block" : ""}>{children}</Link>
+    );
   return (
     <div className="overflow-hidden" style={{ borderRadius: "var(--r)", boxShadow: "var(--shc)" }}>
-      <Link href={`/intents/${intent.id}`}>
-        <IntentPreview intent={intent} />
-      </Link>
-      <div className="glass-hi p-3.5" style={{ border: "none" }}>
-        <Link href={`/intents/${intent.id}`}>
-          {intent.link_meta?.site && (
-            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--txt-l)" }}>
-              {intent.link_meta.site}
-            </div>
+      {openZone(
+        <>
+          <IntentPreview intent={intent} />
+          {intent.url && (
+            <span
+              className="absolute right-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+              style={{ background: "rgba(12,10,20,.55)", backdropFilter: "blur(8px)" }}
+            >
+              <Icon name="link" size="sm" />
+              Open
+            </span>
           )}
-          <div className="font-serif text-sm font-semibold leading-snug">{intent.title}</div>
-        </Link>
+        </>,
+        true,
+      )}
+      <div className="glass-hi p-3.5" style={{ border: "none" }}>
+        {openZone(
+          <>
+            {intent.link_meta?.site && (
+              <div className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--txt-l)" }}>
+                {intent.link_meta.site}
+                {intent.url && <Icon name="link" size="sm" />}
+              </div>
+            )}
+            <div className="font-serif text-sm font-semibold leading-snug">{intent.title}</div>
+          </>,
+        )}
+        {intent.tags.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {intent.tags.slice(0, 3).map((t) => {
+              const suggested = autoTags.includes(t);
+              return (
+                <button
+                  key={t}
+                  onClick={() => onTagClick?.(t)}
+                  title={suggested ? "Added automatically" : undefined}
+                  className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold"
+                  style={{
+                    background: suggested ? "transparent" : "var(--acc-l)",
+                    color: "var(--acc)",
+                    border: suggested ? "1px dashed var(--acc)77" : "1px solid var(--acc)2e",
+                  }}
+                >
+                  {t}
+                </button>
+              );
+            })}
+            {intent.tags.length > 3 && (
+              <span className="tnum rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                style={{ background: "var(--glass-lo)", color: "var(--txt-m)" }}>
+                +{intent.tags.length - 3}
+              </span>
+            )}
+          </div>
+        )}
         {previewMissing && onRetryPreview && (
           <RetryPreviewBanner intentId={intent.id} onRetry={onRetryPreview} />
         )}
         <div className="mt-2.5 flex items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-1.5">
+          <Link
+            href={detailHref}
+            className="-m-1.5 flex flex-1 flex-wrap items-center gap-1.5 rounded-[var(--rs)] p-1.5"
+            aria-label="View details"
+          >
             <StatusBadge status={intent.task_status} />
             {intent.planned_for && (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
@@ -214,12 +275,15 @@ export function IntentCard({ intent, onReact, onBoost, onRetryPreview }: {
                 {intent.planned_for.length > 18 ? intent.planned_for.slice(0, 18) + "…" : intent.planned_for}
               </span>
             )}
-          </div>
+            <span style={{ color: "var(--txt-l)" }}>
+              <Icon name="chevron-right" size="sm" />
+            </span>
+          </Link>
           <div className="flex items-center gap-2">
             <button
               onClick={onReact}
               aria-label="Toggle interested"
-              className="tnum flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-semibold transition-transform active:scale-[.96]"
+              className="tnum flex h-11 min-w-11 items-center justify-center gap-1 rounded-full px-3 text-xs font-semibold transition-transform active:scale-[.96]"
               style={{
                 background: intent.reacted_by_me ? "var(--cp-l)" : "var(--glass-lo)",
                 color: intent.reacted_by_me ? "var(--cp)" : "var(--txt-m)",
@@ -232,7 +296,7 @@ export function IntentCard({ intent, onReact, onBoost, onRetryPreview }: {
             <button
               onClick={onBoost}
               aria-label="Toggle boost"
-              className="flex h-8 w-8 items-center justify-center rounded-full transition-transform active:scale-[.96]"
+              className="flex h-11 w-11 items-center justify-center rounded-full transition-transform active:scale-[.96]"
               style={{
                 background: intent.boosted_by_me ? "rgba(234,165,0,.2)" : "rgba(234,165,0,.08)",
                 border: `1.5px solid rgba(234,165,0,${intent.boosted_by_me ? ".5" : ".22"})`,

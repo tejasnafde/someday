@@ -26,16 +26,17 @@ async def list_intents(
     task_status: str | None = Query(default=None),
     category: str | None = Query(default=None),
     tag: str | None = Query(default=None),
+    tags: list[str] | None = Query(default=None),
     shortlist: bool = Query(default=False),
     cursor: str | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
 ):
     infologger.info(
         f"GET /circles/{circle_id}/intents | user_id={current_user['sub']} "
-        f"task_status={task_status} category={category} shortlist={shortlist} cursor={cursor!r}"
+        f"task_status={task_status} category={category} tags={tags} shortlist={shortlist} cursor={cursor!r}"
     )
     status, result = handler.list_intents(
-        circle_id, current_user["sub"], task_status, category, tag, shortlist, cursor, limit
+        circle_id, current_user["sub"], task_status, category, tag, tags, shortlist, cursor, limit
     )
     return create_response(status, result)
 

@@ -83,6 +83,20 @@ export const TOUR_REGISTRY: TourStep[] = [
     body: "Tagged an idea? Tap a tag here to cut through a long list and find it fast.",
   },
   {
+    id: "circle.card-open",
+    page: "circle",
+    anchor: "intent-card",
+    title: "Cards open the link now",
+    body: "Tap the picture or title to open what was saved. The bottom row still takes you to details.",
+  },
+  {
+    id: "circle.auto-tags",
+    page: "circle",
+    anchor: "tag-filter",
+    title: "Tags happen by themselves",
+    body: "New saves get tagged automatically - dashed tags are suggestions. Pick a few tags here to combine filters.",
+  },
+  {
     id: "intent.planned",
     page: "intent",
     anchor: "intent-planned",

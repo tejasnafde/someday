@@ -324,12 +324,20 @@ export default function IntentPage() {
 
       {intent.tags.length > 0 && (
         <div className="mb-8 mt-4 flex flex-wrap gap-1.5">
-          {intent.tags.map((t) => (
-            <span key={t} className="rounded-full px-2.5 py-1 text-[11px]"
-              style={{ background: "var(--acc-l)", color: "var(--acc)" }}>
-              {t}
-            </span>
-          ))}
+          {intent.tags.map((t) => {
+            const suggested = (intent.auto_tags ?? []).includes(t);
+            return (
+              <span key={t} className="rounded-full px-2.5 py-1 text-[11px]"
+                title={suggested ? "Added automatically - edit tags to keep or remove it" : undefined}
+                style={{
+                  background: suggested ? "transparent" : "var(--acc-l)",
+                  color: "var(--acc)",
+                  border: suggested ? "1px dashed var(--acc)77" : "1px solid transparent",
+                }}>
+                {t}
+              </span>
+            );
+          })}
         </div>
       )}
 
