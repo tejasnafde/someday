@@ -118,6 +118,13 @@ export const TOUR_REGISTRY: TourStep[] = [
     body: "Select several done ideas and archive them together.",
   },
   {
+    id: "circle.meanwhile",
+    page: "circle",
+    anchor: "status-tabs",
+    title: "Meanwhile...",
+    body: "A few times a week, everyone gets a surprise ping on the same day - post what you're doing and see the circle across cities. It all lands in the Meanwhile tab.",
+  },
+  {
     id: "intent.planned",
     page: "intent",
     anchor: "intent-planned",

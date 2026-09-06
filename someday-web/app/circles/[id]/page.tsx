@@ -11,9 +11,9 @@ import { resizeImage } from "@/lib/image";
 import { getCached, setCached } from "@/lib/cache";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
-import type { Category, CircleDetail, Intent } from "@/lib/types";
+import type { Category, CircleDetail, Intent, Moment } from "@/lib/types";
 
-const TABS = ["All", "Shortlist", "Done", "Archived"] as const;
+const TABS = ["All", "Shortlist", "Meanwhile", "Done", "Archived"] as const;
 const CATEGORIES: (Category | "All")[] = ["All", "watch", "eat", "visit", "read", "play", "trip", "talk"];
 
 export default function CirclePage() {
@@ -30,6 +30,8 @@ export default function CirclePage() {
   const [tags, setTags] = useState<string[]>([]);
   const [userId, setUserId] = useState("");
   const [intentsError, setIntentsError] = useState<string | null>(null);
+  const [momentsFeed, setMomentsFeed] = useState<{ moments: Moment[]; memories: Intent[] } | null>(null);
+  const [cadenceBusy, setCadenceBusy] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [archiving, setArchiving] = useState(false);
@@ -49,6 +51,8 @@ export default function CirclePage() {
       setCached(`circle:${id}`, c);
       setCircle(c);
     }).catch(() => router.replace("/"));
+
+    if (tab === "Meanwhile") return; // the Meanwhile effect owns its own data
 
     const cachedIntents = getCached<{ items: Intent[]; next_cursor: string | null }>(intentsKey);
     if (cachedIntents) { setIntents(cachedIntents.items); setNextCursor(cachedIntents.next_cursor); }
@@ -109,6 +113,33 @@ export default function CirclePage() {
     if (!ready) return;
     api.circleTags(id).then(setTags).catch(() => {});
   }, [ready, id]);
+
+  useEffect(() => {
+    if (!ready || tab !== "Meanwhile") return;
+    Promise.all([
+      api.moments(id).then((r) => r.items).catch(() => [] as Moment[]),
+      api.intents(id, { task_status: "done" }).then((r) => (Array.isArray(r) ? r : r.items)).catch(() => [] as Intent[]),
+    ]).then(([moments, done]) => {
+      setMomentsFeed({
+        moments,
+        memories: done.filter((i) => i.done_note || (i.done_photos && i.done_photos.length > 0)),
+      });
+    });
+  }, [ready, id, tab]);
+
+  async function setCadence(n: number) {
+    if (cadenceBusy || !circle) return;
+    setCadenceBusy(true);
+    const prev = circle.moments_cadence ?? 0;
+    setCircle({ ...circle, moments_cadence: n });
+    try {
+      await api.updateCircle(id, { moments_cadence: n });
+    } catch {
+      setCircle((c) => (c ? { ...c, moments_cadence: prev } : c));
+    } finally {
+      setCadenceBusy(false);
+    }
+  }
 
   async function retryPreview(intentId: string) {
     const updated = await api.refreshPreview(intentId);
@@ -263,15 +294,16 @@ export default function CirclePage() {
         }
       />
 
-      <div data-tour="status-tabs" className="flex border-b" style={{ borderColor: "var(--brd-s)" }}>
+      <div data-tour="status-tabs" className="-mx-5 flex overflow-x-auto border-b px-5 [scrollbar-width:none]" style={{ borderColor: "var(--brd-s)" }}>
         {TABS.map((t) => (
           <button key={t} onClick={() => { setTab(t); setSelectMode(false); setSelected(new Set()); }}
-            className="-mb-px flex items-center gap-1.5 px-3.5 py-2.5 text-[13px] font-medium"
+            className="-mb-px flex shrink-0 items-center gap-1.5 whitespace-nowrap px-3.5 py-2.5 text-[13px] font-medium"
             style={{
               color: tab === t ? "var(--acc)" : "var(--txt-l)",
               borderBottom: `2px solid ${tab === t ? "var(--acc)" : "transparent"}`,
             }}>
             {t === "Shortlist" && <Icon name="star" size="sm" />}
+            {t === "Meanwhile" && <Icon name="camera" size="sm" />}
             {t === "Done" && <Icon name="check" size="sm" />}
             {t === "Archived" && <Icon name="archive" size="sm" />}
             {t}
@@ -344,7 +376,11 @@ export default function CirclePage() {
         </div>
       )}
 
-      <div className="mt-2 flex flex-col gap-3">
+      {tab === "Meanwhile" && (
+        <MeanwhileTimeline feed={momentsFeed} cadence={circle.moments_cadence ?? 0} isOwner={isOwner} />
+      )}
+
+      <div className="mt-2 flex flex-col gap-3" style={tab === "Meanwhile" ? { display: "none" } : undefined}>
         {!visible ? (
           <Skeleton height={180} count={3} />
         ) : intentsError ? (
@@ -439,7 +475,32 @@ export default function CirclePage() {
       </div>
       <div className="h-20" />
 
-      <div className="mb-8 mt-10 flex justify-center gap-6 text-xs font-medium" style={{ color: "var(--txt-l)" }}>
+      {isOwner && (
+        <div className="glass mt-10 flex items-center justify-between gap-3 rounded-[var(--r)] px-4 py-3.5" style={{ boxShadow: "var(--shc)" }}>
+          <div>
+            <div className="text-[13px] font-semibold">Meanwhile moments</div>
+            <div className="text-[10.5px]" style={{ color: "var(--txt-m)" }}>
+              Random pings, everyone&apos;s local waking hours
+            </div>
+          </div>
+          <div className="flex rounded-full p-0.5" style={{ background: "var(--glass-lo)", border: "1px solid var(--brd-s)" }}>
+            {[0, 1, 2, 3].map((n) => {
+              const on = (circle.moments_cadence ?? 0) === n;
+              return (
+                <button key={n} onClick={() => setCadence(n)} disabled={cadenceBusy} aria-pressed={on}
+                  className="rounded-full px-2.5 py-1 text-[11px] font-bold disabled:opacity-60"
+                  style={on
+                    ? { background: "linear-gradient(135deg, var(--acc), var(--acc-m))", color: "#fff", boxShadow: "var(--shb)" }
+                    : { color: "var(--txt-m)" }}>
+                  {n === 0 ? "Off" : `${n}x`}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="mb-8 mt-6 flex justify-center gap-6 text-xs font-medium" style={{ color: "var(--txt-l)" }}>
         <button onClick={leave} className="flex items-center gap-1.5">
           <Icon name="log-out" size="sm" />
           Leave circle
@@ -490,5 +551,124 @@ export default function CirclePage() {
 
       {intents && <Tour page="circle" />}
     </main>
+  );
+}
+
+function monthKey(iso: string): string {
+  return new Date(iso.slice(0, 10) + "T00:00:00").toLocaleDateString([], { month: "long", year: "numeric" });
+}
+
+function MeanwhileTimeline({ feed, cadence, isOwner }: {
+  feed: { moments: Moment[]; memories: Intent[] } | null;
+  cadence: number;
+  isOwner: boolean;
+}) {
+  if (!feed) return <div className="mt-4"><Skeleton height={80} count={3} /></div>;
+
+  type Entry = { date: string; moment?: Moment; memory?: Intent };
+  const entries: Entry[] = [
+    ...feed.moments.map((m) => ({ date: m.moment_date, moment: m })),
+    ...feed.memories.map((i) => ({ date: i.updated_at.slice(0, 10), memory: i })),
+  ].sort((a, b) => (a.date < b.date ? 1 : -1));
+
+  if (entries.length === 0) {
+    return (
+      <EmptyState
+        message={
+          cadence > 0
+            ? "No moments yet. The next ping is already scheduled - keep an eye on your notifications."
+            : isOwner
+              ? "Moments are off for this circle. Turn them on below and everyone gets a surprise ping a few times a week."
+              : "Moments are off for this circle. Ask the owner to turn them on."
+        }
+      />
+    );
+  }
+
+  const byMonth = new Map<string, Entry[]>();
+  for (const e of entries) {
+    const k = monthKey(e.date);
+    byMonth.set(k, [...(byMonth.get(k) ?? []), e]);
+  }
+
+  return (
+    <div className="mt-4 flex flex-col gap-5">
+      {[...byMonth.entries()].map(([month, list]) => (
+        <div key={month}>
+          <div className="mb-2 text-[10px] font-bold uppercase tracking-[.12em]" style={{ color: "var(--txt-l)" }}>
+            {month}
+          </div>
+          <div className="flex flex-col gap-2.5">
+            {list.map((e) =>
+              e.moment ? (
+                <Link key={`m-${e.moment.id}`} href={`/moments/${e.moment.id}`}
+                  className="glass flex items-center gap-2.5 rounded-[var(--rs)] p-2.5">
+                  <div className="flex gap-1.5">
+                    {e.moment.posts.length === 0 ? (
+                      <div className="flex h-11 w-9 items-center justify-center rounded-md" style={{ background: "var(--glass-lo)", color: "var(--txt-l)" }}>
+                        <Icon name="camera" size="sm" />
+                      </div>
+                    ) : (
+                      e.moment.posts.slice(0, 4).map((p) =>
+                        p.photo_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img key={p.id} src={p.photo_url} alt="" className="h-11 w-9 rounded-md object-cover"
+                            style={{ outline: "1px solid var(--img-outline)", outlineOffset: -1 }} />
+                        ) : (
+                          <div key={p.id} className="flex h-11 w-9 items-center justify-center rounded-md"
+                            style={{ background: "var(--acc-l)", color: "var(--acc)" }}>
+                            <Icon name="check" size="sm" />
+                          </div>
+                        ),
+                      )
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[11.5px] font-semibold">
+                      {new Date(e.moment.moment_date + "T00:00:00").toLocaleDateString([], { weekday: "short", day: "numeric" })}
+                      {" · "}
+                      {e.moment.posts.length === 0
+                        ? "quiet day"
+                        : `${[...new Set(e.moment.posts.map((p) => (p.tz.split("/").pop() ?? "").replace(/_/g, " ")))].length} ${
+                            [...new Set(e.moment.posts.map((p) => p.tz))].length === 1 ? "city" : "cities"
+                          }`}
+                    </div>
+                    <div className="text-[10px]" style={{ color: "var(--txt-l)" }}>
+                      {e.moment.revealed ? "Meanwhile moment" : "Post yours to reveal"}
+                    </div>
+                  </div>
+                  <span style={{ color: "var(--txt-l)" }}><Icon name="chevron-right" size="sm" /></span>
+                </Link>
+              ) : (
+                <Link key={`i-${e.memory!.id}`} href={`/intents/${e.memory!.id}`}
+                  className="block overflow-hidden"
+                  style={{ borderRadius: "var(--rs)", border: "1px solid var(--acc)2e", boxShadow: "0 6px 26px var(--acc-glow), var(--shc)" }}>
+                  {e.memory!.done_photos && e.memory!.done_photos.length > 0 && (
+                    <div className="flex h-16 gap-0.5">
+                      {e.memory!.done_photos.slice(0, 3).map((u) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img key={u} src={u} alt="" className="min-w-0 flex-1 object-cover" />
+                      ))}
+                    </div>
+                  )}
+                  <div className="glass-hi px-3 py-2">
+                    <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[.1em]" style={{ color: "var(--acc)" }}>
+                      <Icon name="map-pin" size="sm" />
+                      Together
+                    </div>
+                    <div className="font-serif text-[12.5px] font-semibold">{e.memory!.title}</div>
+                    {e.memory!.done_note && (
+                      <div className="truncate font-serif text-[10.5px] italic" style={{ color: "var(--txt-m)" }}>
+                        &ldquo;{e.memory!.done_note}&rdquo;
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              ),
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

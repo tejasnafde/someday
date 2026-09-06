@@ -67,6 +67,9 @@ class Settings(BaseSettings):
     # Shared token guarding the Cloud Build → Discord push webhook
     CLOUDBUILD_ALERT_TOKEN: str = ""
 
+    # Shared token guarding the Cloud Scheduler → moments tick endpoint
+    MOMENTS_TICK_TOKEN: str = ""
+
     # Web push (VAPID)
     VAPID_PUBLIC_KEY: str = ""
     VAPID_PRIVATE_KEY: str = ""

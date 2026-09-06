@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { AppNotification, Circle, CircleDetail, Intent, LinkMeta, NotificationFeed, SmartPick, SpinItem, TourState, User } from "./types";
+import type { AppNotification, Circle, CircleDetail, Intent, LinkMeta, Moment, NotificationFeed, SmartPick, SpinItem, TourState, User } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const CLIENT_HEADERS = { "X-Someday-Client": "web" };
@@ -77,7 +77,7 @@ export const api = {
   circle: (id: string) => request<CircleDetail>("GET", `/circles/${id}`),
   createCircle: (name: string, emoji?: string) =>
     request<Circle>("POST", "/circles", { name, emoji }),
-  updateCircle: (id: string, fields: { name?: string; emoji?: string }) =>
+  updateCircle: (id: string, fields: { name?: string; emoji?: string; moments_cadence?: number }) =>
     request<Circle>("PATCH", `/circles/${id}`, fields),
   deleteCircle: (id: string) => request<unknown>("DELETE", `/circles/${id}`),
   joinCircle: (token: string) =>
@@ -105,6 +105,31 @@ export const api = {
       body: JSON.stringify({ context, message, detail }),
     }).catch(() => {}), // fire-and-forget, never throws
   circleTags: (circleId: string) => request<string[]>("GET", `/circles/${circleId}/tags`),
+  moments: (circleId: string, cursor?: string) =>
+    request<{ items: Moment[]; next_cursor: string | null }>(
+      "GET", `/circles/${circleId}/moments${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`),
+  moment: (id: string) => request<Moment>("GET", `/moments/${id}`),
+  postMoment: (momentId: string, blob: Blob, caption: string): Promise<Moment> =>
+    withTimeout((async (): Promise<Moment> => {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new ApiError(401, "Not signed in");
+      const form = new FormData();
+      form.append("photo", blob, "moment.webp");
+      if (caption.trim()) form.append("caption", caption.trim());
+      const res = await fetch(`${BASE}/moments/${momentId}/posts`, {
+        method: "POST",
+        headers: { ...CLIENT_HEADERS, Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new ApiError(res.status, json.message ?? json.detail ?? res.statusText);
+      return json as Moment;
+    })(), `POST /moments/${momentId}/posts`),
+  somedayFromPost: (postId: string) =>
+    request<Intent>("POST", `/moments/posts/${postId}/someday`),
+  setTimezone: (timezone: string) =>
+    request<{ timezone: string }>("POST", "/me/timezone", { timezone }),
   setMemberRole: (circleId: string, userId: string, role: "admin" | "member" | "owner") =>
     request<{ user_id: string; role: string } | { message: string; new_owner_id: string }>(
       "PATCH", `/circles/${circleId}/members/${userId}`, { role },
