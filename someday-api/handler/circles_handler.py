@@ -33,7 +33,9 @@ class CirclesHandler(DBUtil):
     @log_timing("circles_handler.update_circle")
     def update_circle(self, circle_id: str, request: UpdateCircleRequest, user_id: str) -> tuple[int, dict | str]:
         infologger.info(f"CirclesHandler.update_circle | circle_id={circle_id} user_id={user_id}")
-        circle = h.update_circle(self, circle_id, user_id, request.name, request.emoji)
+        circle = h.update_circle(
+            self, circle_id, user_id, request.name, request.emoji, request.moments_cadence
+        )
         if not circle:
             return 404, "Circle not found or you are not the owner"
         return 200, circle

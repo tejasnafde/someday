@@ -35,6 +35,29 @@ export interface Member {
 
 export interface CircleDetail extends Circle {
   members: Member[];
+  moments_cadence?: number;
+}
+
+export interface MomentPost {
+  id: string;
+  user_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  photo_url: string | null; // null while hidden by the reveal rule
+  caption: string | null;
+  tz: string;
+  late: boolean;
+  created_at: string;
+}
+
+export interface Moment {
+  id: string;
+  circle_id: string;
+  moment_date: string;
+  circle_name?: string;
+  revealed: boolean;
+  my_post?: MomentPost | null;
+  posts: MomentPost[];
 }
 
 export interface LinkMeta {

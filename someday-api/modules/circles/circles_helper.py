@@ -36,11 +36,15 @@ def create_circle(db, name: str, emoji: str | None, owner_id: str) -> dict:
     return circle
 
 
-def update_circle(db, circle_id: str, user_id: str, name: str | None, emoji: str | None) -> dict | None:
+def update_circle(
+    db, circle_id: str, user_id: str, name: str | None, emoji: str | None,
+    moments_cadence: int | None = None,
+) -> dict | None:
     infologger.info(f"circles_helper.update_circle | circle_id={circle_id} user_id={user_id}")
     row = db.execute_query_with_value_returning(
         q.UPDATE_CIRCLE,
-        {"circle_id": circle_id, "user_id": user_id, "name": name, "emoji": emoji},
+        {"circle_id": circle_id, "user_id": user_id, "name": name, "emoji": emoji,
+         "moments_cadence": moments_cadence},
     )
     if not row:
         infologger.warning(f"circles_helper.update_circle | not found or not owner | circle_id={circle_id}")

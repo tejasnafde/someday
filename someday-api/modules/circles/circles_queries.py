@@ -29,6 +29,7 @@ GET_CIRCLE_BY_ID = """
         c.emoji,
         c.owner_id,
         c.invite_token,
+        c.moments_cadence,
         c.created_at::text,
         COUNT(DISTINCT cm_all.user_id) FILTER (WHERE cm_all.status = 1) AS member_count,
         COUNT(DISTINCT i.id) FILTER (WHERE i.status = 1
@@ -73,9 +74,10 @@ INSERT_CIRCLE_MEMBER = """
 UPDATE_CIRCLE = """
     UPDATE public.circles
     SET name  = COALESCE(:name,  name),
-        emoji = COALESCE(:emoji, emoji)
+        emoji = COALESCE(:emoji, emoji),
+        moments_cadence = COALESCE(:moments_cadence, moments_cadence)
     WHERE id = :circle_id AND owner_id = :user_id AND status = 1
-    RETURNING id, name, emoji, owner_id, invite_token, created_at::text
+    RETURNING id, name, emoji, owner_id, invite_token, moments_cadence, created_at::text
 """
 
 SOFT_DELETE_CIRCLE = """
