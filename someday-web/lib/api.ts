@@ -84,11 +84,12 @@ export const api = {
     request<{ message: string; circle_id: string; name: string }>("POST", `/circles/join/${token}`),
   leaveCircle: (id: string) => request<unknown>("POST", `/circles/${id}/leave`),
 
-  intents: (circleId: string, params?: { task_status?: string; category?: string; tag?: string; shortlist?: boolean; cursor?: string; limit?: number }) => {
+  intents: (circleId: string, params?: { task_status?: string; category?: string; tag?: string; tags?: string[]; shortlist?: boolean; cursor?: string; limit?: number }) => {
     const q = new URLSearchParams();
     if (params?.task_status) q.set("task_status", params.task_status);
     if (params?.category) q.set("category", params.category);
     if (params?.tag) q.set("tag", params.tag);
+    for (const t of params?.tags ?? []) q.append("tags", t);
     if (params?.shortlist) q.set("shortlist", "true");
     if (params?.cursor) q.set("cursor", params.cursor);
     if (params?.limit) q.set("limit", String(params.limit));
