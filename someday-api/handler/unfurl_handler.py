@@ -56,6 +56,21 @@ class OGParser(HTMLParser):
 YOUTUBE_HOSTS = {"youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"}
 SHORTLINK_HOSTS = {"share.google", "maps.app.goo.gl", "goo.gl", "g.co"}
 
+# Platforms that serve empty or login-walled pages to datacenter IPs, so the
+# unfurl predictably returns nothing. The transient /unfurl response flags them
+# so capture UIs can say why there is no preview instead of failing silently.
+RESTRICTED_HOSTS = {
+    "tiktok.com", "vm.tiktok.com",
+    "twitter.com", "x.com", "t.co",
+    "linkedin.com", "lnkd.in",
+    "instagram.com", "facebook.com", "fb.watch",
+}
+
+
+def is_restricted_platform(url: str) -> bool:
+    host = (urlparse(url).hostname or "").lower()
+    return any(host == d or host.endswith("." + d) for d in RESTRICTED_HOSTS)
+
 
 def resolve_shortlink(url: str) -> str:
     """Google's shorteners (share.google, goo.gl, g.co) redirect to the real
@@ -267,5 +282,11 @@ class UnfurlHandler(DBUtil):
         meta = fetch_link_meta(url, rehost=False)
         if not meta:
             infologger.warning(f"UnfurlHandler.unfurl | fallback - no metadata | url={url}")
-            return 200, {"title": None, "image": None, "site": None, "description": None}
+            return 200, {
+                "title": None,
+                "image": None,
+                "site": None,
+                "description": None,
+                "restricted_platform": is_restricted_platform(url),
+            }
         return 200, meta

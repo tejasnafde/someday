@@ -42,6 +42,8 @@ export interface LinkMeta {
   image: string | null;
   site: string | null;
   description?: string | null;
+  /** Transient /unfurl responses only: the domain is known to block previews. */
+  restricted_platform?: boolean;
 }
 
 export interface Intent {

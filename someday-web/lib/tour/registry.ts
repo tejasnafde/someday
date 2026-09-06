@@ -111,6 +111,13 @@ export const TOUR_REGISTRY: TourStep[] = [
     body: "Archive hides it from the active tabs without deleting it.",
   },
   {
+    id: "circle.bulk-archive",
+    page: "circle",
+    anchor: "bulk-select",
+    title: "Tidy up in one go",
+    body: "Select several done ideas and archive them together.",
+  },
+  {
     id: "intent.planned",
     page: "intent",
     anchor: "intent-planned",

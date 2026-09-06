@@ -30,6 +30,9 @@ export default function CirclePage() {
   const [tags, setTags] = useState<string[]>([]);
   const [userId, setUserId] = useState("");
   const [intentsError, setIntentsError] = useState<string | null>(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [archiving, setArchiving] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -158,6 +161,21 @@ export default function CirclePage() {
     router.push("/");
   }
 
+  async function bulkArchive() {
+    if (selected.size === 0) return;
+    setArchiving(true);
+    try {
+      await Promise.all([...selected].map((iid) => api.updateIntent(iid, { task_status: "archived" })));
+      setSelectMode(false);
+      setSelected(new Set());
+      load();
+    } catch {
+      load();
+    } finally {
+      setArchiving(false);
+    }
+  }
+
   async function copyInvite() {
     await navigator.clipboard.writeText(`${location.origin}/join/${circle!.invite_token}`);
     setCopied(true);
@@ -247,7 +265,7 @@ export default function CirclePage() {
 
       <div data-tour="status-tabs" className="flex border-b" style={{ borderColor: "var(--brd-s)" }}>
         {TABS.map((t) => (
-          <button key={t} onClick={() => setTab(t)}
+          <button key={t} onClick={() => { setTab(t); setSelectMode(false); setSelected(new Set()); }}
             className="-mb-px flex items-center gap-1.5 px-3.5 py-2.5 text-[13px] font-medium"
             style={{
               color: tab === t ? "var(--acc)" : "var(--txt-l)",
@@ -278,11 +296,15 @@ export default function CirclePage() {
             ))}
           </div>
           )}
-          {tags.length > 0 && (
-            <div data-tour="tag-filter" className="-mx-5 flex items-center gap-2 overflow-x-auto px-5 pb-2 [scrollbar-width:none]">
+          <div data-tour="tag-filter" className="-mx-5 flex items-center gap-2 overflow-x-auto px-5 pb-2 [scrollbar-width:none]">
               <span className="shrink-0" style={{ color: "var(--txt-l)" }}>
                 <Icon name="settings" size="sm" />
               </span>
+              {tags.length === 0 && (
+                <span className="whitespace-nowrap text-[11px]" style={{ color: "var(--txt-l)" }}>
+                  No tags yet - they appear automatically when you save links.
+                </span>
+              )}
               {tags.map((tg) => {
                 const on = selectedTags.includes(tg);
                 return (
@@ -305,9 +327,21 @@ export default function CirclePage() {
                   Clear
                 </button>
               )}
-            </div>
-          )}
+          </div>
         </>
+      )}
+
+      {tab === "Done" && (visible?.length ?? 0) > 0 && (
+        <div className="mt-3 flex items-center justify-between">
+          <span className="tnum text-xs" style={{ color: "var(--txt-m)" }}>
+            {selectMode ? `${selected.size} selected` : ""}
+          </span>
+          <button data-tour="bulk-select"
+            onClick={() => { setSelectMode(!selectMode); setSelected(new Set()); }}
+            className="btn-ghost px-4 py-1.5 text-xs">
+            {selectMode ? "Cancel" : "Select"}
+          </button>
+        </div>
       )}
 
       <div className="mt-2 flex flex-col gap-3">
@@ -330,6 +364,28 @@ export default function CirclePage() {
                     : "Nothing saved yet - drop in the first thing you should do together."
             }
           />
+        ) : selectMode ? (
+          visible.map((i) => {
+            const on = selected.has(i.id);
+            return (
+              <button key={i.id}
+                onClick={() => setSelected((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(i.id)) next.delete(i.id); else next.add(i.id);
+                  return next;
+                })}
+                aria-pressed={on}
+                className="glass flex items-center gap-3 rounded-[var(--rs)] p-3.5 text-left">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
+                  style={on
+                    ? { background: "linear-gradient(135deg, var(--acc), var(--acc-m))", color: "#fff" }
+                    : { background: "var(--glass-lo)", border: "1.5px solid var(--brd-h)" }}>
+                  {on && <Icon name="check" size="sm" />}
+                </span>
+                <span className="truncate font-serif text-sm font-semibold">{i.title}</span>
+              </button>
+            );
+          })
         ) : (
           visible.map((i, idx) => (
             <div key={i.id} data-tour={idx === 0 ? "intent-card" : undefined}>
@@ -347,6 +403,13 @@ export default function CirclePage() {
           ))
         )}
       </div>
+
+      {selectMode && selected.size > 0 && (
+        <button onClick={bulkArchive} disabled={archiving} className="btn-primary mt-4 w-full py-3 text-sm disabled:opacity-60">
+          <Icon name="archive" size="sm" />
+          {archiving ? "Archiving…" : `Archive ${selected.size} ${selected.size === 1 ? "idea" : "ideas"}`}
+        </button>
+      )}
 
       {nextCursor && (
         <div className="mt-4 flex justify-center">

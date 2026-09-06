@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Sprite";
+import { TagInput } from "@/components/TagInput";
 import { Tour } from "@/components/Tour";
 import { CATEGORY_ICONS, IntentPreview, NavBar, Spinner } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -18,8 +19,9 @@ export default function IntentPage() {
   const router = useRouter();
   const [intent, setIntent] = useState<Intent | null>(null);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ title: "", note: "", tags: "", category: null as Category | null, planned_for: "" });
+  const [form, setForm] = useState({ title: "", note: "", tags: [] as string[], category: null as Category | null, planned_for: "" });
   const [saving, setSaving] = useState(false);
+  const [circleTagList, setCircleTagList] = useState<string[]>([]);
 
   const [memorySheet, setMemorySheet] = useState(false);
   const [memoryNote, setMemoryNote] = useState("");
@@ -35,13 +37,18 @@ export default function IntentPage() {
     if (ready) load();
   }, [ready, load]);
 
+  const circleId = intent?.circle_id;
+  useEffect(() => {
+    if (circleId) api.circleTags(circleId).then(setCircleTagList).catch(() => {});
+  }, [circleId]);
+
   if (!ready || !intent) return <Spinner />;
 
   function startEdit() {
     setForm({
       title: intent!.title,
       note: intent!.note ?? "",
-      tags: intent!.tags.join(", "),
+      tags: intent!.tags,
       category: intent!.category,
       planned_for: intent!.planned_for ?? "",
     });
@@ -55,7 +62,7 @@ export default function IntentPage() {
       title: form.title.trim(),
       note: form.note.trim() || undefined,
       category: form.category ?? undefined,
-      tags: form.tags ? form.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
+      tags: form.tags,
       planned_for: form.planned_for.trim() || undefined,
     });
     setSaving(false);
@@ -183,8 +190,8 @@ export default function IntentPage() {
           </div>
           <div>
             <label className={label} style={{ color: "var(--txt-l)" }}>Tags</label>
-            <input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })}
-              placeholder="comma, separated" className={input} />
+            <TagInput value={form.tags} onChange={(t) => setForm({ ...form, tags: t })}
+              suggestions={circleTagList} placeholder="Type to add" />
           </div>
           <div>
             <label className={label} style={{ color: "var(--txt-l)" }}>When</label>
@@ -263,21 +270,36 @@ export default function IntentPage() {
         <div className="mb-2.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--txt-l)" }}>
           Status
         </div>
-        <div className="flex items-center">
-          {STEPS.map((s, i) => (
-            <span key={s} className="contents">
-              {i > 0 && <span className="h-px w-3" style={{ background: "var(--brd-s)" }} />}
-              <button onClick={() => setStatus(s)}
-                className="flex-1 rounded-lg px-1 py-2 text-[10px] font-medium capitalize"
-                style={{
-                  background: intent.task_status === s ? "var(--acc-l)" : "transparent",
-                  color: intent.task_status === s ? "var(--acc)" : "var(--txt-l)",
-                  fontWeight: intent.task_status === s ? 700 : 500,
-                }}>
-                {s}
-              </button>
-            </span>
-          ))}
+        <div className="flex items-start">
+          {STEPS.map((s, i) => {
+            const currentIdx = STEPS.indexOf(intent.task_status as (typeof STEPS)[number]);
+            const reached = currentIdx >= 0 && i < currentIdx;
+            const current = i === currentIdx;
+            return (
+              <span key={s} className="contents">
+                {i > 0 && <span className="mt-[15px] h-px flex-1" style={{ background: "var(--brd-h)" }} />}
+                <button onClick={() => setStatus(s)}
+                  className="flex flex-col items-center gap-1.5 px-1"
+                  aria-current={current ? "step" : undefined}>
+                  <span className="tnum flex h-[30px] w-[30px] items-center justify-center rounded-full text-[11px] font-bold"
+                    style={current
+                      ? { background: "linear-gradient(135deg, var(--acc), var(--acc-m))", color: "#fff", boxShadow: "var(--shb)" }
+                      : reached
+                        ? { background: "var(--acc-l)", color: "var(--acc)", border: "1.5px solid var(--acc)44" }
+                        : { background: "var(--glass-lo)", color: "var(--txt-l)", border: "1.5px solid var(--brd-s)" }}>
+                    {reached ? <Icon name="check" size="sm" /> : i + 1}
+                  </span>
+                  <span className="text-[10px] font-medium capitalize"
+                    style={{ color: current ? "var(--acc)" : reached ? "var(--txt-m)" : "var(--txt-l)", fontWeight: current ? 700 : 500 }}>
+                    {s}
+                  </span>
+                </button>
+              </span>
+            );
+          })}
+        </div>
+        <div className="mt-1.5 text-[10px]" style={{ color: "var(--txt-l)" }}>
+          Tap any step - moving backward is fine.
         </div>
         <div className="mt-2.5 flex items-center justify-between border-t pt-2.5 text-[11px]"
           style={{ borderColor: "var(--brd-s)", color: "var(--txt-m)" }}>
