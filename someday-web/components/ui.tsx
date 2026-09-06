@@ -268,6 +268,15 @@ export function IntentCard({ intent, onReact, onBoost, onRetryPreview, onTagClic
             aria-label="View details"
           >
             <StatusBadge status={intent.task_status} />
+            {intent.task_status === "done" &&
+              (intent.done_note || (intent.done_photos && intent.done_photos.length > 0)) && (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                title="Has a memory"
+                style={{ background: "var(--acc-l)", color: "var(--acc)", border: "1px solid var(--acc)2e" }}>
+                <Icon name="camera" size="sm" />
+                memory
+              </span>
+            )}
             {intent.planned_for && (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
                 style={{ background: "var(--sp)", color: "var(--sp-t)", border: "1px solid var(--sp-t)33" }}>
