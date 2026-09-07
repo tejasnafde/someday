@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from app_util.db_util import DBUtil
 from app_util.log_util import errorlogger, infologger
 from common_helper.decorators import log_timing
+from common_helper.geo_util import reverse_geocode_city
 from common_helper.notify import Notify
 from common_helper.storage_helper import upload_public_image
 from modules.intents import intents_helper as ih
@@ -43,7 +44,8 @@ class MomentsHandler(DBUtil):
 
     @log_timing("moments_handler.create_post")
     def create_post(
-        self, moment_id: str, user_id: str, content: bytes, content_type: str, caption: str | None
+        self, moment_id: str, user_id: str, content: bytes, content_type: str, caption: str | None,
+        lat: float | None = None, lng: float | None = None,
     ) -> tuple[int, dict | str]:
         infologger.info(f"MomentsHandler.create_post | moment_id={moment_id} user_id={user_id} bytes={len(content)}")
         rows = self.execute_query_with_value(q.GET_MOMENT_FOR_MEMBER, {"moment_id": moment_id, "user_id": user_id})
@@ -53,6 +55,17 @@ class MomentsHandler(DBUtil):
 
         tz_rows = self.execute_query_with_value(q.GET_USER_TIMEZONE, {"user_id": user_id})
         poster_tz = tz_rows[0]["timezone"] if tz_rows else "UTC"
+        # City priority: fresh coordinates from the device, else the profile
+        # city. Never derived from timezone - that labeled all of India
+        # "Calcutta". A geocoded city also refreshes the profile fallback.
+        city = tz_rows[0].get("city") if tz_rows else None
+        if lat is not None and lng is not None:
+            geocoded = reverse_geocode_city(lat, lng)
+            if geocoded:
+                city = geocoded
+                self.execute_query_with_value_without_output(
+                    q.UPDATE_USER_CITY, {"user_id": user_id, "city": city}
+                )
         now_utc = datetime.now(timezone.utc)
         if not h.can_post(h.as_date(moment["moment_date"]), poster_tz, now_utc):
             return 400, "This moment is closed"
@@ -75,7 +88,7 @@ class MomentsHandler(DBUtil):
         row = self.execute_query_with_value_returning(
             q.INSERT_POST,
             {"moment_id": moment_id, "user_id": user_id, "photo_url": photo_url,
-             "caption": caption, "tz": poster_tz, "late": late},
+             "caption": caption, "tz": poster_tz, "city": city, "late": late},
         )
         if not row:
             return 409, "You already posted to this moment"

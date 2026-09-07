@@ -29,6 +29,15 @@ class PushTokenRequest(BaseModel):
 class UpdateMeRequest(BaseModel):
     display_name: Optional[str] = None
     avatar_url: Optional[str] = None
+    # Shown on Meanwhile posts. User-declared - never derived from timezone.
+    # Empty string clears it; None leaves it unchanged.
+    city: Optional[str] = None
+
+    @field_validator("city")
+    def city_trimmed(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        return " ".join(v.split())[:40]
 
     @field_validator("display_name")
     def name_not_blank(cls, v: Optional[str]) -> Optional[str]:
@@ -97,7 +106,7 @@ async def update_me(request: UpdateMeRequest, current_user: dict = Depends(jwt_r
         f"PATCH /auth/me | user_id={current_user['sub']} payload={request.model_dump(exclude_none=True)}"
     )
     status, result = handler.update_me(
-        current_user["sub"], request.display_name, request.avatar_url
+        current_user["sub"], request.display_name, request.avatar_url, request.city
     )
     return create_response(status, result)
 

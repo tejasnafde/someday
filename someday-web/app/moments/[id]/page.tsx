@@ -10,8 +10,25 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
 import type { CircleDetail, Moment, MomentPost } from "@/lib/types";
 
-function cityOf(tz: string): string {
-  return (tz.split("/").pop() ?? tz).replace(/_/g, " ");
+// Best-effort device location, resolved to a city server-side. Denied,
+// unavailable, or slow (>3s) all resolve to undefined and the post proceeds
+// with the profile city instead. Never blocks posting.
+function currentGeo(): Promise<{ lat: number; lng: number } | undefined> {
+  return new Promise((resolve) => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return resolve(undefined);
+    const timer = setTimeout(() => resolve(undefined), 3000);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        clearTimeout(timer);
+        resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      },
+      () => {
+        clearTimeout(timer);
+        resolve(undefined);
+      },
+      { timeout: 2500, maximumAge: 600000 },
+    );
+  });
 }
 
 function localClock(createdAt: string, tz: string): string {
@@ -71,7 +88,8 @@ export default function MomentPage() {
     setPosting(true);
     setError("");
     try {
-      const updated = await api.postMoment(id, pending, caption);
+      const geo = await currentGeo();
+      const updated = await api.postMoment(id, pending, caption, geo);
       setMoment(updated);
       setPending(null);
       setPendingUrl(null);
@@ -109,7 +127,7 @@ export default function MomentPage() {
   const posts = moment.posts;
   const postedIds = new Set(posts.map((p) => String(p.user_id)));
   const absent = (circle?.members ?? []).filter((m) => !postedIds.has(String(m.user_id)));
-  const cities = [...new Set(posts.map((p) => cityOf(p.tz)))];
+  const cities = [...new Set(posts.map((p) => p.city).filter((c): c is string => !!c))];
   const dateLabel = new Date(moment.moment_date + "T00:00:00").toLocaleDateString([], {
     weekday: "short", day: "numeric", month: "short",
   });
@@ -167,7 +185,7 @@ export default function MomentPage() {
                 {p.display_name ?? "Someone"} posted
               </span>
               <span className="text-[10px]" style={{ color: "var(--txt-l)" }}>
-                {cityOf(p.tz)}{p.late ? " · late" : ""}
+                {[p.city, p.late ? "late" : ""].filter(Boolean).join(" · ") || "posted"}
               </span>
             </div>
           ),
@@ -241,9 +259,9 @@ function MomentTile({ post, mine, saved, onSomeday }: {
         <div className="text-[11px] font-bold">{mine ? "You" : post.display_name ?? "Someone"}</div>
         <div className="flex items-center gap-1 text-[9.5px] opacity-85">
           <Icon name="map-pin" size="sm" />
-          {[cityOf(post.tz), localClock(post.created_at, post.tz), post.late ? "late" : ""]
+          {[post.city, localClock(post.created_at, post.tz), post.late ? "late" : ""]
             .filter(Boolean)
-            .join(" · ")}
+            .join(" · ") || "somewhere"}
         </div>
       </div>
     </div>

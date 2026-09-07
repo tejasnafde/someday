@@ -67,7 +67,7 @@ function request<T>(method: string, path: string, body?: unknown): Promise<T> {
 export const api = {
   verify: () => request<{ user: User }>("POST", "/auth/verify"),
   me: () => request<{ user: User; circles: Circle[] }>("GET", "/auth/me"),
-  updateMe: (fields: { display_name?: string; avatar_url?: string }) =>
+  updateMe: (fields: { display_name?: string; avatar_url?: string; city?: string }) =>
     request<{ user: User }>("PATCH", "/auth/me", fields),
   uploadAvatar: (blob: Blob) => upload<{ user: User }>("/auth/me/avatar", blob, "avatar.webp"),
   uploadCirclePhoto: (circleId: string, blob: Blob) =>
@@ -109,7 +109,7 @@ export const api = {
     request<{ items: Moment[]; next_cursor: string | null }>(
       "GET", `/circles/${circleId}/moments${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`),
   moment: (id: string) => request<Moment>("GET", `/moments/${id}`),
-  postMoment: (momentId: string, blob: Blob, caption: string): Promise<Moment> =>
+  postMoment: (momentId: string, blob: Blob, caption: string, geo?: { lat: number; lng: number }): Promise<Moment> =>
     withTimeout((async (): Promise<Moment> => {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
@@ -117,6 +117,10 @@ export const api = {
       const form = new FormData();
       form.append("photo", blob, "moment.webp");
       if (caption.trim()) form.append("caption", caption.trim());
+      if (geo) {
+        form.append("lat", String(geo.lat));
+        form.append("lng", String(geo.lng));
+      }
       const res = await fetch(`${BASE}/moments/${momentId}/posts`, {
         method: "POST",
         headers: { ...CLIENT_HEADERS, Authorization: `Bearer ${token}` },

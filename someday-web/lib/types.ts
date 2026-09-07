@@ -10,6 +10,7 @@ export interface User {
   email: string;
   display_name: string | null;
   avatar_url: string | null;
+  city?: string | null;
   tour_state?: TourState | null;
 }
 
@@ -46,6 +47,7 @@ export interface MomentPost {
   photo_url: string | null; // null while hidden by the reveal rule
   caption: string | null;
   tz: string;
+  city: string | null;
   late: boolean;
   created_at: string;
 }
