@@ -6,6 +6,7 @@ on:
     paths: [someday-app/**]
   pull_request:
     paths: [someday-app/**]
+  workflow_dispatch:
 
 jobs:
   typecheck:
