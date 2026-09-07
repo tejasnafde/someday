@@ -221,8 +221,9 @@ def moment_with_posts(db, moment_id: str, viewer_id: str, now_utc: datetime | No
         # Proof of life only: who posted, nothing else.
         moment["posts"] = [
             {"id": p["id"], "user_id": p["user_id"], "display_name": p["display_name"],
-             "avatar_url": p["avatar_url"], "tz": p["tz"], "created_at": p["created_at"],
-             "photo_url": None, "caption": None, "late": p["late"]}
+             "avatar_url": p["avatar_url"], "tz": p["tz"], "city": p["city"],
+             "created_at": p["created_at"], "photo_url": None, "caption": None,
+             "late": p["late"]}
             for p in posts
         ]
     return moment
@@ -230,19 +231,25 @@ def moment_with_posts(db, moment_id: str, viewer_id: str, now_utc: datetime | No
 
 def list_moments(db, circle_id: str, viewer_id: str, cursor: str | None, limit: int,
                  now_utc: datetime | None = None) -> dict:
-    """Paginated timeline of a circle's moments, reveal rule applied per moment."""
+    """Paginated timeline of a circle's moments, reveal rule applied per moment.
+
+    Spoiler rule: the week's schedule is drawn upfront, so the list must never
+    leak it. Future days are excluded in SQL; today's moment appears only once
+    it is real for the viewer - their ping has fired, or a friend has posted."""
     now_utc = now_utc or datetime.now(timezone.utc)
+    viewer_rows = db.execute_query_with_value(q.GET_USER_TIMEZONE, {"user_id": viewer_id})
+    viewer_tz = viewer_rows[0]["timezone"] if viewer_rows else "UTC"
+    viewer_today = now_utc.astimezone(safe_zone(viewer_tz)).date()
     moments = db.execute_query_with_value(
         q.LIST_MOMENTS_FOR_CIRCLE,
-        {"circle_id": circle_id, "user_id": viewer_id, "cursor": cursor, "limit": limit},
+        {"circle_id": circle_id, "user_id": viewer_id, "cursor": cursor, "limit": limit,
+         "max_date": str(viewer_today)},
     )
     if not moments:
         return {"items": [], "next_cursor": None}
     posts = db.execute_query_with_value(
         q.LIST_POSTS_FOR_MOMENTS, {"moment_ids": [str(m["id"]) for m in moments]}
     )
-    viewer_rows = db.execute_query_with_value(q.GET_USER_TIMEZONE, {"user_id": viewer_id})
-    viewer_tz = viewer_rows[0]["timezone"] if viewer_rows else "UTC"
     by_moment: dict[str, list[dict]] = {}
     for p in posts:
         by_moment.setdefault(str(p["moment_id"]), []).append(p)
@@ -250,6 +257,18 @@ def list_moments(db, circle_id: str, viewer_id: str, cursor: str | None, limit: 
     for m in moments:
         entry = dict(m)
         m_posts = by_moment.get(str(m["id"]), [])
+        # Today's moment stays hidden until the viewer's own ping has fired or
+        # a friend has posted - otherwise the tab announces "today is a moment
+        # day" before the ping does.
+        if as_date(entry["moment_date"]) == viewer_today and not m_posts:
+            ping_rows = db.execute_query_with_value(
+                q.GET_MY_PING, {"moment_id": str(m["id"]), "user_id": viewer_id}
+            )
+            if not ping_rows:
+                continue
+            ping_at = datetime.fromisoformat(str(ping_rows[0]["ping_at"]).replace(" ", "T"))
+            if ping_at > now_utc:
+                continue
         viewer_posted = any(str(p["user_id"]) == str(viewer_id) for p in m_posts)
         revealed = posts_visible(viewer_posted, as_date(entry["moment_date"]), viewer_tz, now_utc)
         entry["revealed"] = revealed
@@ -258,8 +277,9 @@ def list_moments(db, circle_id: str, viewer_id: str, cursor: str | None, limit: 
         else:
             entry["posts"] = [
                 {"id": p["id"], "user_id": p["user_id"], "display_name": p["display_name"],
-                 "avatar_url": p["avatar_url"], "tz": p["tz"], "created_at": p["created_at"],
-                 "photo_url": None, "caption": None, "late": p["late"]}
+                 "avatar_url": p["avatar_url"], "tz": p["tz"], "city": p["city"],
+                 "created_at": p["created_at"], "photo_url": None, "caption": None,
+                 "late": p["late"]}
                 for p in m_posts
             ]
         items.append(entry)

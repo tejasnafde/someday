@@ -6,7 +6,7 @@
 // Users' seen step ids live server-side (users.tour_state), so anyone who
 // hasn't seen the new step gets a mini-tour of just that step on next visit.
 
-export type TourPage = "dashboard" | "circle" | "intent" | "members" | "notifications";
+export type TourPage = "dashboard" | "circle" | "intent" | "members" | "notifications" | "settings";
 
 export interface TourStep {
   /** Stable forever - never rename or reuse. */
@@ -116,6 +116,13 @@ export const TOUR_REGISTRY: TourStep[] = [
     anchor: "bulk-select",
     title: "Tidy up in one go",
     body: "Select several done ideas and archive them together.",
+  },
+  {
+    id: "settings.city",
+    page: "settings",
+    anchor: "settings-city",
+    title: "Say where you are",
+    body: "Your city shows on Meanwhile posts. Allow location when posting and it updates itself.",
   },
   {
     id: "circle.meanwhile",

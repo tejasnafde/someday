@@ -91,6 +91,9 @@ LIST_MOMENTS_FOR_CIRCLE = """
           SELECT 1 FROM public.circle_members cm
           WHERE cm.circle_id = m.circle_id AND cm.user_id = :user_id AND cm.status = 1
       )
+      -- Never list future moments: the week is drawn upfront and listing
+      -- them would publish the schedule, killing the surprise.
+      AND m.moment_date <= CAST(:max_date AS date)
       AND (:cursor IS NULL OR m.moment_date < CAST(:cursor AS date))
     ORDER BY m.moment_date DESC
     LIMIT :limit
@@ -106,6 +109,7 @@ LIST_POSTS_FOR_MOMENTS = """
         p.photo_url,
         p.caption,
         p.tz,
+        p.city,
         p.late,
         p.created_at::text
     FROM public.moment_posts p
@@ -122,10 +126,10 @@ GET_MY_PING = """
 """
 
 INSERT_POST = """
-    INSERT INTO public.moment_posts (moment_id, user_id, photo_url, caption, tz, late, status)
-    VALUES (:moment_id, :user_id, :photo_url, :caption, :tz, :late, 1)
+    INSERT INTO public.moment_posts (moment_id, user_id, photo_url, caption, tz, city, late, status)
+    VALUES (:moment_id, :user_id, :photo_url, :caption, :tz, :city, :late, 1)
     ON CONFLICT DO NOTHING
-    RETURNING id, moment_id, user_id, photo_url, caption, tz, late, created_at::text
+    RETURNING id, moment_id, user_id, photo_url, caption, tz, city, late, created_at::text
 """
 
 GET_POST_FOR_MEMBER = """
@@ -149,7 +153,7 @@ GET_POST_FOR_MEMBER = """
 """
 
 GET_USER_TIMEZONE = """
-    SELECT timezone FROM public.users WHERE id = :user_id AND status = 1
+    SELECT timezone, city FROM public.users WHERE id = :user_id AND status = 1
 """
 
 # Pending pings whose window was computed with the user's OLD timezone. Fetched
@@ -168,6 +172,12 @@ UPDATE_PING_TIME = """
     UPDATE public.moment_pings
     SET ping_at = CAST(:ping_at AS timestamptz)
     WHERE id = :ping_id AND sent = 0 AND status = 1
+"""
+
+UPDATE_USER_CITY = """
+    UPDATE public.users
+    SET city = :city
+    WHERE id = :user_id AND status = 1
 """
 
 UPDATE_USER_TIMEZONE = """

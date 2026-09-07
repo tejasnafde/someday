@@ -70,11 +70,13 @@ async def create_post(
     current_user: dict = Depends(jwt_required),
     photo: UploadFile = File(...),
     caption: str | None = Form(default=None),
+    lat: float | None = Form(default=None, ge=-90.0, le=90.0),
+    lng: float | None = Form(default=None, ge=-180.0, le=180.0),
 ):
-    infologger.info(f"POST /moments/{moment_id}/posts | user_id={current_user['sub']}")
+    infologger.info(f"POST /moments/{moment_id}/posts | user_id={current_user['sub']} geo={lat is not None}")
     content = await photo.read()
     status, result = handler.create_post(
-        moment_id, current_user["sub"], content, photo.content_type or "", caption
+        moment_id, current_user["sub"], content, photo.content_type or "", caption, lat, lng
     )
     return create_response(status, result)
 

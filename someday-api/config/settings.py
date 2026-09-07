@@ -70,6 +70,9 @@ class Settings(BaseSettings):
     # Shared token guarding the Cloud Scheduler → moments tick endpoint
     MOMENTS_TICK_TOKEN: str = ""
 
+    # Reverse geocoding for moment posts (coordinates → city name)
+    NOMINATIM_URL: str = "https://nominatim.openstreetmap.org"
+
     # Web push (VAPID)
     VAPID_PUBLIC_KEY: str = ""
     VAPID_PRIVATE_KEY: str = ""

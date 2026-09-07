@@ -9,6 +9,7 @@ class UserOut(BaseModel):
     email: str
     display_name: Optional[str]
     avatar_url: Optional[str]
+    city: Optional[str] = None
     tour_state: Optional[dict] = None
 
 

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Sprite";
+import { Tour } from "@/components/Tour";
 import { InstallSomeday } from "@/components/InstallSomeday";
 import { NavBar, Spinner, ThemeToggle } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -134,6 +135,12 @@ export default function SettingsPage() {
         )}
       </div>
 
+      <CityRow user={user} onSaved={(updated) => {
+        setUser(updated);
+        const me = getCached<{ user: User; circles: Circle[] }>("me");
+        if (me) setCached("me", { ...me, user: updated });
+      }} />
+
       <InstallSomeday />
 
       <button onClick={replayTour} className="btn-ghost mt-5 w-full py-3.5 text-sm" style={{ color: "var(--txt-m)" }}>
@@ -145,6 +152,50 @@ export default function SettingsPage() {
         <Icon name="log-out" size="sm" />
         Sign out
       </button>
+
+      <Tour page="settings" />
     </main>
+  );
+}
+
+function CityRow({ user, onSaved }: { user: User; onSaved: (u: User) => void }) {
+  const [value, setValue] = useState(user.city ?? "");
+  const [saving, setSaving] = useState(false);
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = value.trim();
+    if (trimmed === (user.city ?? "")) return;
+    setSaving(true);
+    try {
+      // Empty string clears the city server-side.
+      const { user: updated } = await api.updateMe({ city: trimmed });
+      onSaved(updated);
+    } catch {
+      setValue(user.city ?? "");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form onSubmit={save} data-tour="settings-city"
+      className="glass mt-5 flex items-center gap-3 rounded-[var(--r)] px-4 py-3.5"
+      style={{ boxShadow: "var(--shc)" }}>
+      <span style={{ color: "var(--txt-m)" }}><Icon name="map-pin" size="sm" /></span>
+      <div className="min-w-0 flex-1">
+        <div className="text-[13px] font-semibold">Your city</div>
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={save}
+          maxLength={40}
+          placeholder="Shown on your Meanwhile posts"
+          className="w-full bg-transparent text-xs outline-none"
+          style={{ color: "var(--txt-m)" }}
+        />
+      </div>
+      {saving && <span className="text-[10px]" style={{ color: "var(--txt-l)" }}>Saving…</span>}
+    </form>
   );
 }

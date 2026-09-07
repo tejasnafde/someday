@@ -554,6 +554,13 @@ export default function CirclePage() {
   );
 }
 
+function momentSubtitle(m: Moment): string {
+  if (m.posts.length === 0) return "quiet day";
+  const cities = [...new Set(m.posts.map((p) => p.city).filter(Boolean))];
+  if (cities.length > 0) return `${cities.length} ${cities.length === 1 ? "city" : "cities"}`;
+  return `${m.posts.length} posted`;
+}
+
 function monthKey(iso: string): string {
   return new Date(iso.slice(0, 10) + "T00:00:00").toLocaleDateString([], { month: "long", year: "numeric" });
 }
@@ -627,11 +634,7 @@ function MeanwhileTimeline({ feed, cadence, isOwner }: {
                     <div className="text-[11.5px] font-semibold">
                       {new Date(e.moment.moment_date + "T00:00:00").toLocaleDateString([], { weekday: "short", day: "numeric" })}
                       {" · "}
-                      {e.moment.posts.length === 0
-                        ? "quiet day"
-                        : `${[...new Set(e.moment.posts.map((p) => (p.tz.split("/").pop() ?? "").replace(/_/g, " ")))].length} ${
-                            [...new Set(e.moment.posts.map((p) => p.tz))].length === 1 ? "city" : "cities"
-                          }`}
+                      {momentSubtitle(e.moment)}
                     </div>
                     <div className="text-[10px]" style={{ color: "var(--txt-l)" }}>
                       {e.moment.revealed ? "Meanwhile moment" : "Post yours to reveal"}

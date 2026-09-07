@@ -107,6 +107,10 @@ export function Home({ nextPath }: { nextPath?: string | null }) {
         }
         return true;
       }}
+      // Lets the web app's Meanwhile posts attach a location. The page's
+      // geolocation request surfaces the system permission prompt via the
+      // manifest permissions in app.json; denial degrades to the profile city.
+      geolocationEnabled
       domStorageEnabled
       sharedCookiesEnabled
       startInLoadingState

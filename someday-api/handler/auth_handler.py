@@ -23,7 +23,7 @@ SET_PUSH_TOKEN = """
 """
 
 GET_USER = """
-    SELECT id, email, display_name, avatar_url, tour_state
+    SELECT id, email, display_name, avatar_url, city, tour_state
     FROM public.users
     WHERE id = :user_id AND status = 1
 """
@@ -31,9 +31,13 @@ GET_USER = """
 UPDATE_USER = """
     UPDATE public.users
     SET display_name = COALESCE(:display_name, display_name),
-        avatar_url   = COALESCE(:avatar_url, avatar_url)
+        avatar_url   = COALESCE(:avatar_url, avatar_url),
+        -- Tri-state: NULL preserves, empty string clears, value sets.
+        city = CASE WHEN :city IS NULL THEN city
+                    WHEN :city = '' THEN NULL
+                    ELSE :city END
     WHERE id = :user_id AND status = 1
-    RETURNING id, email, display_name, avatar_url
+    RETURNING id, email, display_name, avatar_url, city
 """
 
 
@@ -50,11 +54,13 @@ class AuthHandler(DBUtil):
         return 200, {"user": user}
 
     @log_timing("auth_handler.update_me")
-    def update_me(self, user_id: str, display_name: str | None, avatar_url: str | None) -> tuple[int, dict | str]:
-        infologger.info(f"AuthHandler.update_me | user_id={user_id} display_name={display_name!r}")
+    def update_me(
+        self, user_id: str, display_name: str | None, avatar_url: str | None, city: str | None = None
+    ) -> tuple[int, dict | str]:
+        infologger.info(f"AuthHandler.update_me | user_id={user_id} display_name={display_name!r} city={city!r}")
         user = self.execute_query_with_value_returning(
             UPDATE_USER,
-            {"user_id": user_id, "display_name": display_name, "avatar_url": avatar_url},
+            {"user_id": user_id, "display_name": display_name, "avatar_url": avatar_url, "city": city},
         )
         if not user:
             return 404, "User not found"
