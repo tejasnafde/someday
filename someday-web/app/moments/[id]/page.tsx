@@ -16,7 +16,12 @@ function cityOf(tz: string): string {
 
 function localClock(createdAt: string, tz: string): string {
   try {
-    const d = new Date(createdAt.replace(" ", "T"));
+    // Postgres timestamptz::text is "2026-09-07 12:34:56.789+00". JS Date
+    // requires a T separator AND a full "+00:00" offset - a bare "+00" parses
+    // as Invalid Date on WebView/Chrome.
+    const iso = createdAt.replace(" ", "T").replace(/([+-]\d{2})$/, "$1:00");
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
     return d.toLocaleTimeString([], { timeZone: tz, hour: "numeric", minute: "2-digit" });
   } catch {
     return "";
@@ -236,7 +241,9 @@ function MomentTile({ post, mine, saved, onSomeday }: {
         <div className="text-[11px] font-bold">{mine ? "You" : post.display_name ?? "Someone"}</div>
         <div className="flex items-center gap-1 text-[9.5px] opacity-85">
           <Icon name="map-pin" size="sm" />
-          {cityOf(post.tz)} · {localClock(post.created_at, post.tz)}{post.late ? " · late" : ""}
+          {[cityOf(post.tz), localClock(post.created_at, post.tz), post.late ? "late" : ""]
+            .filter(Boolean)
+            .join(" · ")}
         </div>
       </div>
     </div>

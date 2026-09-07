@@ -152,6 +152,24 @@ GET_USER_TIMEZONE = """
     SELECT timezone FROM public.users WHERE id = :user_id AND status = 1
 """
 
+# Pending pings whose window was computed with the user's OLD timezone. Fetched
+# on timezone change so each can be re-windowed in the new zone.
+LIST_UNSENT_PINGS_FOR_USER = """
+    SELECT p.id, m.moment_date::text
+    FROM public.moment_pings p
+    JOIN public.circle_moments m ON m.id = p.moment_id AND m.status = 1
+    WHERE p.user_id = :user_id
+      AND p.sent = 0
+      AND p.status = 1
+      AND m.moment_date >= CAST(:min_date AS date)
+"""
+
+UPDATE_PING_TIME = """
+    UPDATE public.moment_pings
+    SET ping_at = CAST(:ping_at AS timestamptz)
+    WHERE id = :ping_id AND sent = 0 AND status = 1
+"""
+
 UPDATE_USER_TIMEZONE = """
     UPDATE public.users
     SET timezone = :timezone

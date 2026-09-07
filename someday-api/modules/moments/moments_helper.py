@@ -176,6 +176,31 @@ def send_due_pings(db, notify) -> int:
     return len(due)
 
 
+def rewindow_pending_pings(db, user_id: str, tz_name: str,
+                           rng: random.Random | None = None,
+                           now_utc: datetime | None = None) -> int:
+    """A timezone change makes the user's pending ping times wrong (they were
+    drawn in the old zone's waking window - or in UTC before the tzdata fix).
+    Recompute every unsent ping for today onward in the new zone. Past-due
+    times survive the recompute only if the new window has already started."""
+    rng = rng or random.Random()
+    now_utc = now_utc or datetime.now(timezone.utc)
+    today = now_utc.date()
+    rows = db.execute_query_with_value(
+        q.LIST_UNSENT_PINGS_FOR_USER, {"user_id": user_id, "min_date": str(today)}
+    )
+    for row in rows:
+        new_ping = ping_time_utc(as_date(row["moment_date"]), tz_name, rng)
+        db.execute_query_with_value_without_output(
+            q.UPDATE_PING_TIME, {"ping_id": str(row["id"]), "ping_at": new_ping.isoformat()}
+        )
+    if rows:
+        infologger.info(
+            f"moments_helper.rewindow_pending_pings | user_id={user_id} tz={tz_name} rewindowed={len(rows)}"
+        )
+    return len(rows)
+
+
 def moment_with_posts(db, moment_id: str, viewer_id: str, now_utc: datetime | None = None) -> dict | None:
     """One moment with its posts, reveal rule applied for this viewer."""
     now_utc = now_utc or datetime.now(timezone.utc)

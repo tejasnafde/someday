@@ -114,4 +114,6 @@ class MomentsHandler(DBUtil):
         )
         if not row:
             return 404, "User not found"
-        return 200, {"timezone": row["timezone"]}
+        # Pending pings were windowed in the old zone - move them.
+        rewindowed = h.rewindow_pending_pings(self, user_id, tz_name)
+        return 200, {"timezone": row["timezone"], "rewindowed_pings": rewindowed}

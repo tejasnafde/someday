@@ -11,3 +11,8 @@ certifi==2026.5.20
 pandas==3.0.3
 pywebpush==2.3.0
 google-genai==2.14.0
+# python:3.12-slim ships no IANA tz database, so zoneinfo cannot resolve ANY
+# timezone name there (including the Asia/Calcutta alias Android sends).
+# Without this, every /me/timezone call 422s and Meanwhile pings fall back to
+# UTC windows.
+tzdata==2026.3
