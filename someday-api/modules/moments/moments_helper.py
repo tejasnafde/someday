@@ -160,19 +160,27 @@ def send_due_pings(db, notify) -> int:
     due = db.execute_query_with_value(q.LIST_DUE_PINGS, {})
     if not due:
         return 0
+    native = 0
     for ping in due:
-        body = "Meanwhile - what are you doing right now?"
+        body = f"Meanwhile in {ping['circle_name']} - what are you doing right now?"
         path = f"/moments/{ping['moment_id']}"
         try:
             if ping.get("push_token"):
+                native += 1
                 send_push(db, [ping["push_token"]], ping["circle_name"], body, path)
             notify.send_web_push([str(ping["user_id"])], ping["circle_name"], body, path)
+            # In-app fallback: most members have no push channel at all, and
+            # a "sent" ping that reached nobody looked identical in the logs.
+            notify.store_notification(str(ping["user_id"]), None, None, "moment_ping", body)
         except Exception as exc:
             errorlogger.error(f"moments_helper.send_due_pings | push failed | ping={ping['id']} | {exc}")
     db.execute_query_with_value_without_output(
         q.MARK_PINGS_SENT, {"ping_ids": [str(p["id"]) for p in due]}
     )
-    infologger.info(f"moments_helper.send_due_pings | sent={len(due)}")
+    infologger.info(
+        f"moments_helper.send_due_pings | sent={len(due)} native_push={native} "
+        f"no_native_token={len(due) - native}"
+    )
     return len(due)
 
 

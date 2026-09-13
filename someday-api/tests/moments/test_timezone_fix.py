@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 import pytest
 from pydantic import ValidationError
 
-from modules.moments.moments_helper import rewindow_pending_pings
+from modules.moments.moments_helper import rewindow_pending_pings, send_due_pings
 from routers.moments_router import TimezoneRequest
 
 
@@ -55,3 +55,36 @@ def test_rewindow_no_pending_pings():
     db = RewindowStubDB([])
     assert rewindow_pending_pings(db, "u1", "Asia/Kolkata") == 0
     assert db.updates == []
+
+
+class DueStubDB:
+    def __init__(self, due):
+        self.due = due
+        self.marked = None
+
+    def execute_query_with_value(self, query, params):
+        return self.due
+
+    def execute_query_with_value_without_output(self, query, params):
+        self.marked = params["ping_ids"]
+
+
+class StubNotify:
+    def __init__(self):
+        self.web = []
+        self.stored = []
+
+    def send_web_push(self, user_ids, title, body, path):
+        self.web.append(user_ids)
+
+    def store_notification(self, user_id, actor_id, intent_id, notif_type, body):
+        self.stored.append((user_id, notif_type))
+
+
+def test_due_ping_without_push_channel_still_gets_in_app_notification():
+    db = DueStubDB([{"id": "p1", "user_id": "u1", "moment_id": "m1",
+                     "circle_id": "c1", "circle_name": "gang", "push_token": None}])
+    notify = StubNotify()
+    assert send_due_pings(db, notify) == 1
+    assert notify.stored == [("u1", "moment_ping")]
+    assert db.marked == ["p1"]
