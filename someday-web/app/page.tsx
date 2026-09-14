@@ -6,11 +6,16 @@ import { Icon } from "@/components/Sprite";
 import { Tour } from "@/components/Tour";
 import { CircleAvatar, EmptyState, MemberDot, Skeleton, ThemeToggle, circleTheme, memberColor } from "@/components/ui";
 import { getCached, setCached } from "@/lib/cache";
+import { APK_URL, useInstallPlatform } from "@/lib/useInstallPlatform";
 import { api } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import type { Circle, User } from "@/lib/types";
 
 function PublicLanding() {
+  // Android is the only platform with a real artifact to download, so the link
+  // stays hidden everywhere else. null means detection has not run yet.
+  const platform = useInstallPlatform();
+
   const steps = [
     {
       icon: "users",
@@ -57,6 +62,13 @@ function PublicLanding() {
         <Link href="/login" className="btn-primary mx-auto mt-8 min-h-12 w-full max-w-xs px-6 text-sm">
           Create your first circle
         </Link>
+        {platform === "android" && (
+          <a href={APK_URL} className="mx-auto mt-4 flex w-fit items-center gap-1.5 py-1.5 text-xs font-medium"
+            style={{ color: "var(--acc)" }}>
+            <Icon name="download" size="sm" />
+            Download for Android
+          </a>
+        )}
         <a href="#how-it-works" className="mt-4 text-xs font-medium" style={{ color: "var(--txt-m)" }}>
           See how it works
         </a>
