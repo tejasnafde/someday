@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Icon } from "./Sprite";
-import { detectInstallPlatform, type InstallPlatform } from "@/lib/installPlatform.cjs";
-
-const APK_URL = "https://github.com/tejasnafde/someday/releases/latest/download/someday.apk";
+import { APK_URL, useInstallPlatform } from "@/lib/useInstallPlatform";
 
 interface InstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -12,19 +10,12 @@ interface InstallPromptEvent extends Event {
 }
 
 export function InstallSomeday() {
-  const [platform, setPlatform] = useState<InstallPlatform | null>(null);
+  const detected = useInstallPlatform();
+  const [installed, setInstalled] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
+  const platform = installed ? "installed" : detected;
 
   useEffect(() => {
-    const standalone = window.matchMedia("(display-mode: standalone)").matches
-      || Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
-    setPlatform(detectInstallPlatform({
-      userAgent: navigator.userAgent,
-      platform: navigator.platform,
-      maxTouchPoints: navigator.maxTouchPoints,
-      standalone,
-    }));
-
     function capturePrompt(event: Event) {
       event.preventDefault();
       setInstallPrompt(event as InstallPromptEvent);
@@ -37,7 +28,7 @@ export function InstallSomeday() {
     if (!installPrompt) return;
     await installPrompt.prompt();
     const result = await installPrompt.userChoice;
-    if (result.outcome === "accepted") setPlatform("installed");
+    if (result.outcome === "accepted") setInstalled(true);
     setInstallPrompt(null);
   }
 
