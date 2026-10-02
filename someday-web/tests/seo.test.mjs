@@ -33,6 +33,19 @@ test("signed-out visitors get a meaningful public product introduction", async (
   assert.match(homepage, /Create a circle/);
   assert.match(homepage, /Add the films, trips, meals, and small plans/);
   assert.match(homepage, /Sign in/);
-  assert.match(homepage, /if \(!ready\)/);
+  assert.match(homepage, /if \(!ready && !user\)/);
   assert.match(homepage, /if \(!user\)/);
+});
+
+test("signed-in visitors get a skeleton, not the landing, before the session check", async () => {
+  const [homepage, layout, css] = await Promise.all([
+    source("app/page.tsx"),
+    source("app/layout.tsx"),
+    source("app/globals.css"),
+  ]);
+  assert.match(homepage, /className="gate-out"><PublicLanding \/>/);
+  assert.match(homepage, /className="gate-in"><HomeSkeleton \/>/);
+  assert.match(layout, /sb-\.\+-auth-token\$/);
+  assert.match(layout, /data-session/);
+  assert.match(css, /html\[data-session\] \.gate-out/);
 });

@@ -120,10 +120,20 @@ function PublicLanding() {
   );
 }
 
+function HomeSkeleton() {
+  return (
+    <main className="py-5">
+      <div className="mb-8 mt-16"><Skeleton height={96} count={3} /></div>
+    </main>
+  );
+}
+
 export default function Home() {
   const [ready, setReady] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [circles, setCircles] = useState<Circle[] | null>(null);
+  // A cached me() (client-side navigation back home) renders at once, before
+  // the session check finishes.
+  const [user, setUser] = useState<User | null>(() => getCached<{ user: User }>("me")?.user ?? null);
+  const [circles, setCircles] = useState<Circle[] | null>(() => getCached<{ circles: Circle[] }>("me")?.circles ?? null);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -188,18 +198,22 @@ export default function Home() {
     }
   }
 
-  if (!ready)
-    return <PublicLanding />;
+  // No cache and no finished session check. The static HTML keeps the landing
+  // page for visitors and crawlers; the inline script in layout.tsx swaps in
+  // the skeleton when a session is stored, so signed-in users never see it.
+  if (!ready && !user)
+    return (
+      <>
+        <div className="gate-out"><PublicLanding /></div>
+        <div className="gate-in"><HomeSkeleton /></div>
+      </>
+    );
 
   if (!user)
     return <PublicLanding />;
 
   if (!circles)
-    return (
-      <main className="py-5">
-        <div className="mb-8 mt-16"><Skeleton height={96} count={3} /></div>
-      </main>
-    );
+    return <HomeSkeleton />;
 
   const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
   const totalIdeas = circles.reduce((n, c) => n + c.open_intent_count, 0);
