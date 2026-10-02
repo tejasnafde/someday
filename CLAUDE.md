@@ -265,6 +265,16 @@ Letting `await api.call()` throw unhandled leaves the spinner stuck. `finally { 
 
 ---
 
+## Supporter link (Ko-fi) - web only
+
+Someday takes money through ONE channel: a voluntary supporter link (Ko-fi). No paywall, no ads.
+
+- **Show it on the web only. Hide it inside the native apps.** Apple guideline 3.1.1 requires in-app purchase for tips to the developer, and Google Play payments policy has the same rule. An external tip link inside a store build is a rejection, or a takedown later.
+- The Android app is a WebView of the web app, so a web-side check is not enough by itself. The native shell must mark itself (for example, a user-agent suffix set on the WebView), and the web app hides the link when it sees the mark. Any future iOS shell must set the same mark.
+- Never show the link to a store build "just in Settings". Reviewers check Settings.
+
+---
+
 ## Tours - non-negotiable
 
 Every new user-facing feature ships with a coachmark tour step. No exceptions.
