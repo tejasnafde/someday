@@ -35,7 +35,10 @@ export const metadata: Metadata = {
   },
 };
 
-const themeInit = `(function(){var t=localStorage.getItem("theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.setAttribute("data-theme","dark")})()`;
+// Also flags a stored Supabase session before first paint, so the static
+// homepage can show signed-in visitors a skeleton instead of the landing page
+// while their session is checked (see .gate-in / .gate-out in globals.css).
+const themeInit = `(function(){var d=document.documentElement,t=localStorage.getItem("theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches))d.setAttribute("data-theme","dark");for(var i=0;i<localStorage.length;i++)if(/^sb-.+-auth-token$/.test(localStorage.key(i)||""))d.setAttribute("data-session","")})()`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

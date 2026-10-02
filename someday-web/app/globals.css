@@ -78,6 +78,9 @@ body {
 .font-serif { font-family: var(--font-lora), serif; text-wrap: balance }
 
 .tnum { font-variant-numeric: tabular-nums }
+
+/* Homepage before the session check: landing for visitors, skeleton for a stored session. */
+html[data-session] .gate-out, html:not([data-session]) .gate-in { display: none }
 .img-edge { outline: 1px solid var(--img-outline); outline-offset: -1px }
 
 .glass {
