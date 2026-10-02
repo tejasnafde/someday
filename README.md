@@ -83,6 +83,9 @@ cd someday-web
 npm install
 # .env.local needs: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
 #                   NEXT_PUBLIC_API_URL (http://localhost:8000)
+# Optional:         NEXT_PUBLIC_KOFI_URL (Ko-fi page for the "Support Someday"
+#                   link; unset renders no link. Web only, hidden in the app
+#                   shell by store rules. Build-time: set it in Vercel, redeploy.)
 npm run dev                     # http://localhost:3000
 ```
 

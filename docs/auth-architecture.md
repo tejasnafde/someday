@@ -102,22 +102,29 @@ Linking system. Both paths funnel into the same single guarded exchange.
    `/auth/callback` poll for 5s and then show *"Sign-in link expired or
    invalid."* - which looks like a web bug but originates in the app.
 
-6. **If `/auth/webview-session` fails, `Home.tsx` falls back to loading the bare
+6. **Sign-out must clear BOTH sessions.** Web sign-out (Settings, and account
+   deletion) only clears the WebView session, so the web app posts
+   `{"type":"signed-out"}` through `window.ReactNativeWebView` and `Home.tsx`'s
+   `onMessage` (shells from 1.18.0) signs the native session out too, which
+   returns the shell to `SignIn`. A shell without the listener keeps its native
+   session until the refresh token fails.
+
+7. **If `/auth/webview-session` fails, `Home.tsx` falls back to loading the bare
    web login** (`WEB_URL + nextPath`). Symptom: the user sees the *web* login
    page (Google logo button) inside the shell after a "successful" native
    sign-in. That means the bridge failed, not the native auth.
 
 ### Backend (`someday-api`)
 
-7. **`/auth/webview-session` needs `SUPABASE_SERVICE_ROLE_KEY`.** It calls
+8. **`/auth/webview-session` needs `SUPABASE_SERVICE_ROLE_KEY`.** It calls
    `admin/generate_link`. Returns 500 if the key isn't configured for the env.
 
-8. **It mints a *new* session deliberately** - do not "optimise" it to reuse the
+9. **It mints a *new* session deliberately** - do not "optimise" it to reuse the
    native session's tokens (see refresh-token rotation note above).
 
 ### Web (`someday-web`)
 
-9. **The web Supabase client uses default options** (`lib/supabase.ts`) -
+10. **The web Supabase client uses default options** (`lib/supabase.ts`) -
    implicit flow, `detectSessionInUrl: true`. The WebView bridge depends on this.
    If you ever switch the web client to `flowType: 'pkce'`, the implicit
    `#access_token` fragment from the bridge will be rejected and the WebView

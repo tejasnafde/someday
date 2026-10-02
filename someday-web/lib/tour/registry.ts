@@ -132,6 +132,13 @@ export const TOUR_REGISTRY: TourStep[] = [
     body: "You can delete your account here any time. It removes everything you added.",
   },
   {
+    id: "settings.support",
+    page: "settings",
+    anchor: "settings-support",
+    title: "Keep Someday going",
+    body: "Someday has no ads and no paywall. If it helps you, you can chip in here.",
+  },
+  {
     id: "circle.meanwhile",
     page: "circle",
     anchor: "status-tabs",

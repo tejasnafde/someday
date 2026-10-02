@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Sprite";
 import { Tour } from "@/components/Tour";
 import { api } from "@/lib/api";
+import { isNativeShell } from "@/lib/nativeShell";
 import type { Circle } from "@/lib/types";
 
 /**
@@ -26,7 +27,7 @@ export function FirstCircle({ onCreated, onSkip }: { onCreated: () => void; onSk
     setCanShare(typeof navigator.share === "function");
     // The Android shell's WebView cannot open wa.me in WhatsApp, but it hands
     // non-http schemes to the OS, so it gets the app scheme instead.
-    setInShell(navigator.userAgent.includes("SomedayNative"));
+    setInShell(isNativeShell());
     return () => { if (copyTimer.current) clearTimeout(copyTimer.current); };
   }, []);
 
