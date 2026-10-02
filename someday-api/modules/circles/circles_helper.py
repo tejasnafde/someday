@@ -75,6 +75,17 @@ def join_circle_by_token(db, token: str, user_id: str) -> dict | None:
     return circle
 
 
+def get_invite_preview(db, token: str) -> dict | None:
+    """Circle name and the inviter's first name for an active invite, else None."""
+    infologger.info(f"circles_helper.get_invite_preview | token={token[:8]}…")
+    rows = db.execute_query_with_value(q.GET_INVITE_PREVIEW, {"token": token})
+    if not rows:
+        infologger.warning("circles_helper.get_invite_preview | invalid token")
+        return None
+    name = (rows[0]["display_name"] or "").strip()
+    return {"circle_name": rows[0]["name"], "inviter_name": name.split()[0] if name else None}
+
+
 def leave_circle(db, circle_id: str, user_id: str) -> None:
     infologger.info(f"circles_helper.leave_circle | circle_id={circle_id} user_id={user_id}")
     db.execute_query_with_value_without_output(

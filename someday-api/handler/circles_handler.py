@@ -70,6 +70,14 @@ class CirclesHandler(DBUtil):
             return 404, "Invalid or expired invite link"
         return 200, {"message": "Joined circle", "circle_id": str(circle["id"]), "name": circle["name"]}
 
+    @log_timing("circles_handler.get_invite_preview")
+    def get_invite_preview(self, token: str) -> tuple[int, dict | str]:
+        infologger.info("CirclesHandler.get_invite_preview")
+        preview = h.get_invite_preview(self, token)
+        if not preview:
+            return 404, "Invalid or expired invite link"
+        return 200, preview
+
     @log_timing("circles_handler.leave_circle")
     def leave_circle(self, circle_id: str, user_id: str) -> tuple[int, str]:
         infologger.info(f"CirclesHandler.leave_circle | circle_id={circle_id} user_id={user_id}")
