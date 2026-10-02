@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Sprite";
 import { Tour } from "@/components/Tour";
 import { InstallSomeday } from "@/components/InstallSomeday";
+import { SupportLink } from "@/components/SupportLink";
 import { NavBar, Spinner, ThemeToggle } from "@/components/ui";
 import { api } from "@/lib/api";
 import { resizeImage } from "@/lib/image";
@@ -156,6 +157,10 @@ export default function SettingsPage() {
       </button>
 
       <DeleteAccount />
+
+      <div className="mt-6 text-center text-xs" style={{ color: "var(--txt-m)" }}>
+        <SupportLink tour="settings-support" />
+      </div>
 
       <Tour page="settings" />
     </main>

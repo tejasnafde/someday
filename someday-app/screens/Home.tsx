@@ -96,7 +96,21 @@ export function Home({ nextPath }: { nextPath?: string | null }) {
   return (
     <WebView
       ref={webRef}
+      // The shell mark. The web app reads it to hide store-forbidden UI (the
+      // Ko-fi supporter link) and to adapt share links. Any future iOS shell
+      // must send the same SomedayNative/<version> mark.
       applicationNameForUserAgent={`SomedayNative/${APP_VERSION}`}
+      // Web sign-out (and account deletion) clears only the WebView session;
+      // drop the native one too, which returns the shell to SignIn.
+      onMessage={(e) => {
+        // Only our own pages may sign the shell out, not a site opened in the WebView.
+        let type: unknown;
+        try {
+          if (new URL(e.nativeEvent.url).origin !== new URL(WEB_URL).origin) return;
+          type = JSON.parse(e.nativeEvent.data)?.type;
+        } catch { return; }
+        if (type === "signed-out") supabase.auth.signOut({ scope: "local" });
+      }}
       onNavigationStateChange={(nav) => { canGoBack.current = nav.canGoBack; }}
       source={{ uri: startUrl }}
       style={{ flex: 1, backgroundColor: t.bg }}

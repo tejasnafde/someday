@@ -270,7 +270,8 @@ Letting `await api.call()` throw unhandled leaves the spinner stuck. `finally { 
 Someday takes money through ONE channel: a voluntary supporter link (Ko-fi). No paywall, no ads.
 
 - **Show it on the web only. Hide it inside the native apps.** Apple guideline 3.1.1 requires in-app purchase for tips to the developer, and Google Play payments policy has the same rule. An external tip link inside a store build is a rejection, or a takedown later.
-- The Android app is a WebView of the web app, so a web-side check is not enough by itself. The native shell must mark itself (for example, a user-agent suffix set on the WebView), and the web app hides the link when it sees the mark. Any future iOS shell must set the same mark.
+- The Android app is a WebView of the web app, so a web-side check is not enough by itself. The native shell marks itself with the user-agent suffix `SomedayNative/<version>` (`applicationNameForUserAgent` in `someday-app/screens/Home.tsx`), and the web app hides the link when it sees the mark (`isNativeShell()` in `someday-web/lib/nativeShell.ts`, used by `components/SupportLink.tsx`). Any future iOS shell must set the same mark. Do not rename it: shells already installed keep sending the old name, and would start showing the link.
+- The URL comes from `NEXT_PUBLIC_KOFI_URL` (build-time, set in Vercel). Unset means no link renders.
 - Never show the link to a store build "just in Settings". Reviewers check Settings.
 
 ---

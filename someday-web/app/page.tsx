@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { FirstCircle } from "@/components/FirstCircle";
 import { Icon } from "@/components/Sprite";
+import { SupportLink } from "@/components/SupportLink";
 import { Tour } from "@/components/Tour";
 import { CircleAvatar, EmptyState, IntentCard, MemberDot, Skeleton, ThemeToggle, circleTheme, memberColor } from "@/components/ui";
 import { getCached, setCached } from "@/lib/cache";
@@ -141,6 +142,7 @@ function PublicLanding() {
 
       <footer className="flex items-center justify-between py-8 text-[11px]" style={{ color: "var(--txt-l)" }}>
         <span>Someday</span>
+        <SupportLink />
         <a href="https://tn07.dev/" className="underline decoration-transparent underline-offset-4 hover:decoration-current">
           Built by Tejas Nafde
         </a>
