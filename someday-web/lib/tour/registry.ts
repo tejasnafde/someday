@@ -136,7 +136,7 @@ export const TOUR_REGISTRY: TourStep[] = [
     page: "settings",
     anchor: "settings-support",
     title: "Keep Someday going",
-    body: "Someday has no ads and no paywall. If it helps you, you can chip in here.",
+    body: "Someday and the other tn07 apps have no ads and no paywall. If they help you, you can chip in here.",
   },
   {
     id: "circle.meanwhile",

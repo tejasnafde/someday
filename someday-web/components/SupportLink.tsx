@@ -23,7 +23,7 @@ export function SupportLink({ className = "", tour }: { className?: string; tour
   return (
     <a href={KOFI_URL} target="_blank" rel="noopener noreferrer" data-tour={tour}
       className={`underline decoration-transparent underline-offset-4 hover:decoration-current ${className}`}>
-      Support Someday
+      Support tn07 on Ko-fi
     </a>
   );
 }
