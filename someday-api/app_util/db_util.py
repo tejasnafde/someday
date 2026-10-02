@@ -147,3 +147,11 @@ class DBUtil:
         if not row:
             return {}
         return df_to_records(pd.DataFrame([row_to_dict(row)]))[0]
+
+    def tx_query(self, conn, query: str, params: dict) -> list[dict]:
+        """Execute a query (SELECT or UPDATE ... RETURNING) on an existing transaction connection, returning every row."""
+        infologger.debug(f"DB_QUERY(TX) | {query.strip()}")
+        infologger.debug(f"DB_PARAMS | {params}")
+        rows = [row_to_dict(row) for row in conn.execute(sql_text(query), params)]
+        infologger.debug(f"DB_RESULT(TX) | {len(rows)} rows")
+        return df_to_records(pd.DataFrame(rows)) if rows else []

@@ -9,6 +9,7 @@ import { NavBar, Spinner, ThemeToggle } from "@/components/ui";
 import { api } from "@/lib/api";
 import { resizeImage } from "@/lib/image";
 import { getCached, setCached } from "@/lib/cache";
+import { notifyShellSignedOut } from "@/lib/nativeShell";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
 import type { Circle, User } from "@/lib/types";
@@ -51,6 +52,7 @@ export default function SettingsPage() {
 
   async function signOut() {
     await supabase.auth.signOut();
+    notifyShellSignedOut();
     router.replace("/login");
   }
 
@@ -153,8 +155,84 @@ export default function SettingsPage() {
         Sign out
       </button>
 
+      <DeleteAccount />
+
       <Tour page="settings" />
     </main>
+  );
+}
+
+function DeleteAccount() {
+  const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function confirmDelete(e: React.FormEvent) {
+    e.preventDefault();
+    if (typed.trim() !== "DELETE") return;
+    setBusy(true);
+    setError("");
+    try {
+      await api.deleteAccount();
+      // The server already revoked every session; "local" clears this one
+      // without a network call that could fail and keep it.
+      await supabase.auth.signOut({ scope: "local" });
+      notifyShellSignedOut();
+      // A full load, not router.replace, so no in-memory cache of the account survives.
+      window.location.replace("/");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button onClick={() => setOpen(true)} data-tour="settings-delete"
+        className="btn-ghost mt-3 w-full py-3.5 text-sm" style={{ color: "var(--cp)" }}>
+        <Icon name="trash" size="sm" />
+        Delete account
+      </button>
+    );
+  }
+
+  return (
+    <form onSubmit={confirmDelete} data-tour="settings-delete"
+      className="glass mt-3 rounded-[var(--r)] p-4" style={{ boxShadow: "var(--shc)" }}>
+      <div className="font-serif font-semibold">Delete your account?</div>
+      <p className="mt-2 text-xs leading-relaxed" style={{ color: "var(--txt-m)" }}>
+        This deletes your profile, your photo and everything you added: ideas, memories and their
+        photos, reactions, boosts and Meanwhile posts. Circles where you are the only member are
+        deleted. In shared circles, the longest-standing member becomes the owner.
+      </p>
+      <p className="mt-2 text-xs font-semibold">This cannot be undone.</p>
+      <label className="mt-3 block text-xs" style={{ color: "var(--txt-m)" }}>
+        Type DELETE to confirm.
+        <input
+          value={typed}
+          onChange={(e) => setTyped(e.target.value)}
+          autoComplete="off"
+          autoCapitalize="characters"
+          spellCheck={false}
+          className="mt-1.5 w-full rounded-[var(--rs)] px-3 py-2 text-sm outline-none"
+          style={{ background: "var(--glass-lo)", border: "1px solid var(--brd-h)", color: "var(--txt)" }}
+        />
+      </label>
+      {error && <p className="mt-2 text-xs" style={{ color: "var(--cp)" }}>{error}</p>}
+      <div className="mt-3 flex gap-2">
+        <button type="button" onClick={() => { setOpen(false); setTyped(""); setError(""); }}
+          className="btn-ghost flex-1 py-3 text-sm" style={{ color: "var(--txt-m)" }}>
+          Cancel
+        </button>
+        <button type="submit" disabled={typed.trim() !== "DELETE" || busy}
+          className="btn-ghost flex-1 py-3 text-sm disabled:opacity-50" style={{ color: "var(--cp)" }}>
+          <Icon name="trash" size="sm" />
+          {busy ? "Deleting…" : "Delete forever"}
+        </button>
+      </div>
+    </form>
   );
 }
 

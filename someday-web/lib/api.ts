@@ -69,6 +69,7 @@ export const api = {
   me: () => request<{ user: User; circles: Circle[] }>("GET", "/auth/me"),
   updateMe: (fields: { display_name?: string; avatar_url?: string; city?: string }) =>
     request<{ user: User }>("PATCH", "/auth/me", fields),
+  deleteAccount: () => request<{ message: string }>("DELETE", "/auth/me"),
   uploadAvatar: (blob: Blob) => upload<{ user: User }>("/auth/me/avatar", blob, "avatar.webp"),
   uploadCirclePhoto: (circleId: string, blob: Blob) =>
     upload<{ photo_url: string }>(`/circles/${circleId}/photo`, blob, "photo.webp"),
