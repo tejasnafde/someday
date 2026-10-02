@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { FirstCircle } from "@/components/FirstCircle";
 import { Icon } from "@/components/Sprite";
 import { Tour } from "@/components/Tour";
 import { CircleAvatar, EmptyState, IntentCard, MemberDot, Skeleton, ThemeToggle, circleTheme, memberColor } from "@/components/ui";
@@ -148,6 +149,8 @@ function PublicLanding() {
   );
 }
 
+const SKIP_FIRST_CIRCLE = "first-circle:skipped";
+
 function HomeSkeleton() {
   return (
     <main className="py-5">
@@ -166,6 +169,11 @@ export default function Home() {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [unseen, setUnseen] = useState(0);
+  // Zero circles shows the first-circle step until skipped on this device.
+  // `firstCircle` latches it on, so it stays up for the invite after load()
+  // brings back the new circle.
+  const [firstCircle, setFirstCircle] = useState(false);
+  const [skipped, setSkipped] = useState(() => typeof window !== "undefined" && localStorage.getItem(SKIP_FIRST_CIRCLE) === "1");
 
   const load = useCallback(() => {
     const cached = getCached<{ user: User; circles: Circle[] }>("me");
@@ -242,6 +250,18 @@ export default function Home() {
 
   if (!circles)
     return <HomeSkeleton />;
+
+  if (firstCircle || (circles.length === 0 && !skipped))
+    return (
+      <FirstCircle
+        onCreated={() => { setFirstCircle(true); load(); }}
+        onSkip={() => {
+          localStorage.setItem(SKIP_FIRST_CIRCLE, "1");
+          setSkipped(true);
+          setFirstCircle(false);
+        }}
+      />
+    );
 
   const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
   const totalIdeas = circles.reduce((n, c) => n + c.open_intent_count, 0);

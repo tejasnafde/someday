@@ -6,7 +6,7 @@
 // Users' seen step ids live server-side (users.tour_state), so anyone who
 // hasn't seen the new step gets a mini-tour of just that step on next visit.
 
-export type TourPage = "dashboard" | "circle" | "intent" | "members" | "notifications" | "settings";
+export type TourPage = "dashboard" | "circle" | "intent" | "members" | "notifications" | "settings" | "onboarding";
 
 export interface TourStep {
   /** Stable forever - never rename or reuse. */
@@ -158,5 +158,12 @@ export const TOUR_REGISTRY: TourStep[] = [
     anchor: "notifications-bell",
     title: "Activity bell",
     body: "Circle activity - saves, reactions, boosts - shows up here so you never miss what's happening.",
+  },
+  {
+    id: "onboarding.invite",
+    page: "onboarding",
+    anchor: "onboard-invite",
+    title: "Send it where you already talk",
+    body: "Share the link on WhatsApp. Anyone who opens it joins your circle.",
   },
 ];
