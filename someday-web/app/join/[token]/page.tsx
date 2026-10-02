@@ -1,41 +1,22 @@
-"use client";
+import type { Metadata } from "next";
+import { getInvitePreview, inviteTitle } from "@/lib/invitePreview";
+import { JoinClient } from "./JoinClient";
 
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { Spinner } from "@/components/ui";
-import { api } from "@/lib/api";
-import { useAuth } from "@/lib/useAuth";
+const DESCRIPTION = "Save the plans you keep saying you'll do someday, and actually do them together.";
+
+export async function generateMetadata({ params }: { params: Promise<{ token: string }> }): Promise<Metadata> {
+  const { token } = await params;
+  const title = inviteTitle(await getInvitePreview(token));
+  return {
+    title,
+    description: DESCRIPTION,
+    robots: { index: false },
+    alternates: { canonical: null },
+    openGraph: { title, description: DESCRIPTION, url: `/join/${token}`, siteName: "Someday", type: "website" },
+    twitter: { card: "summary_large_image", title, description: DESCRIPTION },
+  };
+}
 
 export default function JoinPage() {
-  const ready = useAuth();
-  const { token } = useParams<{ token: string }>();
-  const router = useRouter();
-  const ran = useRef(false);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (!ready || ran.current) return;
-    ran.current = true;
-    api
-      .joinCircle(token)
-      .then(({ circle_id }) => router.replace(`/circles/${circle_id}`))
-      .catch((e) => setError(e instanceof Error ? e.message : "Invalid invite link"));
-  }, [ready, token, router]);
-
-  if (!ready) return <Spinner />;
-
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center">
-      {error ? (
-        <div className="text-center">
-          <div className="text-sm" style={{ color: "var(--cp)" }}>{error}</div>
-          <button onClick={() => router.replace("/")} className="btn-ghost mt-4 px-6 py-2.5 text-sm">
-            Go home
-          </button>
-        </div>
-      ) : (
-        <Spinner />
-      )}
-    </main>
-  );
+  return <JoinClient />;
 }

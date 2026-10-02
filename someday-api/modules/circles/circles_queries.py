@@ -92,6 +92,15 @@ GET_CIRCLE_BY_INVITE_TOKEN = """
     WHERE invite_token = :token AND status = 1
 """
 
+# Public invite preview (link unfurls). Only the circle name and the owner's
+# display name leave this query.
+GET_INVITE_PREVIEW = """
+    SELECT c.name, u.display_name
+    FROM public.circles c
+    LEFT JOIN public.users u ON u.id = c.owner_id AND u.status = 1
+    WHERE c.invite_token = :token AND c.status = 1
+"""
+
 LEAVE_CIRCLE = """
     UPDATE public.circle_members
     SET status = 0

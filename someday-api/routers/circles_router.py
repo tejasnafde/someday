@@ -79,6 +79,15 @@ async def upload_photo(
     return create_response(status, result)
 
 
+@router.get("/invite/{token}")
+@log_timing("GET /circles/invite/:token")
+async def get_invite_preview(token: str):
+    """Unauthenticated: circle name and inviter first name, for link previews."""
+    infologger.info(f"GET /circles/invite | token={token[:8]}…")
+    status, result = handler.get_invite_preview(token)
+    return create_response(status, result)
+
+
 @router.post("/join/{token}")
 @log_timing("POST /circles/join/:token")
 async def join_circle(token: str, current_user: dict = Depends(jwt_required)):
