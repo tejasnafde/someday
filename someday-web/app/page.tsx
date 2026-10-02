@@ -4,35 +4,99 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Icon } from "@/components/Sprite";
 import { Tour } from "@/components/Tour";
-import { CircleAvatar, EmptyState, MemberDot, Skeleton, ThemeToggle, circleTheme, memberColor } from "@/components/ui";
+import { CircleAvatar, EmptyState, IntentCard, MemberDot, Skeleton, ThemeToggle, circleTheme, memberColor } from "@/components/ui";
 import { getCached, setCached } from "@/lib/cache";
 import { APK_URL, useInstallPlatform } from "@/lib/useInstallPlatform";
 import { api } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
-import type { Circle, User } from "@/lib/types";
+import type { Circle, Intent, User } from "@/lib/types";
+
+// Sample circle for the landing preview. Static demo data rendered with the
+// real components, so the preview cannot drift from what the app looks like.
+const DEMO_STAMP = "2026-09-01T00:00:00Z";
+const DEMO_MEMBERS = ["Asha", "Rohan", "Meera", "Kabir"];
+
+function demoIntent(fields: Partial<Intent> & Pick<Intent, "id" | "title" | "category">): Intent {
+  return {
+    circle_id: "demo", created_by: "demo", url: null, note: null, tags: [], task_status: "saved",
+    link_meta: null, planned_for: null, reaction_count: 0, boosted_by_me: false, reacted_by_me: false,
+    done_note: null, done_photos: null, created_at: DEMO_STAMP, updated_at: DEMO_STAMP,
+    ...fields,
+  };
+}
+
+const DEMO_SAVED = [
+  demoIntent({ id: "d1", title: "Past Lives, on a weeknight", category: "watch", tags: ["film night"], reaction_count: 3, reacted_by_me: true }),
+  demoIntent({ id: "d2", title: "Dosa breakfast at Vidyarthi Bhavan", category: "eat", tags: ["early start"], task_status: "interested", reaction_count: 2 }),
+];
+
+const DEMO_SHORTLIST = [
+  { title: "Nandi Hills for sunrise", icon: "map-pin", count: 4 },
+  { title: "Learn one board game properly", icon: "gamepad", count: 3 },
+];
+
+const DEMO_DONE = demoIntent({
+  id: "d3", title: "Kabini, the long weekend", category: "trip", task_status: "done",
+  reaction_count: 4, done_note: "Rained the whole first day. Best trip we have taken.",
+});
+
+function DemoLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-2 mt-5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[.12em]" style={{ color: "var(--txt-l)" }}>
+      {children}
+    </div>
+  );
+}
+
+function CirclePreview() {
+  return (
+    <div inert className="glass select-none rounded-[var(--r)] p-4" style={{ boxShadow: "var(--shc)" }}>
+      <div className="flex items-center gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+          style={{ background: "var(--cg-l)", color: "var(--cg)", border: "1px solid var(--brd)" }}>
+          <Icon name="users" size="lg" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-serif font-semibold">Sunday people</div>
+          <div className="tnum text-xs" style={{ color: "var(--txt-m)" }}>4 members · 9 ideas</div>
+        </div>
+        <div className="flex pr-1">
+          {DEMO_MEMBERS.map((name, i) => <MemberDot key={name} name={name} color={memberColor(i)} />)}
+        </div>
+      </div>
+
+      <DemoLabel>Saved</DemoLabel>
+      <div className="flex flex-col gap-3">
+        {DEMO_SAVED.map((intent) => <IntentCard key={intent.id} intent={intent} />)}
+      </div>
+
+      <DemoLabel><Icon name="star" size="sm" />Shortlist</DemoLabel>
+      <div className="flex flex-col gap-2">
+        {DEMO_SHORTLIST.map((item) => (
+          <div key={item.title} className="flex items-center gap-3 rounded-[var(--rs)] px-3 py-2.5"
+            style={{ background: "var(--glass-lo)", border: "1px solid var(--brd-s)" }}>
+            <span style={{ color: "var(--acc)" }}><Icon name={item.icon} size="sm" /></span>
+            <span className="min-w-0 flex-1 truncate font-serif text-sm font-semibold">{item.title}</span>
+            <span className="tnum flex items-center gap-1 text-xs font-semibold" style={{ color: "var(--txt-m)" }}>
+              <Icon name="heart" size="sm" />{item.count}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <DemoLabel><Icon name="check" size="sm" />Done</DemoLabel>
+      <IntentCard intent={DEMO_DONE} />
+      <p className="mt-2.5 px-1 font-serif text-sm italic leading-6" style={{ color: "var(--txt-m)" }}>
+        &ldquo;{DEMO_DONE.done_note}&rdquo;
+      </p>
+    </div>
+  );
+}
 
 function PublicLanding() {
   // Android is the only platform with a real artifact to download, so the link
   // stays hidden everywhere else. null means detection has not run yet.
   const platform = useInstallPlatform();
-
-  const steps = [
-    {
-      icon: "users",
-      title: "Create a circle",
-      copy: "Bring together the people you keep making plans with.",
-    },
-    {
-      icon: "heart",
-      title: "Save what sounds good",
-      copy: "Add the films, trips, meals, and small plans you want to remember.",
-    },
-    {
-      icon: "check",
-      title: "Choose a real someday",
-      copy: "See what everyone wants, make a plan, and keep the memory when it happens.",
-    },
-  ];
 
   return (
     <main className="flex min-h-screen flex-col py-5">
@@ -48,18 +112,14 @@ function PublicLanding() {
         </div>
       </nav>
 
-      <section id="top" className="flex min-h-[70vh] flex-col justify-center py-16 text-center">
-        <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-[18px] text-white"
-          style={{ background: "linear-gradient(135deg, var(--acc), var(--acc-m))", boxShadow: "var(--shb)" }}>
-          <Icon name="star" size="lg" />
-        </div>
-        <h1 className="font-serif text-[42px] font-medium leading-[1.08] tracking-[-.025em]">
+      <section id="top" className="pb-10 pt-14 text-center">
+        <h1 className="font-serif text-[40px] font-medium leading-[1.08] tracking-[-.025em]">
           Save the things you want to do together.
         </h1>
-        <p className="mx-auto mt-5 max-w-sm text-[15px] leading-7" style={{ color: "var(--txt-m)" }}>
-          Someday keeps recommendations, plans, and small promises in one shared place, until you are ready to make them happen.
+        <p className="mx-auto mt-4 max-w-sm text-[15px] leading-7" style={{ color: "var(--txt-m)" }}>
+          One shared list for the films, meals, and trips your people keep saying yes to. Hearts show what everyone wants. Done plans keep the memory.
         </p>
-        <Link href="/login" className="btn-primary mx-auto mt-8 min-h-12 w-full max-w-xs px-6 text-sm">
+        <Link href="/login" className="btn-primary mx-auto mt-7 min-h-12 w-full max-w-xs px-6 text-sm">
           Create your first circle
         </Link>
         {platform === "android" && (
@@ -69,45 +129,13 @@ function PublicLanding() {
             Download for Android
           </a>
         )}
-        <a href="#how-it-works" className="mt-4 text-xs font-medium" style={{ color: "var(--txt-m)" }}>
-          See how it works
-        </a>
       </section>
 
-      <section id="how-it-works" className="pb-16 pt-6">
-        <div className="mb-5">
-          <div className="text-[11px] font-semibold uppercase tracking-[.16em]" style={{ color: "var(--acc)" }}>
-            How it works
-          </div>
-          <h2 className="mt-2 font-serif text-2xl font-medium">From “we should” to “we did.”</h2>
-        </div>
-        <ol className="flex flex-col gap-3.5">
-          {steps.map((step, index) => (
-            <li key={step.title} className="glass flex gap-4 rounded-[var(--r)] p-4" style={{ boxShadow: "var(--shc)" }}>
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px]"
-                style={{ background: "var(--acc-l)", color: "var(--acc)" }}>
-                <Icon name={step.icon} />
-              </div>
-              <div className="min-w-0 pt-0.5">
-                <div className="flex items-baseline gap-2">
-                  <span className="tnum text-[10px] font-semibold" style={{ color: "var(--txt-l)" }}>0{index + 1}</span>
-                  <h3 className="font-serif text-base font-semibold">{step.title}</h3>
-                </div>
-                <p className="mt-1 text-[13px] leading-5" style={{ color: "var(--txt-m)" }}>{step.copy}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section className="glass-hi rounded-[var(--r)] p-6 text-center" style={{ boxShadow: "var(--shc)" }}>
-        <h2 className="font-serif text-2xl font-medium">What have you been meaning to do?</h2>
-        <p className="mt-2 text-sm leading-6" style={{ color: "var(--txt-m)" }}>
-          Start a circle, invite someone, and save the first thing you keep saying you will do.
+      <section aria-label="A sample circle" className="pb-6">
+        <p className="mb-2.5 text-center text-xs" style={{ color: "var(--txt-l)" }}>
+          A sample circle, a few weeks in
         </p>
-        <Link href="/login" className="btn-primary mt-5 min-h-12 w-full px-6 text-sm">
-          Start with Someday
-        </Link>
+        <CirclePreview />
       </section>
 
       <footer className="flex items-center justify-between py-8 text-[11px]" style={{ color: "var(--txt-l)" }}>
