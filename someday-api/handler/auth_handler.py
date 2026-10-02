@@ -7,6 +7,7 @@ from app_util.log_util import infologger, errorlogger
 from common_helper.decorators import log_timing
 from common_helper.storage_helper import upload_public_image
 from config.settings import settings
+from modules.account import account_helper as ah
 from modules.circles import circles_helper as ch
 
 
@@ -15,6 +16,8 @@ UPSERT_USER = """
     VALUES (:id, :email, :display_name, 1)
     ON CONFLICT (id) DO UPDATE
         SET email = EXCLUDED.email
+        -- A deleted account keeps its scrubbed row: never write the email back.
+        WHERE public.users.status <> -1
     RETURNING id, email, display_name, avatar_url
 """
 
@@ -50,6 +53,9 @@ class AuthHandler(DBUtil):
             UPSERT_USER,
             {"id": user_id, "email": email, "display_name": email.split("@")[0]},
         )
+        if not user:
+            infologger.warning(f"AuthHandler.verify | account deleted | user_id={user_id}")
+            return 410, "This account was deleted"
         infologger.info(f"AuthHandler.verify | upserted user_id={user_id}")
         return 200, {"user": user}
 
@@ -82,7 +88,7 @@ class AuthHandler(DBUtil):
         return 200, {"user": user}
 
     @log_timing("auth_handler.webview_session")
-    def webview_session(self, email: str) -> tuple[int, dict | str]:
+    def webview_session(self, user_id: str, email: str) -> tuple[int, dict | str]:
         """
         Mint an independent Supabase session for the mobile WebView.
 
@@ -91,7 +97,12 @@ class AuthHandler(DBUtil):
         reuse-detection revokes the whole family - both get signed out.
         A separately minted session has its own refresh-token family.
         """
-        infologger.info(f"AuthHandler.webview_session | email={email}")
+        infologger.info(f"AuthHandler.webview_session | user_id={user_id} email={email}")
+        # A native token outlives the deletion by up to an hour. Minting a
+        # magic link for its email would sign a fresh account in.
+        if ah.is_deleted_user(self, user_id):
+            infologger.warning(f"AuthHandler.webview_session | account deleted | user_id={user_id}")
+            return 410, "This account was deleted"
         if not settings.SUPABASE_SERVICE_ROLE_KEY:
             errorlogger.error("AuthHandler.webview_session | SUPABASE_SERVICE_ROLE_KEY not configured")
             return 500, "Server is not configured for webview sessions"
@@ -140,3 +151,20 @@ class AuthHandler(DBUtil):
         user = rows[0]
         circles = ch.get_my_circles(self, user_id)
         return 200, {"user": user, "circles": circles}
+
+    @log_timing("auth_handler.delete_account")
+    def delete_account(self, user_id: str) -> tuple[int, dict | str]:
+        """Delete the caller's account. The DB transaction is the source of
+        truth; auth and storage cleanup after it only log on failure."""
+        infologger.info(f"AuthHandler.delete_account | user_id={user_id}")
+        result = ah.delete_account_rows(self, user_id)
+        if result is None:
+            return 404, "User not found"
+        if not ah.delete_auth_user(user_id):
+            errorlogger.error(f"AuthHandler.delete_account | auth user NOT deleted, DB already committed | user_id={user_id}")
+        ah.delete_files(user_id, result["files"])
+        infologger.info(
+            f"AuthHandler.delete_account | done | user_id={user_id} "
+            f"transferred={len(result['transferred'])} deleted_circles={len(result['deleted_circles'])}"
+        )
+        return 200, {"message": "Account deleted"}

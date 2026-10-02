@@ -14,6 +14,17 @@ jobs:
     defaults:
       run:
         working-directory: someday-api
+    # Throwaway Postgres for tests that run real SQL (tests/account). The
+    # fixture rebuilds it from supabase/migrations, so the name must end in _test.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: someday_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -31,6 +42,7 @@ jobs:
           SUPABASE_URL: https://test.supabase.co
           SUPABASE_ANON_KEY: test-anon-key
           DATABASE_URL: postgresql://test:test@localhost/test
+          SOMEDAY_TEST_DATABASE_URL: postgresql://postgres:test@localhost:5432/someday_test
           LOG_LEVEL: WARNING
 
   notify-failure:

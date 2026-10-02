@@ -82,3 +82,39 @@ def rehost_remote_image(remote_url: str, bucket: str = "previews") -> str | None
 
     digest = hashlib.sha256(remote_url.encode("utf-8")).hexdigest()[:32]
     return upload_public_image(bucket, f"{digest}.{ext}", resp.content, content_type)
+
+
+def storage_path(url: str | None) -> tuple[str, str] | None:
+    """(bucket, path) for a public URL in our own storage, else None.
+    Drops the ?v= cache-buster that avatar and circle photo URLs carry."""
+    prefix = f"{settings.SUPABASE_URL}/storage/v1/object/public/"
+    if not url or not url.startswith(prefix):
+        return None
+    rest = url[len(prefix):].split("?")[0]
+    if "/" not in rest:
+        return None
+    bucket, path = rest.split("/", 1)
+    return bucket, path
+
+
+def delete_objects(bucket: str, paths: list[str]) -> bool:
+    """Bulk-delete objects from one bucket. Missing paths are not an error."""
+    if not paths:
+        return True
+    try:
+        resp = httpx.request(
+            "DELETE",
+            f"{settings.SUPABASE_URL}/storage/v1/object/{bucket}",
+            headers={
+                "apikey": settings.SUPABASE_SERVICE_ROLE_KEY,
+                "Authorization": f"Bearer {settings.SUPABASE_SERVICE_ROLE_KEY}",
+            },
+            json={"prefixes": paths},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        infologger.info(f"storage.delete | ok | {bucket} | {len(paths)} paths")
+        return True
+    except httpx.HTTPError as exc:
+        errorlogger.error(f"storage.delete | failed | {bucket} | {len(paths)} paths | {exc}", exc_info=True)
+        return False

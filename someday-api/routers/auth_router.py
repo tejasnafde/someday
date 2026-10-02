@@ -111,6 +111,15 @@ async def update_me(request: UpdateMeRequest, current_user: dict = Depends(jwt_r
     return create_response(status, result)
 
 
+@router.delete("/me")
+@log_timing("DELETE /auth/me")
+async def delete_me(current_user: dict = Depends(jwt_required)):
+    """Delete the caller's account: content, memberships, PII, auth user, files."""
+    infologger.info(f"DELETE /auth/me | user_id={current_user['sub']}")
+    status, result = handler.delete_account(current_user["sub"])
+    return create_response(status, result)
+
+
 @router.post("/me/avatar", response_model=UserResponse)
 @log_timing("POST /auth/me/avatar")
 async def upload_avatar(file: UploadFile = File(...), current_user: dict = Depends(jwt_required)):
@@ -139,5 +148,5 @@ async def set_push_token(request: PushTokenRequest, current_user: dict = Depends
 async def webview_session(current_user: dict = Depends(jwt_required)):
     """Mint an independent session for the mobile WebView (separate refresh-token family)."""
     infologger.info(f"POST /auth/webview-session | user_id={current_user['sub']}")
-    status, result = handler.webview_session(current_user.get("email", ""))
+    status, result = handler.webview_session(current_user["sub"], current_user.get("email", ""))
     return create_response(status, result)

@@ -125,6 +125,13 @@ export const TOUR_REGISTRY: TourStep[] = [
     body: "Your city shows on Meanwhile posts. Allow location when posting and it updates itself.",
   },
   {
+    id: "settings.delete-account",
+    page: "settings",
+    anchor: "settings-delete",
+    title: "Your data, your call",
+    body: "You can delete your account here any time. It removes everything you added.",
+  },
+  {
     id: "circle.meanwhile",
     page: "circle",
     anchor: "status-tabs",
