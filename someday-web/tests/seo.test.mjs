@@ -30,8 +30,10 @@ test("signed-out visitors get a meaningful public product introduction", async (
   const homepage = await source("app/page.tsx");
 
   assert.match(homepage, /Save the things you want to do together/);
-  assert.match(homepage, /Create a circle/);
-  assert.match(homepage, /Add the films, trips, meals, and small plans/);
+  assert.match(homepage, /Create your first circle/);
+  assert.match(homepage, /films, meals, and trips/);
+  assert.match(homepage, /<CirclePreview \/>/);
+  assert.doesNotMatch(homepage, /How it works/);
   assert.match(homepage, /Sign in/);
   assert.match(homepage, /if \(!ready && !user\)/);
   assert.match(homepage, /if \(!user\)/);
