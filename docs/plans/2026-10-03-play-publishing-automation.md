@@ -37,7 +37,7 @@ audience and other declarations, the reviewer sign-in details.
 
 - Service account `someday-play-publisher@teejayproject` (Admin on this app
   only). Key: Secret Manager `SOMEDAY_PLAY_SA_KEY`, GitHub secret `PLAY_SA_KEY`.
-- Graphics source: `/tmp/play-assets/` on the Mac that made them (icon,
+- Graphics source: `~/Documents/someday-play-assets/` (backed up from `/tmp/play-assets/`) (icon,
   feature graphic, 8 screenshots at 1080x2160). Move them into `store/play/`
   as the first step, because `/tmp` does not survive a reboot.
 
