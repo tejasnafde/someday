@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Lora } from "next/font/google";
 import { PushInit } from "@/components/PushInit";
+import { ShellReady } from "@/components/ShellReady";
 import { TimezoneSync } from "@/components/TimezoneSync";
 import { Sprite } from "@/components/Sprite";
 import "./globals.css";
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${dmSans.variable} ${lora.variable}`} suppressHydrationWarning>
         <Sprite />
         <PushInit />
+        <ShellReady />
         <TimezoneSync />
         <div className="orb orb1" />
         <div className="orb orb2" />

@@ -109,22 +109,34 @@ Linking system. Both paths funnel into the same single guarded exchange.
    returns the shell to `SignIn`. A shell without the listener keeps its native
    session until the refresh token fails.
 
-7. **If `/auth/webview-session` fails, `Home.tsx` falls back to loading the bare
+7. **The splash stays up until the web app posts `{"type":"ready"}`** (shells
+   from 1.19.0). `App.tsx` calls `SplashScreen.preventAutoHideAsync()` at
+   module load, so a cold launch shows one loading surface instead of splash,
+   native spinner, web spinner and skeleton in turn. `components/ShellReady.tsx`
+   (web, mounted in the root layout) posts `ready` once no element with
+   `data-loading` (the `Spinner` and `Skeleton` components) is in the DOM.
+   `Home.tsx`'s `onMessage` hides the splash on it, origin-checked like
+   `signed-out`. Native screens (`SignIn`, `ShareFlow`) hide it as soon as they
+   render. A safety timeout hides it after 8 s whatever happens, so a web page
+   that never posts `ready` costs 8 s, not a stuck app. Any new page-level
+   loading placeholder must carry `data-loading`, or the splash drops early.
+
+8. **If `/auth/webview-session` fails, `Home.tsx` falls back to loading the bare
    web login** (`WEB_URL + nextPath`). Symptom: the user sees the *web* login
    page (Google logo button) inside the shell after a "successful" native
    sign-in. That means the bridge failed, not the native auth.
 
 ### Backend (`someday-api`)
 
-8. **`/auth/webview-session` needs `SUPABASE_SERVICE_ROLE_KEY`.** It calls
+9. **`/auth/webview-session` needs `SUPABASE_SERVICE_ROLE_KEY`.** It calls
    `admin/generate_link`. Returns 500 if the key isn't configured for the env.
 
-9. **It mints a *new* session deliberately** - do not "optimise" it to reuse the
+10. **It mints a *new* session deliberately** - do not "optimise" it to reuse the
    native session's tokens (see refresh-token rotation note above).
 
 ### Web (`someday-web`)
 
-10. **The web Supabase client uses default options** (`lib/supabase.ts`) -
+11. **The web Supabase client uses default options** (`lib/supabase.ts`) -
    implicit flow, `detectSessionInUrl: true`. The WebView bridge depends on this.
    If you ever switch the web client to `flowType: 'pkce'`, the implicit
    `#access_token` fragment from the bridge will be rejected and the WebView
