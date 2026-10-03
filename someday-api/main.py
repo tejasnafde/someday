@@ -14,6 +14,7 @@ from handler.webhooks_handler import recover_incomplete_releases
 from routers import (
     auth_router,
     circles_router,
+    concerns_router,
     intents_router,
     moments_router,
     notifications_router,
@@ -82,6 +83,7 @@ async def health():
 
 app.include_router(auth_router.router,          prefix="/auth",    tags=["auth"])
 app.include_router(circles_router.router,       prefix="/circles", tags=["circles"])
+app.include_router(concerns_router.router,      prefix="",         tags=["concerns"])
 app.include_router(intents_router.router,       prefix="",         tags=["intents"])
 app.include_router(moments_router.router,       prefix="",         tags=["moments"])
 app.include_router(notifications_router.router, prefix="",         tags=["notifications"])

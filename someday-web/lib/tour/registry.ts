@@ -132,6 +132,13 @@ export const TOUR_REGISTRY: TourStep[] = [
     body: "It removes your account and your name. Plans you shared stay with your circles.",
   },
   {
+    id: "settings.report",
+    page: "settings",
+    anchor: "settings-report",
+    title: "Something wrong?",
+    body: "Report a concern here, child safety included. It goes straight to us.",
+  },
+  {
     id: "settings.support",
     page: "settings",
     anchor: "settings-support",

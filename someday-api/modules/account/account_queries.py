@@ -11,6 +11,9 @@
 RETAINED_USER_COLUMNS = {
     "intents.created_by": "shared content, author shown as Deleted user",
     "moment_posts.user_id": "shared content, author shown as Deleted user",
+    # A report may be evidence of harm (Google Play child safety), so it outlives
+    # the reporter's account. Only the backend can read it (RLS, no policies).
+    "concern_reports.user_id": "safety report, kept as possible evidence",
 }
 
 # Row lock: a second concurrent delete waits here, then finds status = -1.
