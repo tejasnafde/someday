@@ -2,7 +2,7 @@
   "expo": {
     "name": "Someday",
     "slug": "someday",
-    "version": "1.18.0",
+    "version": "1.19.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -81,7 +81,8 @@
         }
       ],
       "expo-web-browser",
-      "./plugins/withAdiRegistration"
+      "./plugins/withAdiRegistration",
+      "expo-splash-screen"
     ],
     "extra": {
       "apiUrl": "https://someday-api-974343814740.asia-south1.run.app",

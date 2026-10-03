@@ -342,7 +342,7 @@ export function NavBar({ title, subtitle, back, right }: { title: React.ReactNod
 
 export function Spinner() {
   return (
-    <div className="flex justify-center py-16">
+    <div data-loading className="flex justify-center py-16">
       <div className="h-7 w-7 animate-spin rounded-full border-2 border-transparent" style={{ borderTopColor: "var(--acc)", borderRightColor: "var(--acc)" }} />
     </div>
   );
@@ -358,7 +358,7 @@ export function EmptyState({ message }: { message: string }) {
 
 export function Skeleton({ height = 80, count = 3 }: { height?: number; count?: number }) {
   return (
-    <div className="flex flex-col gap-3">
+    <div data-loading className="flex flex-col gap-3">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="glass animate-pulse rounded-[var(--r)]" style={{ height, opacity: 1 - i * 0.25 }} />
       ))}

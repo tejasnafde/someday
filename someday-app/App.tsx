@@ -1,5 +1,6 @@
 import * as Linking from "expo-linking";
 import * as Notifications from "expo-notifications";
+import * as SplashScreen from "expo-splash-screen";
 import { useShareIntent } from "expo-share-intent";
 import * as Updates from "expo-updates";
 import { useEffect, useState, useRef } from "react";
@@ -35,6 +36,13 @@ Notifications.setNotificationHandler({
 });
 
 const INACTIVITY_LIMIT_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+// One loading surface on launch: the native splash stays up until the web app
+// posts {"type":"ready"} (handled in Home.tsx), or until SPLASH_MAX_MS passes,
+// whichever is first. hideAsync is safe to call more than once.
+const SPLASH_MAX_MS = 8000;
+SplashScreen.preventAutoHideAsync().catch(() => {});
+setTimeout(() => { SplashScreen.hideAsync().catch(() => {}); }, SPLASH_MAX_MS);
 
 export default function App() {
   const t = useTheme();
@@ -134,6 +142,11 @@ export default function App() {
     });
     return () => sub.remove();
   }, []);
+
+  // Native screens are ready as soon as they render; only Home waits for the web.
+  useEffect(() => {
+    if (signedIn === false || (signedIn && hasShareIntent)) SplashScreen.hideAsync().catch(() => {});
+  }, [signedIn, hasShareIntent]);
 
   const sharedPayload = normalizeSharePayload(hasShareIntent ? shareIntent : {});
 

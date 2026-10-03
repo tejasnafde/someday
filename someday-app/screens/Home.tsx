@@ -1,4 +1,5 @@
 import Constants from "expo-constants";
+import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, BackHandler, Linking, View } from "react-native";
 import { WebView } from "react-native-webview";
@@ -85,6 +86,8 @@ export function Home({ nextPath }: { nextPath?: string | null }) {
     })();
   }, [nextPath]);
 
+  // Hidden behind the splash on a cold launch. It shows only right after a
+  // native sign-in (the splash is already gone) or past the splash timeout.
   if (!startUrl) {
     return (
       <View style={{ flex: 1, justifyContent: "center", backgroundColor: t.bg }}>
@@ -101,15 +104,17 @@ export function Home({ nextPath }: { nextPath?: string | null }) {
       // must send the same SomedayNative/<version> mark.
       applicationNameForUserAgent={`SomedayNative/${APP_VERSION}`}
       // Web sign-out (and account deletion) clears only the WebView session;
-      // drop the native one too, which returns the shell to SignIn.
+      // drop the native one too, which returns the shell to SignIn. "ready"
+      // means the web app's first real screen rendered, so the splash can go.
       onMessage={(e) => {
-        // Only our own pages may sign the shell out, not a site opened in the WebView.
+        // Only our own pages may message the shell, not a site opened in the WebView.
         let type: unknown;
         try {
           if (new URL(e.nativeEvent.url).origin !== new URL(WEB_URL).origin) return;
           type = JSON.parse(e.nativeEvent.data)?.type;
         } catch { return; }
         if (type === "signed-out") supabase.auth.signOut({ scope: "local" });
+        if (type === "ready") SplashScreen.hideAsync().catch(() => {});
       }}
       onNavigationStateChange={(nav) => { canGoBack.current = nav.canGoBack; }}
       source={{ uri: startUrl }}
@@ -127,12 +132,6 @@ export function Home({ nextPath }: { nextPath?: string | null }) {
       geolocationEnabled
       domStorageEnabled
       sharedCookiesEnabled
-      startInLoadingState
-      renderLoading={() => (
-        <View style={{ flex: 1, justifyContent: "center", backgroundColor: t.bg }}>
-          <ActivityIndicator color={t.acc} />
-        </View>
-      )}
     />
   );
 }

@@ -14,6 +14,16 @@ export function isNativeShell(): boolean {
 // window.ReactNativeWebView exists only when the shell registers onMessage;
 // in a browser, or a shell without the listener, this does nothing.
 export function notifyShellSignedOut(): void {
-  const bridge = (window as { ReactNativeWebView?: { postMessage: (m: string) => void } }).ReactNativeWebView;
-  bridge?.postMessage(JSON.stringify({ type: "signed-out" }));
+  shellBridge()?.postMessage(JSON.stringify({ type: "signed-out" }));
+}
+
+// The shell keeps its native splash up until this arrives (shells from 1.19.0),
+// so a cold launch shows one loading surface. components/ShellReady.tsx sends
+// it once the first real screen, not a Spinner or Skeleton, has rendered.
+export function notifyShellReady(): void {
+  shellBridge()?.postMessage(JSON.stringify({ type: "ready" }));
+}
+
+export function shellBridge(): { postMessage: (m: string) => void } | undefined {
+  return (window as { ReactNativeWebView?: { postMessage: (m: string) => void } }).ReactNativeWebView;
 }
