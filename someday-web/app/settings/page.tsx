@@ -208,9 +208,13 @@ function DeleteAccount() {
       className="glass mt-3 rounded-[var(--r)] p-4" style={{ boxShadow: "var(--shc)" }}>
       <div className="font-serif font-semibold">Delete your account?</div>
       <p className="mt-2 text-xs leading-relaxed" style={{ color: "var(--txt-m)" }}>
-        This deletes your profile, your photo and everything you added: ideas, memories and their
-        photos, reactions, boosts and Meanwhile posts. Circles where you are the only member are
-        deleted. In shared circles, the longest-standing member becomes the owner.
+        It removes your account and your name. This deletes your account, name, email, photo,
+        sign-in, reactions and boosts. Circles where you are the only member are deleted with
+        everything in them.
+      </p>
+      <p className="mt-2 text-xs leading-relaxed" style={{ color: "var(--txt-m)" }}>
+        Plans you shared stay with your circles. Ideas, memories and Meanwhile posts in circles
+        with other people stay, shown as Deleted user. The longest-standing member becomes the owner.
       </p>
       <p className="mt-2 text-xs font-semibold">This cannot be undone.</p>
       <label className="mt-3 block text-xs" style={{ color: "var(--txt-m)" }}>

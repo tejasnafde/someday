@@ -104,8 +104,9 @@ LIST_POSTS_FOR_MOMENTS = """
         p.id,
         p.moment_id,
         p.user_id,
-        u.display_name,
-        u.avatar_url,
+        CASE WHEN u.status = 1 AND u.display_name IS NOT NULL
+             THEN u.display_name ELSE 'Deleted user' END AS display_name,
+        CASE WHEN u.status = 1 THEN u.avatar_url END AS avatar_url,
         p.photo_url,
         p.caption,
         p.tz,
@@ -113,7 +114,8 @@ LIST_POSTS_FOR_MOMENTS = """
         p.late,
         p.created_at::text
     FROM public.moment_posts p
-    JOIN public.users u ON u.id = p.user_id AND u.status = 1
+    -- No u.status filter: a deleted author's posts stay, shown as Deleted user.
+    JOIN public.users u ON u.id = p.user_id
     WHERE p.moment_id = ANY(CAST(:moment_ids AS uuid[]))
       AND p.status = 1
     ORDER BY p.created_at
@@ -139,12 +141,13 @@ GET_POST_FOR_MEMBER = """
         p.user_id,
         p.photo_url,
         p.caption,
-        u.display_name AS author_name,
+        CASE WHEN u.status = 1 AND u.display_name IS NOT NULL
+             THEN u.display_name ELSE 'Deleted user' END AS author_name,
         m.circle_id,
         m.moment_date::text
     FROM public.moment_posts p
     JOIN public.circle_moments m ON m.id = p.moment_id AND m.status = 1
-    JOIN public.users u          ON u.id = p.user_id AND u.status = 1
+    JOIN public.users u          ON u.id = p.user_id
     WHERE p.id = :post_id AND p.status = 1
       AND EXISTS (
           SELECT 1 FROM public.circle_members cm

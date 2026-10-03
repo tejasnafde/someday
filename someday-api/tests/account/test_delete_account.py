@@ -202,7 +202,7 @@ async def test_users_row_is_scrubbed_and_auth_user_deleted(client, db, as_user):
     assert (await client.delete("/auth/me")).status_code == 404
 
 
-async def test_other_members_content_in_shared_circle_is_untouched(client, db, as_user):
+async def test_shared_circle_content_stays_and_personal_signals_go(client, db, as_user):
     me, friend = db.user("asha"), db.user("bina")
     cid = db.circle(friend, (me, "2026-02-01"))
     mine, theirs = db.intent(cid, me, photo="mine.webp"), db.intent(cid, friend, photo="theirs.webp")
@@ -211,6 +211,9 @@ async def test_other_members_content_in_shared_circle_is_untouched(client, db, a
     )[0])
     my_reaction_on_theirs = str(db.one(
         "INSERT INTO public.reactions (intent_id, user_id) VALUES (:i, :u) RETURNING id", i=theirs, u=me
+    )[0])
+    my_boost_on_theirs = str(db.one(
+        "INSERT INTO public.intent_boosts (intent_id, user_id) VALUES (:i, :u) RETURNING id", i=theirs, u=me
     )[0])
     their_post, my_post = db.moment_post(cid, friend, "f.webp"), db.moment_post(cid, me, "m.webp")
     notif_about_me, notif_unrelated = (
@@ -225,16 +228,40 @@ async def test_other_members_content_in_shared_circle_is_untouched(client, db, a
     assert (await client.delete("/auth/me")).status_code == 200
 
     assert db.status("circles", cid) == 1
-    assert db.status("intents", theirs) == 1
-    assert db.status("reactions", their_reaction_on_mine) == 1
-    assert db.status("moment_posts", their_post) == 1
-    assert db.status("notifications", notif_unrelated) == 1
-    assert db.status("intents", mine) == -1
-    assert db.status("reactions", my_reaction_on_theirs) == -1
-    assert db.status("moment_posts", my_post) == -1
-    assert db.status("notifications", notif_about_me) == -1
-    assert db.status("users", friend) == 1
-    assert dict(db.file_calls)["memories"] == ["mine.webp"]
+    for table, row in [
+        ("intents", mine), ("intents", theirs), ("moment_posts", my_post), ("moment_posts", their_post),
+        ("reactions", their_reaction_on_mine), ("notifications", notif_unrelated), ("users", friend),
+    ]:
+        assert db.status(table, row) == 1, table
+    for table, row in [
+        ("reactions", my_reaction_on_theirs), ("intent_boosts", my_boost_on_theirs),
+        ("notifications", notif_about_me),
+    ]:
+        assert db.status(table, row) == -1, table
+    # Photos of content that stays are kept; only the avatar goes.
+    assert set(dict(db.file_calls)) == {"avatars"}
+
+    # The friend still sees it all, credited to "Deleted user", never the scrubbed email.
+    as_user(friend)
+    intents = (await client.get(f"/circles/{cid}/intents")).json()["items"]
+    assert {i["id"] for i in intents} >= {mine, theirs}
+    mid = db.one("SELECT CAST(moment_id AS text) FROM public.moment_posts WHERE id = :p", p=my_post)[0]
+    moment = (await client.get(f"/moments/{mid}")).json()
+    authors = {p["id"]: (p["display_name"], p["avatar_url"]) for p in moment["posts"]}
+    assert authors[my_post] == ("Deleted user", None)
+    assert authors[their_post][0] == "bina"
+    assert (await client.post(f"/moments/posts/{my_post}/someday")).json()["note"].startswith(
+        "From Deleted user's"
+    )
+
+    scrubbed = f"deleted-{me}@deleted.invalid"
+    for path in [
+        "/circles", f"/circles/{cid}", f"/circles/{cid}/intents", f"/intents/{mine}",
+        f"/circles/{cid}/moments", f"/moments/{mid}", "/notifications",
+    ]:
+        resp = await client.get(path)
+        assert resp.status_code == 200, path
+        assert scrubbed not in resp.text and "deleted.invalid" not in resp.text, path
 
 
 async def test_cleanup_failure_does_not_fail_the_request(client, db, as_user, monkeypatch):

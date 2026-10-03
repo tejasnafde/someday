@@ -1,5 +1,17 @@
 # Account deletion. Every write here runs inside ONE transaction
 # (account_helper.delete_account_rows). status = -1 marks user-initiated removal.
+#
+# Deleting an account does not delete content shared with others: in circles
+# that keep other members, the user's intents (and their memory photos) and
+# Meanwhile posts stay at status = 1 and point at the scrubbed users row.
+# Author lookups show that row as "Deleted user". Only personal signals go.
+
+# Columns referencing public.users that deletion leaves in place on purpose.
+# tests/account/test_deletion_coverage.py fails on any other unhandled column.
+RETAINED_USER_COLUMNS = {
+    "intents.created_by": "shared content, author shown as Deleted user",
+    "moment_posts.user_id": "shared content, author shown as Deleted user",
+}
 
 # Row lock: a second concurrent delete waits here, then finds status = -1.
 LOCK_USER = """
@@ -77,13 +89,7 @@ DELETE_CIRCLE = """
     WHERE id = :circle_id AND status = 1
 """
 
-# ── Everything the user created, in any circle ──────────────────────────────
-
-DELETE_USER_INTENTS = """
-    UPDATE public.intents SET status = -1
-    WHERE created_by = :user_id AND status = 1
-    RETURNING done_photos
-"""
+# ── The user's personal signals, in any circle ──────────────────────────────
 
 DELETE_USER_REACTIONS = """
     UPDATE public.reactions SET status = -1
@@ -98,12 +104,6 @@ DELETE_USER_BOOSTS = """
 DELETE_USER_MOMENT_PINGS = """
     UPDATE public.moment_pings SET status = -1
     WHERE user_id = :user_id AND status = 1
-"""
-
-DELETE_USER_MOMENT_POSTS = """
-    UPDATE public.moment_posts SET status = -1
-    WHERE user_id = :user_id AND status = 1
-    RETURNING photo_url
 """
 
 DELETE_USER_WEB_PUSH = """

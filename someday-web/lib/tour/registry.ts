@@ -129,7 +129,7 @@ export const TOUR_REGISTRY: TourStep[] = [
     page: "settings",
     anchor: "settings-delete",
     title: "Your data, your call",
-    body: "You can delete your account here any time. It removes everything you added.",
+    body: "It removes your account and your name. Plans you shared stay with your circles.",
   },
   {
     id: "settings.support",
