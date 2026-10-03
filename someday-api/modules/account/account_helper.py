@@ -24,7 +24,8 @@ def photo_urls(rows: list[dict], key: str) -> list[str]:
 
 
 def delete_account_rows(db, user_id: str) -> dict | None:
-    """Soft-delete the account in ONE transaction. Returns what to clean up
+    """Soft-delete the account in ONE transaction. Content shared in circles
+    that keep other members stays. Returns what to clean up
     after commit ({"files": {bucket: [paths]}, ...}), or None if the user is
     not active."""
     infologger.info(f"account_helper.delete_account_rows | user_id={user_id}")
@@ -62,11 +63,10 @@ def delete_account_rows(db, user_id: str) -> dict | None:
             files["circle-photos"].append(circle_id)
             deleted_circles.append(circle_id)
 
-        urls += photo_urls(db.tx_query(conn, q.DELETE_USER_INTENTS, p), "done_photos")
+        # Intents and Meanwhile posts in circles that live on stay, and so do their photos.
         db.tx_exec(conn, q.DELETE_USER_REACTIONS, p)
         db.tx_exec(conn, q.DELETE_USER_BOOSTS, p)
         db.tx_exec(conn, q.DELETE_USER_MOMENT_PINGS, p)
-        urls += photo_urls(db.tx_query(conn, q.DELETE_USER_MOMENT_POSTS, p), "photo_url")
         db.tx_exec(conn, q.DELETE_USER_WEB_PUSH, p)
         db.tx_exec(conn, q.DELETE_USER_NOTIFICATIONS, p)
         db.tx_exec(conn, q.DELETE_USER_MEMBERSHIPS, p)

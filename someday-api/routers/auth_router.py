@@ -114,7 +114,7 @@ async def update_me(request: UpdateMeRequest, current_user: dict = Depends(jwt_r
 @router.delete("/me")
 @log_timing("DELETE /auth/me")
 async def delete_me(current_user: dict = Depends(jwt_required)):
-    """Delete the caller's account: content, memberships, PII, auth user, files."""
+    """Delete the caller's account: memberships, personal signals, PII, auth user. Shared content stays."""
     infologger.info(f"DELETE /auth/me | user_id={current_user['sub']}")
     status, result = handler.delete_account(current_user["sub"])
     return create_response(status, result)
