@@ -15,7 +15,7 @@ import {
 import { api } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
-import type { CircleDetail, Member } from "@/lib/types";
+import type { CircleDetail, Member, RemovedMember } from "@/lib/types";
 import { plural } from "@/lib/plural";
 import { confirmDialog } from "@/components/ConfirmDialog";
 
@@ -94,6 +94,17 @@ export default function MembersPage() {
     try {
       await api.removeMember(id, m.user_id);
       setSheet(null);
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function allowBack(m: RemovedMember) {
+    if (!(await confirmDialog({ title: `Allow ${m.display_name ?? "this person"} back?`, description: "They can join again with the invite link.", confirmLabel: "Allow back" }))) return;
+    setBusy(true);
+    try {
+      await api.allowMemberBack(id, m.user_id);
       await load();
     } finally {
       setBusy(false);
@@ -183,6 +194,28 @@ export default function MembersPage() {
           );
         })}
       </div>
+
+      {canManage && !!circle.removed?.length && (
+        <>
+          <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--txt-l)" }}>
+            Removed
+          </div>
+          <div data-tour="members-removed" className="mb-5 flex flex-col gap-2">
+            {circle.removed.map((m, i) => (
+              <div key={m.user_id} className="glass flex items-center gap-3 rounded-[var(--rs)] p-3">
+                <MemberDot name={m.display_name ?? m.email} color={memberColor(circle.members.length + i)} size={42} src={m.avatar_url} />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold">{m.display_name ?? m.email}</div>
+                  <div className="truncate text-xs" style={{ color: "var(--txt-m)" }}>Can't rejoin by link</div>
+                </div>
+                <button disabled={busy} onClick={() => allowBack(m)} className="btn-ghost shrink-0 px-3 py-1.5 text-xs disabled:opacity-50">
+                  Allow back
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       <div className="rounded-[var(--r)] p-4"
         style={{ background: "linear-gradient(135deg, var(--acc-l), rgba(189,176,224,.04))", border: "1px solid rgba(155,141,196,.22)" }}>

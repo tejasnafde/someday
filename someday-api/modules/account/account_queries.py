@@ -14,6 +14,9 @@ RETAINED_USER_COLUMNS = {
     # A report may be evidence of harm (Google Play child safety), so it outlives
     # the reporter's account. Only the backend can read it (RLS, no policies).
     "concern_reports.user_id": "safety report, kept as possible evidence",
+    # Who removed a member stays on the row: it points at the scrubbed users
+    # row (no name, no email), and the removal itself must keep blocking rejoin.
+    "circle_members.removed_by": "moderation record, points at the scrubbed row",
 }
 
 # Row lock: a second concurrent delete waits here, then finds status = -1.
