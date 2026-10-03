@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Constants from "expo-constants";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 import { checkForApkUpdate, downloadAndInstall, type ApkUpdate } from "../lib/selfUpdate";
 import { useTheme } from "../lib/theme";
@@ -9,9 +10,13 @@ export function UpdateBanner() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  // Play builds update through Play; self-updating is against Play policy.
+  const isPlayBuild = Constants.expoConfig?.extra?.distribution === "play";
+
   useEffect(() => {
+    if (isPlayBuild) return;
     checkForApkUpdate().then(setUpdate);
-  }, []);
+  }, [isPlayBuild]);
 
   if (!update) return null;
 
