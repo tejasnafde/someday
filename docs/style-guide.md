@@ -93,6 +93,8 @@ The app uses a layered glass system. Choose the right layer - don't mix them arb
 
 **Implementation:** always pair with `backdrop-filter: blur(18px) saturate(155%)` and include the `@supports` fallback for non-supporting browsers (solid `--glass-hi` background).
 
+**Modal scrim:** the dim layer behind a modal or dialog is `var(--scrim)` (`rgba(0,0,0,.4)`, both themes).
+
 **Dark mode:** Glass in dark mode is charcoal-tinted (`rgba(22,22,22, .80)`) - no colour bleed from the surface.
 
 ---
@@ -127,6 +129,10 @@ Use for: Spin the Wheel, Cancel, Leave, secondary actions alongside a primary.
 - Never use circle identity colours (`--cp`, `--cg`, `--cb`) on buttons
 - Never create a one-off button colour for a "special" action (e.g. green for "Planned") - use primary CTA style
 - Destructive actions (Delete, Leave) use secondary style with `color: var(--cp)` text only - never a red filled button in the POC
+
+### shadcn/ui components
+
+shadcn/ui lives in `components/shadcn/` (alias `ui` in `components.json`, kept apart from the hand-written `components/ui.tsx`). Its theme variables (`--primary`, `--muted`, `--border`, ...) are mapped to the tokens above at the end of `globals.css`, so they follow dark mode with no `.dark` block. `components/shadcn/button.tsx` variants reuse `.btn-primary` / `.btn-ghost`: `default` is the primary CTA, `outline` the ghost, and `destructive` the ghost with `--cp` text. Confirmations use `await confirmDialog({...})` (`components/ConfirmDialog.tsx`, host mounted in the root layout), never native `confirm()` or `alert()`.
 
 ---
 

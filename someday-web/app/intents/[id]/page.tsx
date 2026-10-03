@@ -9,6 +9,7 @@ import { CATEGORY_ICONS, IntentPreview, NavBar, Spinner } from "@/components/ui"
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
 import type { Category, Intent, TaskStatus } from "@/lib/types";
+import { confirmDialog } from "@/components/ConfirmDialog";
 
 const STEPS: TaskStatus[] = ["saved", "interested", "planned", "done"];
 const CATEGORIES: Category[] = ["watch", "eat", "visit", "read", "play", "trip", "talk"];
@@ -139,7 +140,7 @@ export default function IntentPage() {
   }
 
   async function remove() {
-    if (!confirm("Delete this from the circle?")) return;
+    if (!(await confirmDialog({ title: "Delete this from the circle?", confirmLabel: "Delete", destructive: true }))) return;
     await api.deleteIntent(id);
     router.push(`/circles/${intent!.circle_id}`);
   }

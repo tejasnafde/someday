@@ -17,6 +17,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
 import type { CircleDetail, Member } from "@/lib/types";
 import { plural } from "@/lib/plural";
+import { confirmDialog } from "@/components/ConfirmDialog";
 
 export default function MembersPage() {
   const ready = useAuth();
@@ -76,7 +77,7 @@ export default function MembersPage() {
   }
 
   async function transferOwnership(m: Member) {
-    if (!confirm(`Make ${m.display_name ?? "this member"} the owner? You'll become an admin.`)) return;
+    if (!(await confirmDialog({ title: `Make ${m.display_name ?? "this member"} the owner?`, description: "You'll become an admin.", confirmLabel: "Make owner" }))) return;
     setBusy(true);
     try {
       await api.setMemberRole(id, m.user_id, "owner");
@@ -88,7 +89,7 @@ export default function MembersPage() {
   }
 
   async function removeMember(m: Member) {
-    if (!confirm(`Remove ${m.display_name ?? "this member"} from the circle?`)) return;
+    if (!(await confirmDialog({ title: `Remove ${m.display_name ?? "this member"} from the circle?`, confirmLabel: "Remove", destructive: true }))) return;
     setBusy(true);
     try {
       await api.removeMember(id, m.user_id);
@@ -101,16 +102,16 @@ export default function MembersPage() {
 
   async function leaveCircle() {
     if (myRole === "owner") {
-      alert("Transfer ownership before leaving - promote another member first.");
+      await confirmDialog({ title: "Transfer ownership first", description: "Promote another member to owner before you leave.", notice: true });
       return;
     }
-    if (!confirm("Leave this circle?")) return;
+    if (!(await confirmDialog({ title: "Leave this circle?", confirmLabel: "Leave", destructive: true }))) return;
     await api.leaveCircle(id);
     router.push("/");
   }
 
   async function deleteCircle() {
-    if (!confirm("Delete this circle for everyone? This can't be undone.")) return;
+    if (!(await confirmDialog({ title: "Delete this circle for everyone?", description: "This can't be undone.", confirmLabel: "Delete", destructive: true }))) return;
     await api.deleteCircle(id);
     router.push("/");
   }
