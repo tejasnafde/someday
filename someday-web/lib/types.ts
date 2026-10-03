@@ -128,3 +128,5 @@ export interface SpinItem {
   category: Category | null;
   reaction_count: number;
 }
+
+export type ConcernCategory = "child_safety" | "abuse" | "other";

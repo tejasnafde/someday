@@ -1,5 +1,8 @@
 """Reverse geocoding: coordinates -> city name, via OSM Nominatim.
 
+Coordinates are never logged, not even rounded: the privacy policy says they
+are not kept. Log lines name the resolved city or the failure type only.
+
 Volume here is tiny (a handful of moment posts a day), well inside Nominatim's
 usage policy. The request goes through safe_client so the SSRF posture matches
 every other outbound call, and the UA identifies us per their policy.
@@ -39,10 +42,11 @@ def reverse_geocode_city(lat: float, lng: float) -> str | None:
         resp.raise_for_status()
         city = pick_city(resp.json().get("address", {}))
         if city:
-            infologger.info(f"geo_util.reverse_geocode_city | ({lat:.3f},{lng:.3f}) -> {city!r}")
+            infologger.info(f"geo_util.reverse_geocode_city | resolved city={city!r}")
         else:
-            infologger.warning(f"geo_util.reverse_geocode_city | no city key in address | ({lat:.3f},{lng:.3f})")
+            infologger.warning("geo_util.reverse_geocode_city | no city key in address")
         return city
     except Exception as exc:
-        errorlogger.error(f"geo_util.reverse_geocode_city | failed | {exc}")
+        # Type only: httpx error text carries the request URL, which holds the coordinates.
+        errorlogger.error(f"geo_util.reverse_geocode_city | failed | type={type(exc).__name__}")
         return None

@@ -149,6 +149,36 @@ async def send_build_alert(build_id: str, status: str, log_url: str, commit: str
     await _post(embed)
 
 
+CONCERN_LABELS = {"child_safety": "Child safety", "abuse": "Abuse or harassment", "other": "Something else"}
+
+
+async def send_concern_alert(
+    report_id: str, user_id: str, category: str, subject: str | None, body: str
+) -> None:
+    """Alert on a user's Report a concern. Child safety is marked URGENT. Runs
+    after the report is stored, so a failed post loses nothing (_post logs ERROR)."""
+    if not settings.DISCORD_WEBHOOK_URL:
+        errorlogger.error(f"discord_alert | concern alert not sent, no webhook | report_id={report_id}")
+        return
+    env_label = "🔴 PROD" if settings.APP_ENV == "production" else "🟡 DEV"
+    urgent = category == "child_safety"
+    label = CONCERN_LABELS.get(category, category)
+    fields = [
+        {"name": "report", "value": safe_alert_text(report_id), "inline": True},
+        {"name": "reporter", "value": safe_alert_text(user_id), "inline": True},
+    ]
+    if subject:
+        fields.append({"name": "about", "value": safe_alert_text(subject, 500), "inline": False})
+    embed = {
+        "title": safe_alert_text(f"{env_label} {'URGENT ' if urgent else ''}Report a concern: {label}", 256),
+        "description": safe_alert_text(body, 2000, preserve_newlines=True),
+        "color": 0xE53E3E if urgent else 0xDD6B20,
+        "fields": fields,
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
+    await _post(embed)
+
+
 def alert(
     status: int,
     method: str,

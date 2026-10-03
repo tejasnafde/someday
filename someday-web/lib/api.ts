@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { AppNotification, Circle, CircleDetail, Intent, LinkMeta, Moment, NotificationFeed, SmartPick, SpinItem, TourState, User } from "./types";
+import type { AppNotification, Circle, CircleDetail, Intent, LinkMeta, Moment, NotificationFeed, SmartPick, SpinItem, TourState, User, ConcernCategory } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const CLIENT_HEADERS = { "X-Someday-Client": "web" };
@@ -70,6 +70,8 @@ export const api = {
   updateMe: (fields: { display_name?: string; avatar_url?: string; city?: string }) =>
     request<{ user: User }>("PATCH", "/auth/me", fields),
   deleteAccount: () => request<{ message: string }>("DELETE", "/auth/me"),
+  reportConcern: (body: { category: ConcernCategory; subject?: string; body: string }) =>
+    request<{ id: string }>("POST", "/concerns", body),
   uploadAvatar: (blob: Blob) => upload<{ user: User }>("/auth/me/avatar", blob, "avatar.webp"),
   uploadCirclePhoto: (circleId: string, blob: Blob) =>
     upload<{ photo_url: string }>(`/circles/${circleId}/photo`, blob, "photo.webp"),

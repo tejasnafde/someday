@@ -13,7 +13,7 @@ import { getCached, setCached } from "@/lib/cache";
 import { notifyShellSignedOut } from "@/lib/nativeShell";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
-import type { Circle, User } from "@/lib/types";
+import type { Circle, ConcernCategory, User } from "@/lib/types";
 
 export default function SettingsPage() {
   const ready = useAuth();
@@ -156,6 +156,8 @@ export default function SettingsPage() {
         Sign out
       </button>
 
+      <ReportConcern />
+
       <DeleteAccount />
 
       <div className="mt-6 text-center text-xs" style={{ color: "var(--txt-m)" }}>
@@ -164,6 +166,106 @@ export default function SettingsPage() {
 
       <Tour page="settings" />
     </main>
+  );
+}
+
+const CONCERN_CATEGORIES: { value: ConcernCategory; label: string }[] = [
+  { value: "child_safety", label: "Child safety" },
+  { value: "abuse", label: "Abuse or harassment" },
+  { value: "other", label: "Something else" },
+];
+
+// An in-app form, not a mailto link: mailto does nothing inside the Android shell.
+function ReportConcern() {
+  const [open, setOpen] = useState(false);
+  const [category, setCategory] = useState<ConcernCategory>("child_safety");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [sent, setSent] = useState(false);
+
+  function close() {
+    setOpen(false);
+    setCategory("child_safety");
+    setSubject("");
+    setBody("");
+    setError("");
+    setSent(false);
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!body.trim()) return;
+    setBusy(true);
+    setError("");
+    try {
+      await api.reportConcern({ category, subject: subject.trim() || undefined, body: body.trim() });
+      setSent(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const field = { background: "var(--glass-lo)", border: "1px solid var(--brd-h)", color: "var(--txt)" };
+
+  if (!open) {
+    return (
+      <button onClick={() => setOpen(true)} data-tour="settings-report"
+        className="btn-ghost mt-3 w-full py-3.5 text-sm" style={{ color: "var(--txt-m)" }}>
+        <Icon name="message-circle" size="sm" />
+        Report a concern
+      </button>
+    );
+  }
+
+  if (sent) {
+    return (
+      <div data-tour="settings-report" className="glass mt-3 rounded-[var(--r)] p-4" style={{ boxShadow: "var(--shc)" }}>
+        <div className="font-serif font-semibold">Thanks, we got your report.</div>
+        <p className="mt-2 text-xs leading-relaxed" style={{ color: "var(--txt-m)" }}>
+          We read every report. If someone is in immediate danger, contact local emergency services.
+        </p>
+        <button type="button" onClick={close} className="btn-ghost mt-3 w-full py-3 text-sm" style={{ color: "var(--txt-m)" }}>
+          Done
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={submit} data-tour="settings-report"
+      className="glass mt-3 rounded-[var(--r)] p-4" style={{ boxShadow: "var(--shc)" }}>
+      <div className="font-serif font-semibold">Report a concern</div>
+      <label className="mt-3 block text-xs" style={{ color: "var(--txt-m)" }}>
+        What is it about?
+        <select value={category} onChange={(e) => setCategory(e.target.value as ConcernCategory)}
+          className="mt-1.5 w-full rounded-[var(--rs)] px-3 py-2 text-sm outline-none" style={field}>
+          {CONCERN_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+        </select>
+      </label>
+      <label className="mt-3 block text-xs" style={{ color: "var(--txt-m)" }}>
+        Circle or item this is about (optional)
+        <input value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={200}
+          className="mt-1.5 w-full rounded-[var(--rs)] px-3 py-2 text-sm outline-none" style={field} />
+      </label>
+      <label className="mt-3 block text-xs" style={{ color: "var(--txt-m)" }}>
+        What happened?
+        <textarea value={body} onChange={(e) => setBody(e.target.value)} required maxLength={4000} rows={5}
+          className="mt-1.5 w-full rounded-[var(--rs)] px-3 py-2 text-sm outline-none" style={field} />
+      </label>
+      {error && <p className="mt-2 text-xs" style={{ color: "var(--cp)" }}>{error}</p>}
+      <div className="mt-3 flex gap-2">
+        <button type="button" onClick={close} className="btn-ghost flex-1 py-3 text-sm" style={{ color: "var(--txt-m)" }}>
+          Cancel
+        </button>
+        <button type="submit" disabled={!body.trim() || busy} className="btn-primary flex-1 py-3 text-sm disabled:opacity-50">
+          {busy ? "Sending…" : "Send report"}
+        </button>
+      </div>
+    </form>
   );
 }
 
