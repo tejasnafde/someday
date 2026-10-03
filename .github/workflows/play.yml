@@ -1,0 +1,46 @@
+name: Play
+
+# Manual only: each run spends an EAS build. Builds the "play" AAB (versionCode
+# auto-increments on EAS) and uploads it to the Play internal track as a draft.
+# Promote it in Play Console. The production profile (sideloaded APK and the
+# GitHub release) is unaffected.
+on:
+  workflow_dispatch:
+
+jobs:
+  play:
+    name: Build AAB and submit to internal track
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: someday-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: someday-app/package-lock.json
+
+      - run: npm ci
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build AAB
+        run: eas build --platform android --profile play --non-interactive --wait
+
+      - name: Write Play service account key
+        run: printf '%s' "$PLAY_SA_KEY" > play-sa.json
+        env:
+          PLAY_SA_KEY: ${{ secrets.PLAY_SA_KEY }}
+
+      - name: Submit to internal track (draft)
+        run: eas submit --platform android --profile play --latest --non-interactive
+
+      - name: Remove key
+        if: always()
+        run: rm -f play-sa.json

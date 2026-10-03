@@ -207,6 +207,14 @@ Auth tokens are stored in the device secure enclave via `expo-secure-store`, **n
 - `someday-app/lib/supabase.ts` uses `SecureStore.getItemAsync / setItemAsync / deleteItemAsync` as the Supabase auth storage adapter.
 - The session inactivity timer in `App.tsx` uses `AsyncStorage` only for the `last_active_timestamp` value (not sensitive) - this is intentional. Supabase tokens stay in SecureStore.
 
+### Google Play
+
+- Package `app.someday.capture`, listed as "Someday: Shared Bucket List" in the GlycoCare developer account (draft app id 4974763279252445229). Package names never change; it is also registered for Android developer verification.
+- Two EAS profiles: `production` builds the sideloaded APK (GitHub release via the EAS webhook, which publishes ONLY `production` `.apk` builds) and `play` builds the AAB. `versionCode` auto-increments on EAS (`appVersionSource: remote`).
+- Play app signing uses OUR key (SHA-256 `0A:1A:66:7B...1D:18:18`), the same key as the APK, so APK users can move to the Play build without reinstalling. Never let Play generate a new key.
+- Ship to Play: run the manual `Play` workflow (`gh workflow run play.yml`). It builds the AAB and uploads it to the internal track as a DRAFT; promote it in Play Console. The service account is `someday-play-publisher@teejayproject` (Admin on this app only), key in Secret Manager `SOMEDAY_PLAY_SA_KEY` and GitHub secret `PLAY_SA_KEY`.
+- Play review login: `review@tn07.dev` (Google account; mail forwards to nafdetejas@gmail.com, and codes the app sends land in Gmail's Sent folder).
+
 ### Crash reporting
 
 `App.tsx` installs `ErrorUtils.setGlobalHandler` at module load time. It forwards fatal and non-fatal JS errors to `POST /auth/client-error` via `api.clientError()` (fire-and-forget, never throws).
