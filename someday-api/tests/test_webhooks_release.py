@@ -513,3 +513,21 @@ def test_recovery_does_not_retry_name_occupying_incomplete_asset(monkeypatch):
     )
 
     webhooks_handler.recover_incomplete_releases()
+
+
+def eas_payload(profile, url):
+    return {
+        "id": "b1", "status": "finished", "platform": "android",
+        "metadata": {"appVersion": "9.9.9", "buildProfile": profile},
+        "artifacts": {"buildUrl": url},
+    }
+
+
+def test_only_production_apk_builds_are_published():
+    handler = webhooks_handler.WebhooksHandler()
+    status, result = handler.eas_build(eas_payload("production", "https://expo.dev/artifacts/eas/x.apk"))
+    assert (status, result["action"]) == (200, "publish")
+    status, result = handler.eas_build(eas_payload("play", "https://expo.dev/artifacts/eas/x.aab"))
+    assert (status, result["action"]) == (200, "ignored")
+    status, result = handler.eas_build(eas_payload("production", "https://expo.dev/artifacts/eas/x.aab"))
+    assert result["action"] == "ignored"
