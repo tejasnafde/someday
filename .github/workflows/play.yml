@@ -31,7 +31,10 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Build AAB
-        run: eas build --platform android --profile play --non-interactive --wait
+        id: build
+        run: |
+          eas build --platform android --profile play --non-interactive --wait --json > build.json
+          echo "id=$(node -p "require('./build.json')[0].id")" >> "$GITHUB_OUTPUT"
 
       - name: Write Play service account key
         run: printf '%s' "$PLAY_SA_KEY" > play-sa.json
@@ -39,7 +42,9 @@ jobs:
           PLAY_SA_KEY: ${{ secrets.PLAY_SA_KEY }}
 
       - name: Submit to internal track (draft)
-        run: eas submit --platform android --profile play --latest --non-interactive
+        # Submit THIS build by id. --latest picks the newest Android build of any
+        # profile, which can be a production APK, and Play rejects APKs.
+        run: eas submit --platform android --profile play --id "${{ steps.build.outputs.id }}" --non-interactive
 
       - name: Remove key
         if: always()
