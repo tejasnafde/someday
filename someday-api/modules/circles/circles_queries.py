@@ -71,6 +71,35 @@ INSERT_CIRCLE_MEMBER = """
     ON CONFLICT DO NOTHING
 """
 
+# Join by invite. A user who left keeps a status = 0 row, so revive their most
+# recent row as a plain member instead of adding another. The INSERT only runs
+# when there was nothing to revive, and ON CONFLICT keeps an existing active
+# membership as it is (joining twice is a no-op).
+# Gap: an admin removal also sets status = 0, so a removed member can rejoin
+# through the invite link the same way. The schema does not record why a row
+# went inactive.
+JOIN_CIRCLE_MEMBER = """
+    WITH revived AS (
+        UPDATE public.circle_members
+        SET status = 1, role = 'member', joined_at = now()
+        WHERE id = (
+            SELECT id FROM public.circle_members
+            WHERE circle_id = :circle_id AND user_id = :user_id AND status = 0
+              AND NOT EXISTS (
+                  SELECT 1 FROM public.circle_members
+                  WHERE circle_id = :circle_id AND user_id = :user_id AND status = 1
+              )
+            ORDER BY joined_at DESC
+            LIMIT 1
+        )
+        RETURNING id
+    )
+    INSERT INTO public.circle_members (circle_id, user_id, role, status)
+    SELECT :circle_id, :user_id, 'member', 1
+    WHERE NOT EXISTS (SELECT 1 FROM revived)
+    ON CONFLICT DO NOTHING
+"""
+
 UPDATE_CIRCLE = """
     UPDATE public.circles
     SET name  = COALESCE(:name,  name),

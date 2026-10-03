@@ -95,6 +95,10 @@ class Settings(BaseSettings):
     # re-hosted og:image). Enforced while streaming by url_util.get_capped.
     MAX_FETCH_BYTES: int = 5 * 1024 * 1024
 
+    # Meanwhile: a post more than this long after the member's ping is labeled
+    # "late". 30 minutes is the product owner's choice.
+    MEANWHILE_LATE_GRACE_SECONDS: int = 1800
+
     # Auto-tagging. TAGGER_ENABLED gates the background task on intent create;
     # TAGGER_LLM_ENABLED gates only the Vertex call (heuristics always run), so
     # the LLM can be switched off without losing domain-based tags. On Cloud Run

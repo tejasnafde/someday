@@ -121,6 +121,11 @@ export interface SmartPick {
   };
 }
 
+export interface SmartPickResult {
+  pick: SmartPick | null;
+  reason: string | null;
+}
+
 export interface SpinItem {
   id: string;
   title: string;
