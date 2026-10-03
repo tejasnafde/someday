@@ -7,6 +7,7 @@ import { IntentPreview, NavBar, Spinner } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
 import type { CircleDetail, Intent, SmartPick, SpinItem } from "@/lib/types";
+import { plural } from "@/lib/plural";
 
 export default function PayoffPage() {
   const ready = useAuth();
@@ -96,7 +97,7 @@ export default function PayoffPage() {
         {shortlistCount !== null && (
           <span className="tnum mt-2.5 inline-block rounded-full px-3.5 py-1.5 text-xs font-semibold"
             style={{ background: "var(--acc-l)", color: "var(--acc)", border: "1.5px solid var(--acc)33" }}>
-            {shortlistCount} {shortlistCount === 1 ? "thing" : "things"} you {circle.member_count > 2 ? "all" : "both"} want
+            {plural(shortlistCount, "thing")} you {circle.member_count > 2 ? "all" : "both"} want
           </span>
         )}
       </div>
@@ -180,7 +181,7 @@ export default function PayoffPage() {
               <div className="font-serif text-lg font-semibold">{pick.title}</div>
               <div className="mt-2.5 flex flex-wrap gap-1.5">
                 <Chip icon="heart" label={`${pick.breakdown.reaction_count} of ${circle.member_count} interested`} />
-                <Chip icon="clock" label={`Saved ${Math.round(pick.breakdown.days_saved)} days ago`} />
+                <Chip icon="clock" label={`Saved ${plural(Math.round(pick.breakdown.days_saved), "day")} ago`} />
                 {pick.breakdown.has_boost && <Chip icon="zap" label="Boosted today" />}
               </div>
               <button onClick={() => markPlanned(pick.intent_id)} className="btn-primary mt-4 w-full py-3 text-sm" style={{ borderRadius: "var(--rs)" }}>

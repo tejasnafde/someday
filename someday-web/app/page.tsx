@@ -12,6 +12,7 @@ import { APK_URL, useInstallPlatform } from "@/lib/useInstallPlatform";
 import { api } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import type { Circle, Intent, User } from "@/lib/types";
+import { plural } from "@/lib/plural";
 
 // Sample circle for the landing preview. Static demo data rendered with the
 // real components, so the preview cannot drift from what the app looks like.
@@ -299,7 +300,7 @@ export default function Home() {
         {greeting},<br />{user?.display_name ?? "friend"}.
       </h1>
       <p className="tnum mt-1.5 text-[13px]" style={{ color: "var(--txt-m)" }}>
-        {circles.length} {circles.length === 1 ? "circle" : "circles"} · {totalIdeas} ideas waiting
+        {plural(circles.length, "circle")} · {plural(totalIdeas, "idea")} waiting
       </p>
 
       <div className="mt-6 flex flex-col gap-3.5">
@@ -316,7 +317,7 @@ export default function Home() {
               <div className="min-w-0 flex-1">
                 <div className="truncate font-serif font-semibold">{c.name}</div>
                 <div className="tnum text-xs" style={{ color: "var(--txt-m)" }}>
-                  {c.member_count} {c.member_count === 1 ? "member" : "members"}
+                  {plural(c.member_count, "member")}
                 </div>
                 <div className="mt-2 flex">
                   {Array.from({ length: Math.min(c.member_count, 5) }).map((_, i) => (
@@ -326,7 +327,7 @@ export default function Home() {
               </div>
               <span className="tnum whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-semibold"
                 style={{ background: "var(--glass-lo)", color: "var(--txt-m)" }}>
-                {c.open_intent_count} {c.open_intent_count === 1 ? "idea" : "ideas"}
+                {plural(c.open_intent_count, "idea")}
               </span>
             </Link>
           );
