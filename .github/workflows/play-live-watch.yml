@@ -1,0 +1,33 @@
+name: Play live watch
+
+# Hourly until Someday's public Play page exists, then one Discord post and the
+# workflow disables itself. The page returns 404 until Google approves and
+# publishes the app. A known app is checked as a control, so a Play outage or a
+# block on GitHub runners cannot look like "not live yet" forever unnoticed.
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the Play page
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          URL="https://play.google.com/store/apps/details?id=app.someday.capture&hl=en"
+          code=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+          control=$(curl -s -o /dev/null -w "%{http_code}" "https://play.google.com/store/apps/details?id=com.whatsapp&hl=en")
+          echo "someday=$code control=$control"
+          if [ "$control" != "200" ]; then echo "::warning::control check failed ($control); result not trusted"; exit 0; fi
+          if [ "$code" = "200" ]; then
+            curl -s -X POST "$DISCORD_WEBHOOK_URL" -H "Content-Type: application/json" \
+              -d "{\"username\":\"Play\",\"content\":\"Someday is LIVE on Google Play: $URL\"}"
+            gh workflow disable "Play live watch" -R "$GITHUB_REPOSITORY"
+          fi
