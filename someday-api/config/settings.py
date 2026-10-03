@@ -56,6 +56,10 @@ class Settings(BaseSettings):
 
     # Release pipeline (EAS build webhook → GitHub release)
     EAS_WEBHOOK_SECRET: str = ""
+    # Only this EAS build profile becomes a GitHub release (someday.apk for the
+    # in-app updater). The "play" profile builds an AAB for Google Play and must
+    # never be published as an APK.
+    EAS_RELEASE_PROFILE: str = "production"
     GITHUB_TOKEN: str = ""
 
     # Database

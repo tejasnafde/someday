@@ -287,6 +287,13 @@ class WebhooksHandler:
         )
         if status != "finished" or platform != "android":
             return 200, {"action": "ignored", "reason": f"{platform}/{status}"}
+        profile = (payload.get("metadata") or {}).get("buildProfile")
+        if profile != settings.EAS_RELEASE_PROFILE or not str(apk_url or "").endswith(".apk"):
+            infologger.info(
+                f"WebhooksHandler.eas_build | not a release APK | build={build_id} "
+                f"profile={profile} artifact={str(apk_url or '')[-12:]}"
+            )
+            return 200, {"action": "ignored", "reason": f"profile={profile}"}
         if not version or not apk_url:
             infologger.warning("WebhooksHandler.eas_build | missing version or artifact")
             return 200, {"action": "ignored", "reason": "missing version/artifact"}
