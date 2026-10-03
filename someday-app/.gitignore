@@ -4,3 +4,8 @@ dist/
 *.tsbuildinfo
 android/
 ios/
+
+# Signing keys and store credentials never live in the repo.
+*.jks
+*.keystore
+play-sa.json
