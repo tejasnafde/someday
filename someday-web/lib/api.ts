@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { AppNotification, Circle, CircleDetail, Intent, LinkMeta, Moment, NotificationFeed, SmartPick, SpinItem, TourState, User, ConcernCategory } from "./types";
+import type { AppNotification, Circle, CircleDetail, Intent, LinkMeta, Moment, NotificationFeed, SmartPickResult, SpinItem, TourState, User, ConcernCategory } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const CLIENT_HEADERS = { "X-Someday-Client": "web" };
@@ -158,7 +158,7 @@ export const api = {
   react: (id: string) => request<{ reacted: boolean }>("POST", `/intents/${id}/react`),
   boost: (id: string) => request<{ boosted: boolean }>("POST", `/intents/${id}/boost`),
 
-  smartPick: (circleId: string) => request<SmartPick>("GET", `/circles/${circleId}/payoff/smart`),
+  smartPick: (circleId: string) => request<SmartPickResult>("GET", `/circles/${circleId}/payoff/smart`),
   spin: (circleId: string) => request<{ shortlist: SpinItem[] }>("GET", `/circles/${circleId}/payoff/spin`),
 
   unfurl: (url: string) => request<LinkMeta>("POST", "/unfurl", { url }),

@@ -27,7 +27,6 @@ from modules.moments import moments_queries as q
 
 WAKING_START_HOUR = 9    # never ping before 09:00 local
 WAKING_END_HOUR = 22     # last ping minute is 21:59 local
-LATE_GRACE_SECONDS = 60  # posts after ping_at + grace are labeled late
 POST_MAX_AGE_DAYS = 1    # can post to today's or yesterday's moment (local)
 
 

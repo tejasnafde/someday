@@ -68,8 +68,8 @@ def join_circle_by_token(db, token: str, user_id: str) -> dict | None:
         return None
     circle = rows[0]
     db.execute_query_with_value_without_output(
-        q.INSERT_CIRCLE_MEMBER,
-        {"circle_id": circle["id"], "user_id": user_id, "role": "member"},
+        q.JOIN_CIRCLE_MEMBER,
+        {"circle_id": circle["id"], "user_id": user_id},
     )
     infologger.info(f"circles_helper.join_circle_by_token | joined circle_id={circle['id']}")
     return circle

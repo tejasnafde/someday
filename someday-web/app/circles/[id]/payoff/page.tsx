@@ -45,11 +45,14 @@ export default function PayoffPage() {
     setWinner(null);
     setSpinItems(null);
     try {
-      setPick(await api.smartPick(id));
+      const { pick, reason } = await api.smartPick(id);
+      setPick(pick);
+      if (!pick) setError(reason ?? "No shortlist yet");
     } catch (e) {
       setError(e instanceof Error ? e.message : "No shortlist yet");
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   }
 
   async function spin() {

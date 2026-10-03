@@ -7,6 +7,7 @@ from common_helper.decorators import log_timing
 from common_helper.geo_util import reverse_geocode_city
 from common_helper.notify import Notify
 from common_helper.storage_helper import upload_public_image
+from config.settings import settings
 from modules.intents import intents_helper as ih
 from modules.moments import moments_helper as h
 from modules.moments import moments_queries as q
@@ -82,7 +83,7 @@ class MomentsHandler(DBUtil):
         ping_rows = self.execute_query_with_value(q.GET_MY_PING, {"moment_id": moment_id, "user_id": user_id})
         if ping_rows:
             ping_at = datetime.fromisoformat(str(ping_rows[0]["ping_at"]).replace(" ", "T"))
-            late = (now_utc - ping_at).total_seconds() > h.LATE_GRACE_SECONDS
+            late = (now_utc - ping_at).total_seconds() > settings.MEANWHILE_LATE_GRACE_SECONDS
 
         caption = (caption or "").strip()[:140] or None
         row = self.execute_query_with_value_returning(
