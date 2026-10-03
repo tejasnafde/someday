@@ -12,6 +12,7 @@ import { getCached, setCached } from "@/lib/cache";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
 import type { Category, CircleDetail, Intent, Moment } from "@/lib/types";
+import { plural } from "@/lib/plural";
 
 const TABS = ["All", "Shortlist", "Meanwhile", "Done", "Archived"] as const;
 const CATEGORIES: (Category | "All")[] = ["All", "watch", "eat", "visit", "read", "play", "trip", "talk"];
@@ -275,7 +276,7 @@ export default function CirclePage() {
             </span>
           )
         }
-        subtitle={`${circle.member_count} members · ${circle.open_intent_count} ideas`}
+        subtitle={`${plural(circle.member_count, "member")} · ${plural(circle.open_intent_count, "idea")}`}
         back="/"
         right={
           <div className="flex items-center gap-2">
@@ -443,7 +444,7 @@ export default function CirclePage() {
       {selectMode && selected.size > 0 && (
         <button onClick={bulkArchive} disabled={archiving} className="btn-primary mt-4 w-full py-3 text-sm disabled:opacity-60">
           <Icon name="archive" size="sm" />
-          {archiving ? "Archiving…" : `Archive ${selected.size} ${selected.size === 1 ? "idea" : "ideas"}`}
+          {archiving ? "Archiving…" : `Archive ${plural(selected.size, "idea")}`}
         </button>
       )}
 
@@ -557,7 +558,7 @@ export default function CirclePage() {
 function momentSubtitle(m: Moment): string {
   if (m.posts.length === 0) return "quiet day";
   const cities = [...new Set(m.posts.map((p) => p.city).filter(Boolean))];
-  if (cities.length > 0) return `${cities.length} ${cities.length === 1 ? "city" : "cities"}`;
+  if (cities.length > 0) return plural(cities.length, "city", "cities");
   return `${m.posts.length} posted`;
 }
 

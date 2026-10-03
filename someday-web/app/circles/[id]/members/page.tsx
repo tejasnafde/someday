@@ -16,6 +16,7 @@ import { api } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
 import type { CircleDetail, Member } from "@/lib/types";
+import { plural } from "@/lib/plural";
 
 export default function MembersPage() {
   const ready = useAuth();
@@ -124,7 +125,7 @@ export default function MembersPage() {
     <main>
       <NavBar
         title="Members"
-        subtitle={`${circle.name} · ${circle.member_count} ${circle.member_count === 1 ? "person" : "people"}`}
+        subtitle={`${circle.name} · ${plural(circle.member_count, "person", "people")}`}
         back={`/circles/${id}`}
       />
 
@@ -133,7 +134,7 @@ export default function MembersPage() {
         <div className="min-w-0 flex-1">
           <div className="truncate font-serif text-base font-semibold">{circle.name}</div>
           <div className="tnum text-xs" style={{ color: "var(--txt-m)" }}>
-            {circle.open_intent_count} {circle.open_intent_count === 1 ? "idea waiting" : "ideas waiting"}
+            {plural(circle.open_intent_count, "idea")} waiting
           </div>
         </div>
       </div>
