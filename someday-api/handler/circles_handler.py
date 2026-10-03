@@ -22,6 +22,8 @@ class CirclesHandler(DBUtil):
         circle = h.get_circle_with_members(self, circle_id, user_id)
         if not circle:
             return 404, "Circle not found or you are not a member"
+        if h.can_manage_members(h.get_member_role(self, circle_id, user_id)):
+            circle["removed"] = h.list_removed_members(self, circle_id)
         return 200, circle
 
     @log_timing("circles_handler.create_circle")
@@ -65,7 +67,10 @@ class CirclesHandler(DBUtil):
     @log_timing("circles_handler.join_circle")
     def join_circle(self, token: str, user_id: str) -> tuple[int, dict | str]:
         infologger.info(f"CirclesHandler.join_circle | user_id={user_id}")
-        circle = h.join_circle_by_token(self, token, user_id)
+        try:
+            circle = h.join_circle_by_token(self, token, user_id)
+        except PermissionError:
+            return 403, "You were removed from this circle. Ask an admin to add you back."
         if not circle:
             return 404, "Invalid or expired invite link"
         return 200, {"message": "Joined circle", "circle_id": str(circle["id"]), "name": circle["name"]}
@@ -143,8 +148,18 @@ class CirclesHandler(DBUtil):
             return 403, "Cannot remove the owner"
         if actor_role == "admin" and target_role == "admin":
             return 403, "Admins can't remove other admins - ask the owner"
-        h.remove_member(self, circle_id, target_id)
+        h.remove_member(self, circle_id, actor_id, target_id)
         return 200, "Member removed"
+
+    @log_timing("circles_handler.allow_member_back")
+    def allow_member_back(self, circle_id: str, actor_id: str, target_id: str) -> tuple[int, str]:
+        """Owner+admins let a removed person join by invite again."""
+        infologger.info(f"CirclesHandler.allow_member_back | circle_id={circle_id} actor={actor_id} target={target_id}")
+        if not h.can_manage_members(h.get_member_role(self, circle_id, actor_id)):
+            return 403, "Only the owner or admins can allow someone back"
+        if not h.allow_member_back(self, circle_id, target_id):
+            return 404, "No removed member to allow back"
+        return 200, "Allowed back"
 
     @log_timing("circles_handler.list_tags")
     def list_tags(self, circle_id: str, user_id: str) -> tuple[int, list | str]:

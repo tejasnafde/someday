@@ -132,6 +132,16 @@ async def remove_member(circle_id: str, target_id: str, current_user: dict = Dep
     return create_response(status, result)
 
 
+@router.post("/{circle_id}/members/{target_id}/allow-back")
+@log_timing("POST /circles/:id/members/:user_id/allow-back")
+async def allow_member_back(circle_id: str, target_id: str, current_user: dict = Depends(jwt_required)):
+    infologger.info(
+        f"POST /circles/{circle_id}/members/{target_id}/allow-back | actor={current_user['sub']}"
+    )
+    status, result = handler.allow_member_back(circle_id, current_user["sub"], target_id)
+    return create_response(status, result)
+
+
 @router.get("/{circle_id}/tags")
 @log_timing("GET /circles/:id/tags")
 async def list_tags(circle_id: str, current_user: dict = Depends(jwt_required)):

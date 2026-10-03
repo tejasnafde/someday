@@ -167,6 +167,13 @@ export const TOUR_REGISTRY: TourStep[] = [
     body: "Promote someone to admin, remove a member, or grab the invite link to bring a new person in.",
   },
   {
+    id: "members.allow-back",
+    page: "members",
+    anchor: "members-removed",
+    title: "Removed people",
+    body: "Someone you removed can't rejoin by link until you tap Allow back.",
+  },
+  {
     id: "intent.memories",
     page: "intent",
     anchor: "intent-memories",

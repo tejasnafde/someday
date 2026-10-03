@@ -71,13 +71,25 @@ INSERT_CIRCLE_MEMBER = """
     ON CONFLICT DO NOTHING
 """
 
+# A removed member: an inactive row an admin stamped with removed_at, and no
+# active row. Joining by invite refuses them until an admin allows them back.
+IS_REMOVED_MEMBER = """
+    SELECT 1 FROM public.circle_members
+    WHERE circle_id = :circle_id AND user_id = :user_id AND status = 0
+      AND removed_at IS NOT NULL
+      AND NOT EXISTS (
+          SELECT 1 FROM public.circle_members
+          WHERE circle_id = :circle_id AND user_id = :user_id AND status = 1
+      )
+    LIMIT 1
+"""
+
 # Join by invite. A user who left keeps a status = 0 row, so revive their most
 # recent row as a plain member instead of adding another. The INSERT only runs
 # when there was nothing to revive, and ON CONFLICT keeps an existing active
-# membership as it is (joining twice is a no-op).
-# Gap: an admin removal also sets status = 0, so a removed member can rejoin
-# through the invite link the same way. The schema does not record why a row
-# went inactive.
+# membership as it is (joining twice is a no-op). The helper refuses a removed
+# member first (IS_REMOVED_MEMBER); the removed_at guards here stop a race
+# from reviving or going around a removed row anyway.
 JOIN_CIRCLE_MEMBER = """
     WITH revived AS (
         UPDATE public.circle_members
@@ -85,6 +97,7 @@ JOIN_CIRCLE_MEMBER = """
         WHERE id = (
             SELECT id FROM public.circle_members
             WHERE circle_id = :circle_id AND user_id = :user_id AND status = 0
+              AND removed_at IS NULL
               AND NOT EXISTS (
                   SELECT 1 FROM public.circle_members
                   WHERE circle_id = :circle_id AND user_id = :user_id AND status = 1
@@ -97,6 +110,11 @@ JOIN_CIRCLE_MEMBER = """
     INSERT INTO public.circle_members (circle_id, user_id, role, status)
     SELECT :circle_id, :user_id, 'member', 1
     WHERE NOT EXISTS (SELECT 1 FROM revived)
+      AND NOT EXISTS (
+          SELECT 1 FROM public.circle_members
+          WHERE circle_id = :circle_id AND user_id = :user_id AND status = 0
+            AND removed_at IS NOT NULL
+      )
     ON CONFLICT DO NOTHING
 """
 
@@ -158,8 +176,37 @@ SET_MEMBER_ROLE = """
 
 REMOVE_MEMBER = """
     UPDATE public.circle_members
-    SET status = 0
+    SET status = 0, removed_at = now(), removed_by = :actor_id
     WHERE circle_id = :circle_id AND user_id = :target_user_id AND status = 1
+"""
+
+# People an admin removed, for the "Allow back" list. One row per person,
+# the latest removal. Deleted accounts (users.status <> 1) drop out.
+LIST_REMOVED_MEMBERS = """
+    SELECT DISTINCT ON (cm.user_id)
+        cm.user_id,
+        cm.removed_at::text,
+        u.email,
+        u.display_name,
+        u.avatar_url
+    FROM public.circle_members cm
+    JOIN public.users u ON u.id = cm.user_id AND u.status = 1
+    WHERE cm.circle_id = :circle_id AND cm.status = 0 AND cm.removed_at IS NOT NULL
+      AND NOT EXISTS (
+          SELECT 1 FROM public.circle_members a
+          WHERE a.circle_id = cm.circle_id AND a.user_id = cm.user_id AND a.status = 1
+      )
+    ORDER BY cm.user_id, cm.removed_at DESC
+"""
+
+# Allow a removed person back: the invite link works for them again. They
+# still join themselves; this does not make them a member.
+ALLOW_MEMBER_BACK = """
+    UPDATE public.circle_members
+    SET removed_at = NULL, removed_by = NULL
+    WHERE circle_id = :circle_id AND user_id = :target_user_id AND status = 0
+      AND removed_at IS NOT NULL
+    RETURNING user_id
 """
 
 SET_CIRCLE_OWNER = """

@@ -143,6 +143,8 @@ export const api = {
     ),
   removeMember: (circleId: string, userId: string) =>
     request<unknown>("DELETE", `/circles/${circleId}/members/${userId}`),
+  allowMemberBack: (circleId: string, userId: string) =>
+    request<unknown>("POST", `/circles/${circleId}/members/${userId}/allow-back`),
   refreshPreview: (intentId: string) =>
     request<{ id: string; link_meta: LinkMeta }>("POST", `/intents/${intentId}/refresh-preview`),
   intent: (id: string) => request<Intent>("GET", `/intents/${id}`),

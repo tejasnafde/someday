@@ -67,6 +67,9 @@ def join_circle_by_token(db, token: str, user_id: str) -> dict | None:
         infologger.warning(f"circles_helper.join_circle_by_token | invalid token")
         return None
     circle = rows[0]
+    if db.execute_query_with_value(q.IS_REMOVED_MEMBER, {"circle_id": circle["id"], "user_id": user_id}):
+        infologger.warning(f"circles_helper.join_circle_by_token | removed member refused | circle_id={circle['id']} user_id={user_id}")
+        raise PermissionError("removed from circle")
     db.execute_query_with_value_without_output(
         q.JOIN_CIRCLE_MEMBER,
         {"circle_id": circle["id"], "user_id": user_id},
@@ -127,11 +130,27 @@ def transfer_ownership(db, circle_id: str, actor_id: str, target_id: str) -> Non
         db.tx_exec(conn, q.SET_MEMBER_ROLE, {"circle_id": circle_id, "target_user_id": actor_id, "role": "admin"})
 
 
-def remove_member(db, circle_id: str, target_user_id: str) -> None:
-    infologger.info(f"circles_helper.remove_member | circle_id={circle_id} target={target_user_id}")
+def remove_member(db, circle_id: str, actor_id: str, target_user_id: str) -> None:
+    infologger.info(f"circles_helper.remove_member | circle_id={circle_id} actor={actor_id} target={target_user_id}")
     db.execute_query_with_value_without_output(
-        q.REMOVE_MEMBER, {"circle_id": circle_id, "target_user_id": target_user_id}
+        q.REMOVE_MEMBER, {"circle_id": circle_id, "actor_id": actor_id, "target_user_id": target_user_id}
     )
+
+
+def list_removed_members(db, circle_id: str) -> list[dict]:
+    infologger.info(f"circles_helper.list_removed_members | circle_id={circle_id}")
+    return db.execute_query_with_value(q.LIST_REMOVED_MEMBERS, {"circle_id": circle_id})
+
+
+def allow_member_back(db, circle_id: str, target_user_id: str) -> bool:
+    """Clear the removal so the invite link works for this person again."""
+    infologger.info(f"circles_helper.allow_member_back | circle_id={circle_id} target={target_user_id}")
+    row = db.execute_query_with_value_returning(
+        q.ALLOW_MEMBER_BACK, {"circle_id": circle_id, "target_user_id": target_user_id}
+    )
+    if not row:
+        infologger.warning(f"circles_helper.allow_member_back | no removed row | circle_id={circle_id} target={target_user_id}")
+    return bool(row)
 
 
 def set_owner(db, circle_id: str, new_owner_id: str) -> None:

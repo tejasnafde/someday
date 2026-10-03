@@ -34,8 +34,18 @@ export interface Member {
   joined_at: string;
 }
 
+export interface RemovedMember {
+  user_id: string;
+  email: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  removed_at: string;
+}
+
 export interface CircleDetail extends Circle {
   members: Member[];
+  /** Only sent to the owner and admins. */
+  removed?: RemovedMember[];
   moments_cadence?: number;
 }
 
