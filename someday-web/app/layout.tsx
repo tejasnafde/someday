@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, Lora } from "next/font/google";
+import { ConfirmHost } from "@/components/ConfirmDialog";
 import { PushInit } from "@/components/PushInit";
 import { ShellReady } from "@/components/ShellReady";
 import { TimezoneSync } from "@/components/TimezoneSync";
@@ -62,6 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="orb orb2" />
         <div className="orb orb3" />
         <div className="relative z-10 mx-auto min-h-screen max-w-md px-5 pb-16">{children}</div>
+        <ConfirmHost />
       </body>
     </html>
   );

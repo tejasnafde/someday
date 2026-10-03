@@ -13,6 +13,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
 import type { Category, CircleDetail, Intent, Moment } from "@/lib/types";
 import { plural } from "@/lib/plural";
+import { confirmDialog } from "@/components/ConfirmDialog";
 
 const TABS = ["All", "Shortlist", "Meanwhile", "Done", "Archived"] as const;
 const CATEGORIES: (Category | "All")[] = ["All", "watch", "eat", "visit", "read", "play", "trip", "talk"];
@@ -182,13 +183,13 @@ export default function CirclePage() {
   }
 
   async function leave() {
-    if (!confirm("Leave this circle?")) return;
+    if (!(await confirmDialog({ title: "Leave this circle?", confirmLabel: "Leave", destructive: true }))) return;
     await api.leaveCircle(id);
     router.push("/");
   }
 
   async function remove() {
-    if (!confirm("Delete this circle for everyone? This can't be undone.")) return;
+    if (!(await confirmDialog({ title: "Delete this circle for everyone?", description: "This can't be undone.", confirmLabel: "Delete", destructive: true }))) return;
     await api.deleteCircle(id);
     router.push("/");
   }
