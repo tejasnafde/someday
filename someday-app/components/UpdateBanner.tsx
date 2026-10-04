@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Constants from "expo-constants";
-import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Platform, Text, TouchableOpacity, View } from "react-native";
 import { checkForApkUpdate, downloadAndInstall, type ApkUpdate } from "../lib/selfUpdate";
 import { useTheme } from "../lib/theme";
 
@@ -10,8 +10,10 @@ export function UpdateBanner() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  // Play builds update through Play; self-updating is against Play policy.
-  const isPlayBuild = Constants.expoConfig?.extra?.distribution === "play";
+  // Only the sideloaded Android APK updates itself. Store builds (Play, App
+  // Store) update through the store, and self-updating is against both
+  // policies; iOS cannot install an APK at all.
+  const isPlayBuild = Platform.OS !== "android" || Boolean(Constants.expoConfig?.extra?.distribution);
 
   useEffect(() => {
     if (isPlayBuild) return;

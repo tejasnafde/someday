@@ -9,3 +9,4 @@ ios/
 *.jks
 *.keystore
 play-sa.json
+asc-key.p8

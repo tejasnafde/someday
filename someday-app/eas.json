@@ -18,6 +18,18 @@
       "env": {
         "APP_VARIANT": "play"
       }
+    },
+    "appstore": {
+      "extends": "production",
+      "env": {
+        "APP_VARIANT": "appstore"
+      }
+    },
+    "ios-sim": {
+      "extends": "appstore",
+      "ios": {
+        "simulator": true
+      }
     }
   },
   "submit": {
@@ -26,6 +38,14 @@
         "track": "internal",
         "releaseStatus": "draft",
         "serviceAccountKeyPath": "./play-sa.json"
+      }
+    },
+    "appstore": {
+      "ios": {
+        "ascAppId": "6819052816",
+        "ascApiKeyPath": "./asc-key.p8",
+        "ascApiKeyId": "96P4C5L673",
+        "ascApiKeyIssuerId": "808fc64a-bb32-43d8-89c3-19b5b7daf208"
       }
     }
   }
