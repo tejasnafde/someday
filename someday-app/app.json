@@ -14,7 +14,11 @@
     },
     "ios": {
       "bundleIdentifier": "app.someday.capture",
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "supportsTablet": false
     },
     "android": {
       "package": "app.someday.capture",

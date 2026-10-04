@@ -9,8 +9,10 @@ const PLAY_BLOCKED = [
   "android.permission.SYSTEM_ALERT_WINDOW",
 ];
 
+// "appstore" (iOS App Store) gets the same distribution flag: no APK updater.
 module.exports = ({ config }) => {
-  if (process.env.APP_VARIANT !== "play") return config;
+  const variant = process.env.APP_VARIANT;
+  if (variant !== "play" && variant !== "appstore") return config;
   return {
     ...config,
     android: {
@@ -18,6 +20,6 @@ module.exports = ({ config }) => {
       permissions: (config.android.permissions ?? []).filter((p) => !PLAY_BLOCKED.includes(p)),
       blockedPermissions: [...(config.android.blockedPermissions ?? []), ...PLAY_BLOCKED],
     },
-    extra: { ...config.extra, distribution: "play" },
+    extra: { ...config.extra, distribution: variant },
   };
 };
