@@ -153,13 +153,25 @@ class AuthHandler(DBUtil):
         return 200, {"user": user, "circles": circles}
 
     @log_timing("auth_handler.delete_account")
-    def delete_account(self, user_id: str) -> tuple[int, dict | str]:
+    def delete_account(
+        self, user_id: str, claims: dict, apple_authorization_code: str | None = None
+    ) -> tuple[int, dict | str]:
         """Delete the caller's account. The DB transaction is the source of
-        truth; auth and storage cleanup after it only log on failure."""
-        infologger.info(f"AuthHandler.delete_account | user_id={user_id}")
+        truth; Apple revoke, auth and storage cleanup after it only log on failure."""
+        apple = ah.is_apple_user(claims)
+        infologger.info(
+            f"AuthHandler.delete_account | user_id={user_id} apple={apple} has_code={bool(apple_authorization_code)}"
+        )
         result = ah.delete_account_rows(self, user_id)
         if result is None:
             return 404, "User not found"
+        if apple and apple_authorization_code:
+            if not ah.revoke_apple_tokens(user_id, apple_authorization_code):
+                errorlogger.error(f"AuthHandler.delete_account | Apple tokens NOT revoked | user_id={user_id}")
+        elif apple:
+            errorlogger.error(f"AuthHandler.delete_account | Apple user sent no authorization code, not revoked | user_id={user_id}")
+        elif apple_authorization_code:
+            infologger.warning(f"AuthHandler.delete_account | code sent by a non-Apple user, ignored | user_id={user_id}")
         if not ah.delete_auth_user(user_id):
             errorlogger.error(f"AuthHandler.delete_account | auth user NOT deleted, DB already committed | user_id={user_id}")
         ah.delete_files(user_id, result["files"])

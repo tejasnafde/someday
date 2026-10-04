@@ -90,6 +90,9 @@ jobs:
       # --set-secrets, not --update-secrets: update MERGES, so the eight old
       # per-value refs would stay attached and this line would stop describing
       # reality. Keep identical to cloudbuild-production.yaml.
+      #
+      # SOMEDAY_SIWA_KEY is the one exception to the single blob: it is the only
+      # copy of the Sign in with Apple .p8, so it stays in its own secret.
       - name: Deploy
         run: |
           IMAGE="asia-south1-docker.pkg.dev/teejayproject/cloud-run-source-deploy/someday-api:${{ github.sha }}"
@@ -98,5 +101,5 @@ jobs:
             --region asia-south1 \
             --project teejayproject \
             --update-env-vars "^|^APP_ENV=production|LOG_LEVEL=INFO|SUPABASE_URL=https://hltpqcmmpddjhijqeeko.supabase.co|ALLOWED_ORIGINS=https://someday.tn07.dev,https://someday-web-gamma.vercel.app" \
-            --set-secrets "SOMEDAY_CONFIG=someday-api-config:latest" \
+            --set-secrets "SOMEDAY_CONFIG=someday-api-config:latest,SOMEDAY_SIWA_KEY=SOMEDAY_SIWA_KEY:latest" \
             --quiet

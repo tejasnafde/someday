@@ -82,6 +82,15 @@ class Settings(BaseSettings):
     VAPID_PRIVATE_KEY: str = ""
     VAPID_CONTACT_EMAIL: str = "hello@someday.app"
 
+    # Sign in with Apple token revocation on account deletion. The key is the
+    # JSON {key_id, team_id, client_id, p8} from Secret Manager SOMEDAY_SIWA_KEY,
+    # attached by --set-secrets in the deploy. Empty means revoke is skipped.
+    SOMEDAY_SIWA_KEY: str = ""
+    APPLE_AUDIENCE: str = "https://appleid.apple.com"
+    APPLE_TOKEN_URL: str = "https://appleid.apple.com/auth/token"
+    APPLE_REVOKE_URL: str = "https://appleid.apple.com/auth/revoke"
+    APPLE_CLIENT_SECRET_TTL_SECONDS: int = 300
+
     # Logging
     LOG_LEVEL: str = "DEBUG"
 

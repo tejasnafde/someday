@@ -98,6 +98,12 @@ async def get_me(current_user: dict = Depends(jwt_required)):
     return create_response(status, result)
 
 
+class DeleteMeRequest(BaseModel):
+    # A fresh Sign in with Apple credential.authorizationCode from the iOS shell,
+    # used only to revoke the user's Apple tokens. Absent for everyone else.
+    apple_authorization_code: Optional[str] = None
+
+
 @router.patch("/me", response_model=UserResponse)
 @log_timing("PATCH /auth/me")
 async def update_me(request: UpdateMeRequest, current_user: dict = Depends(jwt_required)):
@@ -113,10 +119,11 @@ async def update_me(request: UpdateMeRequest, current_user: dict = Depends(jwt_r
 
 @router.delete("/me")
 @log_timing("DELETE /auth/me")
-async def delete_me(current_user: dict = Depends(jwt_required)):
+async def delete_me(request: Optional[DeleteMeRequest] = None, current_user: dict = Depends(jwt_required)):
     """Delete the caller's account: memberships, personal signals, PII, auth user. Shared content stays."""
-    infologger.info(f"DELETE /auth/me | user_id={current_user['sub']}")
-    status, result = handler.delete_account(current_user["sub"])
+    code = request.apple_authorization_code if request else None
+    infologger.info(f"DELETE /auth/me | user_id={current_user['sub']} has_apple_code={bool(code)}")
+    status, result = handler.delete_account(current_user["sub"], current_user, code)
     return create_response(status, result)
 
 

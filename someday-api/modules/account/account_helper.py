@@ -1,9 +1,13 @@
+import json
+import time
 from collections import defaultdict
 
 import httpx
+import jwt
 
 from app_util.log_util import errorlogger, infologger
 from common_helper.storage_helper import delete_objects, storage_path
+from common_helper.url_util import safe_client
 from config.settings import settings
 from modules.account import account_queries as q
 from modules.circles import circles_queries as cq
@@ -94,16 +98,7 @@ def delete_auth_user(user_id: str) -> bool:
     circle_members, ...) would block that cascade. A GoTrue soft delete
     obfuscates the email, removes identities and revokes sessions.
 
-    TODO(sign-in-with-apple): REQUIRED before App Review. Apple requires an app
-    that offers Sign in with Apple to revoke the user's Apple tokens when the
-    account is deleted (POST https://appleid.apple.com/auth/revoke). Revoke
-    takes an Apple refresh or access token, and Supabase does not keep one for
-    a native signInWithIdToken session. So the client must send a fresh
-    credential.authorizationCode, the API exchanges it at
-    https://appleid.apple.com/auth/token, then revokes the result. Both calls
-    need a client_secret JWT signed with a Sign in with Apple private key
-    (.p8), which does not exist yet. See docs/auth-architecture.md,
-    "Sign in with Apple (iOS)"."""
+    Apple token revocation is separate, see revoke_apple_tokens."""
     if not settings.SUPABASE_SERVICE_ROLE_KEY:
         errorlogger.error(f"account_helper.delete_auth_user | SUPABASE_SERVICE_ROLE_KEY not configured | user_id={user_id}")
         return False
@@ -123,6 +118,69 @@ def delete_auth_user(user_id: str) -> bool:
         return True
     except httpx.HTTPError as exc:
         errorlogger.error(f"account_helper.delete_auth_user | failed | user_id={user_id} | {exc}", exc_info=True)
+        return False
+
+
+def is_apple_user(claims: dict) -> bool:
+    """True when Supabase lists Apple among the user's sign-in providers. Read
+    from the verified JWT's app_metadata, which Supabase writes, never from a
+    client claim."""
+    providers = (claims.get("app_metadata") or {}).get("providers") or []
+    return "apple" in providers
+
+
+def apple_client_secret(key: dict, now: int | None = None) -> str:
+    """The short-lived ES256 client_secret JWT Apple's token and revoke endpoints require."""
+    now = int(time.time()) if now is None else now
+    return jwt.encode(
+        {
+            "iss": key["team_id"],
+            "iat": now,
+            "exp": now + settings.APPLE_CLIENT_SECRET_TTL_SECONDS,
+            "aud": settings.APPLE_AUDIENCE,
+            "sub": key["client_id"],
+        },
+        key["p8"],
+        algorithm="ES256",
+        headers={"kid": key["key_id"]},
+    )
+
+
+def revoke_apple_tokens(user_id: str, authorization_code: str) -> bool:
+    """Exchange a fresh Sign in with Apple authorizationCode for a refresh
+    token, then revoke it. Apple requires this on account deletion. Supabase
+    keeps no Apple token for a native sign-in, hence the fresh code. Logs and
+    returns False on any failure: the caller must not block deletion on it."""
+    infologger.info(f"account_helper.revoke_apple_tokens | user_id={user_id}")
+    if not settings.SOMEDAY_SIWA_KEY:
+        errorlogger.error(f"account_helper.revoke_apple_tokens | SOMEDAY_SIWA_KEY not configured | user_id={user_id}")
+        return False
+    try:
+        key = json.loads(settings.SOMEDAY_SIWA_KEY)
+        form = {"client_id": key["client_id"], "client_secret": apple_client_secret(key)}
+        # Fixed Apple URLs from settings, not user input; the safe client is still the house rule.
+        with safe_client(timeout=10) as client:
+            resp = client.post(
+                settings.APPLE_TOKEN_URL,
+                data={**form, "code": authorization_code, "grant_type": "authorization_code"},
+            )
+            resp.raise_for_status()
+            refresh_token = resp.json()["refresh_token"]
+            resp = client.post(
+                settings.APPLE_REVOKE_URL,
+                data={**form, "token": refresh_token, "token_type_hint": "refresh_token"},
+            )
+            resp.raise_for_status()
+        infologger.info(f"account_helper.revoke_apple_tokens | ok | user_id={user_id}")
+        return True
+    except httpx.HTTPStatusError as exc:
+        # Apple's body names the cause (invalid_grant, invalid_client); the status alone does not.
+        errorlogger.error(
+            f"account_helper.revoke_apple_tokens | failed | user_id={user_id} | {exc} | {exc.response.text[:300]}"
+        )
+        return False
+    except Exception as exc:
+        errorlogger.error(f"account_helper.revoke_apple_tokens | failed | user_id={user_id} | {exc}", exc_info=True)
         return False
 
 

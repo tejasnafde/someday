@@ -24,6 +24,45 @@ export function notifyShellReady(): void {
   shellBridge()?.postMessage(JSON.stringify({ type: "ready" }));
 }
 
+// iPad WebViews send a desktop "Macintosh" user agent; with the shell mark that
+// still means the iOS app, because no Mac shell exists.
+export function isIosShell(): boolean {
+  return isNativeShell() && /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
+}
+
+export class AppleReauthCancelled extends Error {
+  constructor() {
+    super("Confirm with Apple to delete your account.");
+  }
+}
+
+// Account deletion for an Apple sign-in: the iOS shell re-runs the Apple sheet
+// and answers with a fresh authorizationCode, which the API uses to revoke the
+// user's Apple tokens (docs/auth-architecture.md). Resolves null when the shell
+// cannot get a code, or never answers (shells before this change), so deletion
+// still goes ahead. Rejects with AppleReauthCancelled if the user cancels.
+export function requestAppleReauth(timeoutMs = 90_000): Promise<string | null> {
+  const bridge = shellBridge();
+  if (!bridge) return Promise.resolve(null);
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => finish(null), timeoutMs);
+    function onReply(e: Event) {
+      const detail = (e as CustomEvent<{ type?: string; code?: string | null; cancelled?: boolean }>).detail;
+      if (detail?.type !== "apple-reauth") return;
+      if (detail.cancelled) finish(new AppleReauthCancelled());
+      else finish(detail.code ?? null);
+    }
+    function finish(result: string | null | Error) {
+      clearTimeout(timer);
+      window.removeEventListener("someday-shell", onReply);
+      if (result instanceof Error) reject(result);
+      else resolve(result);
+    }
+    window.addEventListener("someday-shell", onReply);
+    bridge.postMessage(JSON.stringify({ type: "apple-reauth" }));
+  });
+}
+
 export function shellBridge(): { postMessage: (m: string) => void } | undefined {
   return (window as { ReactNativeWebView?: { postMessage: (m: string) => void } }).ReactNativeWebView;
 }

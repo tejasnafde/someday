@@ -10,7 +10,7 @@ import { NavBar, Spinner, ThemeToggle } from "@/components/ui";
 import { api } from "@/lib/api";
 import { resizeImage } from "@/lib/image";
 import { getCached, setCached } from "@/lib/cache";
-import { notifyShellSignedOut } from "@/lib/nativeShell";
+import { isIosShell, notifyShellSignedOut, requestAppleReauth } from "@/lib/nativeShell";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/useAuth";
 import type { Circle, ConcernCategory, User } from "@/lib/types";
@@ -281,7 +281,15 @@ function DeleteAccount() {
     setBusy(true);
     setError("");
     try {
-      await api.deleteAccount();
+      // Apple requires revoking an Apple sign-in's tokens on deletion; the iOS
+      // shell gets a fresh code for that. Everyone else sends nothing extra.
+      let appleCode: string | null = null;
+      const { data } = await supabase.auth.getSession();
+      const providers: unknown = data.session?.user.app_metadata.providers;
+      if (isIosShell() && Array.isArray(providers) && providers.includes("apple")) {
+        appleCode = await requestAppleReauth();
+      }
+      await api.deleteAccount(appleCode);
       // The server already revoked every session; "local" clears this one
       // without a network call that could fail and keep it.
       await supabase.auth.signOut({ scope: "local" });
