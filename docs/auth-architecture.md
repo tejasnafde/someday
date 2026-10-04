@@ -200,16 +200,48 @@ Sign in with Apple for Email Communication). Until the Supabase sending domain
 is registered there, magic-link and OTP email to a relay address does not
 arrive. Such users must keep using Apple to sign in. Follow-up, not done.
 
-### Token revocation on account deletion (required follow-up)
+### Token revocation on account deletion
 
 Apple requires an app that offers Sign in with Apple to revoke the user's Apple
-tokens when the account is deleted. This is NOT implemented. It needs a Sign in
-with Apple private key (.p8), which does not exist yet, to sign the
-`client_secret` JWT. Supabase keeps no Apple refresh token for a native
-sign-in, so the client must send a fresh `credential.authorizationCode` with
-the deletion request. The API exchanges it at `appleid.apple.com/auth/token`
-and posts the result to `appleid.apple.com/auth/revoke`. The TODO lives in
-`account_helper.delete_auth_user`. Do it before App Review.
+tokens when the account is deleted. Supabase keeps no Apple refresh token for a
+native sign-in, so the iOS shell gets a fresh `authorizationCode` at deletion
+time:
+
+```
+Settings "Delete account" (web, inside the iOS shell WebView)
+1. the session's app_metadata.providers includes "apple" and isIosShell()
+2. web posts { type: "apple-reauth" } to the shell        (nativeShell.ts)
+3. Home.tsx (iOS only) runs AppleAuthentication.signInAsync()
+4. the shell dispatches a "someday-shell" event { type: "apple-reauth",
+     code, cancelled } into the page, only if the page is still our origin
+5. DELETE /auth/me { apple_authorization_code: code }
+6. API, after the DB delete commits: if the verified JWT's
+     app_metadata.providers includes "apple"
+   -> POST appleid.apple.com/auth/token  (grant_type=authorization_code)
+   -> POST appleid.apple.com/auth/revoke (the refresh_token,
+        token_type_hint=refresh_token)
+```
+
+Both Apple calls send a `client_secret`: an ES256 JWT with `iss` = team ID,
+`sub` = `app.someday.capture`, `aud` = `https://appleid.apple.com`, header
+`kid` = key ID, and a 5-minute expiry (`account_helper.apple_client_secret`).
+The key is the JSON `{key_id, team_id, client_id, p8}` in Secret Manager
+`SOMEDAY_SIWA_KEY`. The deploy attaches it as an env var of the same name with
+`--set-secrets`, beside `SOMEDAY_CONFIG`.
+
+Rules that keep this safe:
+
+- **Revoke never blocks deletion.** The DB delete is the source of truth. A
+  failed exchange or revoke, a missing key, or an Apple user who sent no code
+  logs ERROR, and the account is deleted anyway.
+- **The server decides who is an Apple user**, from the Supabase-signed JWT,
+  not from the client. A code sent for a non-Apple user is ignored.
+- **Cancel stops deletion.** If the user cancels the Apple sheet, the web shows
+  "Confirm with Apple to delete your account." and deletes nothing.
+- **Old shells still delete.** A shell that never answers makes the web wait
+  90 seconds and then delete without a code (logged as not revoked).
+- Outside the iOS shell, and for non-Apple users, the request has no body and
+  the flow is unchanged.
 
 ---
 
@@ -233,6 +265,7 @@ root cause is almost always visible within one sign-in attempt. Strip the
 | Native Linking (invite deep-links) | `someday-app/App.tsx` |
 | WebView host + session bridge | `someday-app/screens/Home.tsx` |
 | RN Supabase client (PKCE) | `someday-app/lib/supabase.ts` |
+| Apple token revoke on deletion | `someday-api/modules/account/account_helper.py` → `revoke_apple_tokens`; shell side `someday-web/lib/nativeShell.ts` → `requestAppleReauth` |
 | Mint WebView session | `someday-api/handler/auth_handler.py` → `webview_session` |
 | Client-error → Discord | `someday-api/routers/auth_router.py` → `/auth/client-error` |
 | Web callback (consumes fragment) | `someday-web/app/auth/callback/page.tsx` |

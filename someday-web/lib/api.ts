@@ -69,7 +69,12 @@ export const api = {
   me: () => request<{ user: User; circles: Circle[] }>("GET", "/auth/me"),
   updateMe: (fields: { display_name?: string; avatar_url?: string; city?: string }) =>
     request<{ user: User }>("PATCH", "/auth/me", fields),
-  deleteAccount: () => request<{ message: string }>("DELETE", "/auth/me"),
+  deleteAccount: (appleAuthorizationCode?: string | null) =>
+    request<{ message: string }>(
+      "DELETE",
+      "/auth/me",
+      appleAuthorizationCode ? { apple_authorization_code: appleAuthorizationCode } : undefined,
+    ),
   reportConcern: (body: { category: ConcernCategory; subject?: string; body: string }) =>
     request<{ id: string }>("POST", "/concerns", body),
   uploadAvatar: (blob: Blob) => upload<{ user: User }>("/auth/me/avatar", blob, "avatar.webp"),

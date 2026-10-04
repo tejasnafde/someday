@@ -1,7 +1,8 @@
+import * as AppleAuthentication from "expo-apple-authentication";
 import Constants from "expo-constants";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, BackHandler, Linking, View } from "react-native";
+import { ActivityIndicator, BackHandler, Linking, Platform, View } from "react-native";
 import { WebView } from "react-native-webview";
 import { api } from "../lib/api";
 import { supabase } from "../lib/supabase";
@@ -86,6 +87,27 @@ export function Home({ nextPath }: { nextPath?: string | null }) {
     })();
   }, [nextPath]);
 
+  // Account deletion from an Apple sign-in: Apple requires revoking the user's
+  // Apple tokens, and Supabase keeps none, so the API needs a fresh
+  // authorizationCode. Re-run the Apple sheet and hand the code back to the
+  // web page, which sends it with DELETE /auth/me (docs/auth-architecture.md).
+  async function appleReauth() {
+    let reply: { type: string; code: string | null; cancelled: boolean };
+    try {
+      const credential = await AppleAuthentication.signInAsync();
+      reply = { type: "apple-reauth", code: credential.authorizationCode, cancelled: false };
+    } catch (e: unknown) {
+      const cancelled = (e as { code?: string })?.code === "ERR_REQUEST_CANCELED";
+      if (!cancelled) api.clientError("apple_reauth", e instanceof Error ? e.message : String(e));
+      reply = { type: "apple-reauth", code: null, cancelled };
+    }
+    // The page may have navigated meanwhile; only our own origin gets the code.
+    const origin = JSON.stringify(new URL(WEB_URL).origin);
+    webRef.current?.injectJavaScript(
+      `if (location.origin === ${origin}) window.dispatchEvent(new CustomEvent("someday-shell", { detail: ${JSON.stringify(reply)} })); true;`,
+    );
+  }
+
   // Hidden behind the splash on a cold launch. It shows only right after a
   // native sign-in (the splash is already gone) or past the splash timeout.
   if (!startUrl) {
@@ -106,6 +128,7 @@ export function Home({ nextPath }: { nextPath?: string | null }) {
       // Web sign-out (and account deletion) clears only the WebView session;
       // drop the native one too, which returns the shell to SignIn. "ready"
       // means the web app's first real screen rendered, so the splash can go.
+      // "apple-reauth" asks for a fresh Apple code before account deletion.
       onMessage={(e) => {
         // Only our own pages may message the shell, not a site opened in the WebView.
         let type: unknown;
@@ -115,6 +138,7 @@ export function Home({ nextPath }: { nextPath?: string | null }) {
         } catch { return; }
         if (type === "signed-out") supabase.auth.signOut({ scope: "local" });
         if (type === "ready") SplashScreen.hideAsync().catch(() => {});
+        if (type === "apple-reauth" && Platform.OS === "ios") appleReauth();
       }}
       onNavigationStateChange={(nav) => { canGoBack.current = nav.canGoBack; }}
       source={{ uri: startUrl }}

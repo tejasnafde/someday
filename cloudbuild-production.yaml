@@ -62,7 +62,7 @@ steps:
       # --set-secrets, not --update-secrets: update MERGES, so the eight old
       # per-value refs would stay attached and this line would stop describing
       # reality. set REPLACES, which is what detaches them.
-      - --set-secrets=SOMEDAY_CONFIG=someday-api-config:latest
+      - --set-secrets=SOMEDAY_CONFIG=someday-api-config:latest,SOMEDAY_SIWA_KEY=SOMEDAY_SIWA_KEY:latest
       - --quiet
 
 substitutions:
