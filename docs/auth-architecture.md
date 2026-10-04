@@ -144,6 +144,75 @@ Linking system. Both paths funnel into the same single guarded exchange.
 
 ---
 
+## Sign in with Apple (iOS)
+
+App Store guideline 4.8: an app that offers Google sign-in must also offer Sign
+in with Apple. So the iOS shell shows Apple's system button above Google.
+Android and web do not offer Apple, and must not: there is no native Apple
+sheet on Android, and the web flow would need a Services ID.
+
+### The native nonce flow
+
+```
+SignIn.tsx (iOS only)
+1. rawNonce = Crypto.randomUUID()
+2. AppleAuthentication.signInAsync({ scopes: FULL_NAME, EMAIL,
+     nonce: SHA-256(rawNonce) })        <- native Apple sheet, no browser
+3. supabase.auth.signInWithIdToken({ provider: 'apple',
+     token: credential.identityToken, nonce: rawNonce })   <- NATIVE client
+   -> NATIVE session saved, onAuthStateChange fires
+4. api.verify(), then the name (below)
+```
+
+After step 3 the flow is the Google flow from step 5: `Home.tsx` mounts and
+bridges the WebView through `POST /auth/webview-session`.
+
+Apple puts the SHA-256 of the nonce in the ID token. Supabase hashes the raw
+nonce it gets and compares the two, so a stolen ID token cannot be replayed
+without the raw nonce. Pass the HASH to Apple and the RAW value to Supabase.
+The other way round fails with a nonce mismatch.
+
+### Why no Services ID or client secret
+
+A Services ID and a signed client secret are only for the web OAuth redirect
+flow. The native flow sends Supabase an ID token that Apple issued to the app's
+bundle ID, so Supabase only checks the token's `aud`. The Supabase Apple
+provider needs `app.someday.capture` in its Client IDs, and nothing else. The
+client secret becomes necessary only for token revocation (below).
+
+### The name arrives once
+
+Apple returns `credential.fullName` on the FIRST sign-in only. Later sign-ins
+return null, also after a reinstall. `/auth/verify` creates the users row with
+the email prefix as the display name, so `SignIn.tsx` sends the Apple name
+through `PATCH /auth/me` only when the stored name is empty or still that
+prefix. A name the user chose is never overwritten. If that first PATCH fails,
+the name is gone; the user can set it in Settings.
+
+### "Hide my email" relay addresses
+
+A user can hide their email. The ID token then carries
+`<random>@privaterelay.appleid.com`. The API treats it as a normal email
+(`tests/test_apple_relay_email.py`), and the WebView bridge works because
+`admin/generate_link` sends no mail. But Apple's relay only delivers mail from
+domains registered with Apple (Certificates, Identifiers & Profiles, Services,
+Sign in with Apple for Email Communication). Until the Supabase sending domain
+is registered there, magic-link and OTP email to a relay address does not
+arrive. Such users must keep using Apple to sign in. Follow-up, not done.
+
+### Token revocation on account deletion (required follow-up)
+
+Apple requires an app that offers Sign in with Apple to revoke the user's Apple
+tokens when the account is deleted. This is NOT implemented. It needs a Sign in
+with Apple private key (.p8), which does not exist yet, to sign the
+`client_secret` JWT. Supabase keeps no Apple refresh token for a native
+sign-in, so the client must send a fresh `credential.authorizationCode` with
+the deletion request. The API exchanges it at `appleid.apple.com/auth/token`
+and posts the result to `appleid.apple.com/auth/revoke`. The TODO lives in
+`account_helper.delete_auth_user`. Do it before App Review.
+
+---
+
 ## Observability
 
 There is **no server log for client-side auth failures** - they happen before
@@ -160,7 +229,7 @@ root cause is almost always visible within one sign-in attempt. Strip the
 
 | Concern | File |
 |---|---|
-| Native sign-in + OAuth exchange | `someday-app/screens/SignIn.tsx` |
+| Native sign-in + OAuth exchange + Apple (iOS) | `someday-app/screens/SignIn.tsx` |
 | Native Linking (invite deep-links) | `someday-app/App.tsx` |
 | WebView host + session bridge | `someday-app/screens/Home.tsx` |
 | RN Supabase client (PKCE) | `someday-app/lib/supabase.ts` |

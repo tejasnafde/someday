@@ -54,8 +54,15 @@ function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   })(), `${method} ${path}`);
 }
 
+export interface Me {
+  email: string;
+  display_name: string | null;
+}
+
 export const api = {
-  verify: () => request("POST", "/auth/verify"),
+  verify: () => request<{ user: Me }>("POST", "/auth/verify"),
+  setDisplayName: (displayName: string) =>
+    request("PATCH", "/auth/me", { display_name: displayName }),
   clientError: (context: string, message: string, detail?: string) =>
     fetch(`${BASE}/auth/client-error`, {
       method: "POST",

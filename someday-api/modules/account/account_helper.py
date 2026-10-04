@@ -92,7 +92,18 @@ def delete_auth_user(user_id: str) -> bool:
     Soft, not hard: public.users.id references auth.users ON DELETE CASCADE,
     and the soft-deleted rows that still reference public.users (intents,
     circle_members, ...) would block that cascade. A GoTrue soft delete
-    obfuscates the email, removes identities and revokes sessions."""
+    obfuscates the email, removes identities and revokes sessions.
+
+    TODO(sign-in-with-apple): REQUIRED before App Review. Apple requires an app
+    that offers Sign in with Apple to revoke the user's Apple tokens when the
+    account is deleted (POST https://appleid.apple.com/auth/revoke). Revoke
+    takes an Apple refresh or access token, and Supabase does not keep one for
+    a native signInWithIdToken session. So the client must send a fresh
+    credential.authorizationCode, the API exchanges it at
+    https://appleid.apple.com/auth/token, then revokes the result. Both calls
+    need a client_secret JWT signed with a Sign in with Apple private key
+    (.p8), which does not exist yet. See docs/auth-architecture.md,
+    "Sign in with Apple (iOS)"."""
     if not settings.SUPABASE_SERVICE_ROLE_KEY:
         errorlogger.error(f"account_helper.delete_auth_user | SUPABASE_SERVICE_ROLE_KEY not configured | user_id={user_id}")
         return False
