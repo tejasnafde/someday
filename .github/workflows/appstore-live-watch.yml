@@ -1,6 +1,6 @@
 name: App Store live watch
 
-# Hourly until Someday.s public App Store page exists, then one Discord post and the
+# Hourly until Someday's public App Store page exists, then one Discord post and the
 # workflow disables itself. The page returns 404 until Apple approves and
 # publishes the app. A known app is checked as a control, so a Play outage or a
 # block on GitHub runners cannot look like "not live yet" forever unnoticed.
