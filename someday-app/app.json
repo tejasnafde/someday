@@ -2,7 +2,7 @@
   "expo": {
     "name": "Someday",
     "slug": "someday",
-    "version": "1.19.0",
+    "version": "1.20.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -13,7 +13,8 @@
       "backgroundColor": "#101010"
     },
     "ios": {
-      "bundleIdentifier": "app.someday.capture"
+      "bundleIdentifier": "app.someday.capture",
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "app.someday.capture",
@@ -81,6 +82,7 @@
         }
       ],
       "expo-web-browser",
+      "expo-apple-authentication",
       "./plugins/withAdiRegistration",
       "expo-splash-screen"
     ],

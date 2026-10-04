@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { ActivityIndicator, Keyboard, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from "react-native";
+import { ActivityIndicator, Keyboard, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform, useColorScheme } from "react-native";
+import * as AppleAuthentication from "expo-apple-authentication";
+import * as Crypto from "expo-crypto";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import Constants from "expo-constants";
@@ -11,6 +13,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
   const t = useTheme();
+  const scheme = useColorScheme();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [stage, setStage] = useState<"email" | "code">("email");
@@ -81,6 +84,56 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
     }
   }
 
+  // Apple sends the name on the FIRST sign-in only. verify() creates the users
+  // row with the email prefix as the name, so that prefix (or empty) means the
+  // user never chose a name and the Apple name may replace it.
+  async function saveAppleName(fullName: string) {
+    const { user } = await api.verify();
+    if (fullName && (!user.display_name || user.display_name === user.email.split("@")[0])) {
+      await api.setDisplayName(fullName);
+    }
+  }
+
+  // iOS only (App Store guideline 4.8). Native flow: Apple signs an ID token
+  // over SHA-256(rawNonce), and Supabase checks it against the raw nonce. No
+  // browser, no Services ID, no client secret. See docs/auth-architecture.md.
+  async function signInWithApple() {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const rawNonce = Crypto.randomUUID();
+      const hashedNonce = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, rawNonce);
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+        nonce: hashedNonce,
+      });
+      if (!credential.identityToken) throw new Error("Apple returned no identity token");
+      const { error: idTokenError } = await supabase.auth.signInWithIdToken({
+        provider: "apple",
+        token: credential.identityToken,
+        nonce: rawNonce,
+      });
+      if (idTokenError) throw idTokenError;
+      const fullName = [credential.fullName?.givenName, credential.fullName?.familyName]
+        .filter(Boolean).join(" ").trim();
+      // Signed in now; a failure here must not show a sign-in error.
+      saveAppleName(fullName).catch((e: unknown) =>
+        api.clientError("apple_name", e instanceof Error ? e.message : String(e)));
+    } catch (e: unknown) {
+      // The user closed the Apple sheet: not an error.
+      if ((e as { code?: string })?.code === "ERR_REQUEST_CANCELED") return;
+      const message = e instanceof Error ? e.message : String(e);
+      api.clientError("apple_sign_in", message);
+      setError("Sign-in failed - please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function sendCode() {
     Keyboard.dismiss();
     setBusy(true);
@@ -140,6 +193,19 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
 
       {stage === "email" && (
         <>
+          {Platform.OS === "ios" && (
+            // Apple's HIG requires the system button, so it is exempt from the
+            // one-gradient button rule. Same width and radius as Google's.
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+              buttonStyle={scheme === "dark"
+                ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+              cornerRadius={14}
+              onPress={signInWithApple}
+              style={{ height: 50, opacity: busy ? 0.6 : 1 }}
+            />
+          )}
           <TouchableOpacity
             disabled={busy}
             onPress={signInWithGoogle}
