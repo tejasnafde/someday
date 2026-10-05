@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Icon } from "@/components/Sprite";
 import { api } from "@/lib/api";
+import { CODE_FAILED, GOOGLE_FAILED, emailSendMessage, errorCode } from "@/lib/authErrors.cjs";
 import { supabase } from "@/lib/supabase";
 
 export default function Login() {
@@ -15,47 +16,61 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
 
   async function signInWithGoogle() {
+    if (busy) return;
     setBusy(true);
     setError("");
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${location.origin}/auth/callback` },
-    });
-    if (error) { setBusy(false); setError(error.message); }
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${location.origin}/auth/callback` },
+      });
+      if (error) throw error;
+      // Success navigates away to Google, so the button stays disabled.
+    } catch (err: unknown) {
+      api.clientError("google_sign_in", errorCode(err), "step=start");
+      setError(GOOGLE_FAILED);
+      setBusy(false);
+    }
   }
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError("");
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${location.origin}/auth/callback` },
-    });
-    setBusy(false);
-    if (error)
-      setError(
-        error.message.includes("rate limit")
-          ? "Too many sign-in emails right now - wait a bit and try again."
-          : error.message,
-      );
-    else setSent(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: `${location.origin}/auth/callback` },
+      });
+      if (error) throw error;
+      setSent(true);
+    } catch (err: unknown) {
+      api.clientError("email_sign_in", errorCode(err), "step=send_code");
+      setError(emailSendMessage(err));
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function verifyCode(e: React.FormEvent) {
     e.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError("");
-    const { error } = await supabase.auth.verifyOtp({ email, token: code.trim(), type: "email" });
-    if (error) {
+    try {
+      const { error } = await supabase.auth.verifyOtp({ email, token: code.trim(), type: "email" });
+      if (error) throw error;
+      await api.verify().catch(() => {});
+      const next = sessionStorage.getItem("next") ?? "/";
+      sessionStorage.removeItem("next");
+      router.replace(next);
+    } catch (err: unknown) {
+      api.clientError("email_sign_in", errorCode(err), "step=verify_code");
+      setError(CODE_FAILED);
+    } finally {
       setBusy(false);
-      setError("That code didn't work - check it and try again.");
-      return;
     }
-    await api.verify().catch(() => {});
-    const next = sessionStorage.getItem("next") ?? "/";
-    sessionStorage.removeItem("next");
-    router.replace(next);
   }
 
   return (
@@ -118,7 +133,7 @@ export default function Login() {
             </button>
             <button type="button" onClick={() => { setSent(false); setCode(""); setError(""); }}
               className="text-center text-sm" style={{ color: "var(--txt-m)" }}>
-              Different email
+              Change email or resend
             </button>
           </form>
         </div>

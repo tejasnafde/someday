@@ -97,7 +97,7 @@ def verify_supabase_jwt(
             **token_diagnostics(token),
             "reason": classify_jwt_error(exc),
         }
-        errorlogger.error(f"JWT_INVALID | {exc}")
+        errorlogger.error(f"JWT_INVALID | reason={classify_jwt_error(exc)} | {exc}")
         raise HTTPException(status_code=401, detail="Invalid or expired token")
     except Exception as exc:
         request.state.auth_alert = {
@@ -106,7 +106,7 @@ def verify_supabase_jwt(
             "reason": classify_jwt_error(exc),
         }
         # Network error fetching JWKS, malformed token, etc.
-        errorlogger.error(f"JWT_ERROR | {exc}", exc_info=True)
+        errorlogger.error(f"JWT_ERROR | reason={classify_jwt_error(exc)} | {exc}", exc_info=True)
         raise HTTPException(status_code=401, detail="Could not validate token")
 
 

@@ -3,7 +3,7 @@ import time
 import httpx
 
 from app_util.db_util import DBUtil
-from app_util.log_util import infologger, errorlogger
+from app_util.log_util import infologger, errorlogger, mask_email
 from common_helper.decorators import log_timing
 from common_helper.storage_helper import upload_public_image
 from config.settings import settings
@@ -48,7 +48,7 @@ class AuthHandler(DBUtil):
 
     @log_timing("auth_handler.verify")
     def verify(self, user_id: str, email: str) -> tuple[int, dict]:
-        infologger.info(f"AuthHandler.verify | user_id={user_id} email={email}")
+        infologger.info(f"AuthHandler.verify | user_id={user_id} email={mask_email(email)}")
         user = self.execute_query_with_value_returning(
             UPSERT_USER,
             {"id": user_id, "email": email, "display_name": email.split("@")[0]},
@@ -97,7 +97,7 @@ class AuthHandler(DBUtil):
         reuse-detection revokes the whole family - both get signed out.
         A separately minted session has its own refresh-token family.
         """
-        infologger.info(f"AuthHandler.webview_session | user_id={user_id} email={email}")
+        infologger.info(f"AuthHandler.webview_session | user_id={user_id} email={mask_email(email)}")
         # A native token outlives the deletion by up to an hour. Minting a
         # magic link for its email would sign a fresh account in.
         if ah.is_deleted_user(self, user_id):
@@ -126,13 +126,13 @@ class AuthHandler(DBUtil):
             )
             session.raise_for_status()
             data = session.json()
-            infologger.info(f"AuthHandler.webview_session | minted independent session | email={email}")
+            infologger.info(f"AuthHandler.webview_session | minted independent session | user_id={user_id}")
             return 200, {
                 "access_token": data["access_token"],
                 "refresh_token": data["refresh_token"],
             }
         except httpx.HTTPError as exc:
-            errorlogger.error(f"AuthHandler.webview_session | supabase error | {exc}", exc_info=True)
+            errorlogger.error(f"AuthHandler.webview_session | supabase error | user_id={user_id} | {exc}", exc_info=True)
             return 502, "Could not mint webview session"
 
     @log_timing("auth_handler.set_push_token")

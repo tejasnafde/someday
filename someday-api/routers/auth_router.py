@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Request, UploadFile
 from pydantic import BaseModel, field_validator
 
-from app_util.log_util import errorlogger, infologger
+from app_util.log_util import errorlogger, infologger, redact
 from common_helper.auth_helper import jwt_required
 from common_helper.decorators import log_timing
 from common_helper.discord_alert import alert as discord_alert
@@ -56,13 +56,11 @@ async def client_error(payload: ClientErrorRequest, request: Request):
     never reach the backend otherwise, and fires a Discord alert so they're visible.
     No JWT required - the user can't be authenticated when sign-in fails.
     """
-    errorlogger.error(
-        f"CLIENT_AUTH_ERROR | context={payload.context} | {payload.message}"
-        + (f" | {payload.detail}" if payload.detail else "")
-    )
-    message = f"{payload.context}: {payload.message}"
+    # Client text is untrusted and may carry an email or a token: redact it.
+    message = redact(f"{payload.context}: {payload.message}")
     if payload.detail:
-        message = f"{message} | {payload.detail}"
+        message = f"{message} | {redact(payload.detail)}"
+    errorlogger.error(f"CLIENT_AUTH_ERROR | {message}")
     discord_alert(
         400,
         "CLIENT",

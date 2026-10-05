@@ -255,6 +255,15 @@ issue, instrument each step with `clientError` and read the Discord channel; the
 root cause is almost always visible within one sign-in attempt. Strip the
 `DEBUG_*` calls once the issue is fixed.
 
+Sign-in screens never show SDK text. User copy and the error-code helper live
+in `authErrors.cjs` (`someday-app/lib/` and `someday-web/lib/`). Send
+`errorCode(e)` plus a `step=` detail to `clientError`, not the SDK message:
+Supabase messages can repeat the email back. A cancel (Apple
+`ERR_REQUEST_CANCELED`, Google `access_denied`, a closed browser) shows nothing
+and logs nothing. Email-code errors read the same for every address. The API
+runs client text through `log_util.redact()` (masks emails, blanks `code=`,
+`token=` and `nonce=` values) before it logs or alerts.
+
 ---
 
 ## Key files
