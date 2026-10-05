@@ -8,6 +8,7 @@ import Constants from "expo-constants";
 import { api } from "../lib/api";
 import { supabase } from "../lib/supabase";
 import { useTheme } from "../lib/theme";
+import { CODE_FAILED, GOOGLE_FAILED, appleSignInMessage, emailSendMessage, errorCode, oauthRedirectResult } from "../lib/authErrors.cjs";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -19,6 +20,9 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
   const [stage, setStage] = useState<"email" | "code">("email");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  // One sign-in attempt at a time. A ref, not the busy state: two taps in the
+  // same frame both read busy=false, and the Apple system button cannot be disabled.
+  const inFlight = useRef(false);
   // Guard: the auth code is single-use. Both openAuthSessionAsync's success
   // result AND the Linking listener can deliver the same callback URL. Whichever
   // fires first wins; the second is a no-op. Without this, two parallel
@@ -33,20 +37,48 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
     if (busyTimeoutRef.current) clearTimeout(busyTimeoutRef.current);
   }, []);
 
+  function begin() {
+    if (inFlight.current) return false;
+    inFlight.current = true;
+    setBusy(true);
+    setError("");
+    return true;
+  }
+
+  function end() {
+    inFlight.current = false;
+    setBusy(false);
+  }
+
   async function exchange(url: string) {
-    const authCode = url.match(/[?&]code=([\w-]+)/)?.[1];
-    if (!authCode || handledCodes.current.has(authCode)) return;
-    handledCodes.current.add(authCode);
+    const result = oauthRedirectResult(url);
+    // Supabase answers ?error= when Google fails or the user declines.
+    const key = result.code ?? url;
+    if (handledCodes.current.has(key)) return;
+    handledCodes.current.add(key);
     if (busyTimeoutRef.current) { clearTimeout(busyTimeoutRef.current); busyTimeoutRef.current = null; }
 
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(authCode);
-    if (exchangeError) {
-      api.clientError("google_oauth_exchange", exchangeError.message);
-      setError("Sign-in failed - please try again.");
-    } else {
-      api.verify().catch(() => {});
+    try {
+      if (!result.code) {
+        if (!result.cancelled) {
+          api.clientError("google_sign_in", `redirect_error ${result.error}`, "step=redirect");
+          setError(GOOGLE_FAILED);
+        }
+        return;
+      }
+      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(result.code);
+      if (exchangeError) {
+        api.clientError("google_sign_in", errorCode(exchangeError), "step=exchange");
+        setError(GOOGLE_FAILED);
+      } else {
+        api.verify().catch(() => {});
+      }
+    } catch (e: unknown) {
+      api.clientError("google_sign_in", errorCode(e), "step=exchange");
+      setError(GOOGLE_FAILED);
+    } finally {
+      end();
     }
-    setBusy(false);
   }
 
   // Android: Chrome Custom Tab closes on redirect and the callback URL
@@ -54,33 +86,42 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
   // openAuthSessionAsync's return value.
   useEffect(() => {
     const sub = Linking.addEventListener("url", (e) => {
-      if (e.url.startsWith("someday:") && e.url.includes("code=")) exchange(e.url);
+      if (e.url.startsWith("someday:") && /[?&#](code|error)=/.test(e.url)) exchange(e.url);
     });
     return () => sub.remove();
   }, []);
 
   async function signInWithGoogle() {
-    setBusy(true);
-    setError("");
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: "someday://", skipBrowserRedirect: true },
-    });
-    if (error) { setBusy(false); setError(error.message); return; }
-    if (data.url) {
+    if (!begin()) return;
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: "someday://", skipBrowserRedirect: true },
+      });
+      if (error || !data.url) {
+        api.clientError("google_sign_in", errorCode(error ?? { code: "no_url" }), "step=start");
+        setError(GOOGLE_FAILED);
+        end();
+        return;
+      }
       // Pass "someday:" (no //) as the return scheme - Android strips the slashes.
       const result = await WebBrowser.openAuthSessionAsync(data.url, "someday:");
       if (result.type === "success") {
         // iOS returns the redirect URL directly. On Android the Linking listener
         // above usually fires first; the guard makes whichever loses a no-op.
         exchange(result.url);
+      } else if (Platform.OS === "ios") {
+        // The user closed the browser. iOS has no Linking path, so nothing else is coming.
+        end();
       } else {
         // type="dismiss"/"cancel": on Android the Linking listener handles the
         // exchange. Set a fallback to clear the spinner if no code arrives.
-        busyTimeoutRef.current = setTimeout(() => setBusy(false), 4000);
+        busyTimeoutRef.current = setTimeout(end, 4000);
       }
-    } else {
-      setBusy(false);
+    } catch (e: unknown) {
+      api.clientError("google_sign_in", errorCode(e), "step=browser");
+      setError(GOOGLE_FAILED);
+      end();
     }
   }
 
@@ -98,9 +139,8 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
   // over SHA-256(rawNonce), and Supabase checks it against the raw nonce. No
   // browser, no Services ID, no client secret. See docs/auth-architecture.md.
   async function signInWithApple() {
-    if (busy) return;
-    setBusy(true);
-    setError("");
+    if (!begin()) return;
+    let step = "apple_sheet";
     try {
       const rawNonce = Crypto.randomUUID();
       const hashedNonce = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, rawNonce);
@@ -111,7 +151,8 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
         ],
         nonce: hashedNonce,
       });
-      if (!credential.identityToken) throw new Error("Apple returned no identity token");
+      step = "supabase_id_token";
+      if (!credential.identityToken) throw { code: "no_identity_token" };
       const { error: idTokenError } = await supabase.auth.signInWithIdToken({
         provider: "apple",
         token: credential.identityToken,
@@ -121,53 +162,61 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
       const fullName = [credential.fullName?.givenName, credential.fullName?.familyName]
         .filter(Boolean).join(" ").trim();
       // Signed in now; a failure here must not show a sign-in error.
-      saveAppleName(fullName).catch((e: unknown) =>
-        api.clientError("apple_name", e instanceof Error ? e.message : String(e)));
+      saveAppleName(fullName).catch((e: unknown) => api.clientError("apple_name", errorCode(e)));
     } catch (e: unknown) {
-      // The user closed the Apple sheet: not an error.
-      if ((e as { code?: string })?.code === "ERR_REQUEST_CANCELED") return;
-      const message = e instanceof Error ? e.message : String(e);
-      api.clientError("apple_sign_in", message);
-      setError("Sign-in failed - please try again.");
+      // Only the Apple sheet can be cancelled; a Supabase failure is never a cancel.
+      const message = appleSignInMessage(step === "apple_sheet" ? (e as { code?: string })?.code : undefined);
+      if (message === null) return; // The user closed the Apple sheet.
+      api.clientError("apple_sign_in", errorCode(e), `step=${step}`);
+      setError(message);
     } finally {
-      setBusy(false);
+      end();
     }
   }
 
   async function sendCode() {
     Keyboard.dismiss();
-    setBusy(true);
-    setError("");
-    const webUrl = (Constants.expoConfig?.extra as Record<string, string>).webUrl;
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: `${webUrl}/auth/callback` },
-    });
-    setBusy(false);
-    if (error) setError(error.message.includes("rate limit") ? "Too many emails right now - try again in a bit." : error.message);
-    else setStage("code");
+    if (!begin()) return;
+    try {
+      const webUrl = (Constants.expoConfig?.extra as Record<string, string>).webUrl;
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: { emailRedirectTo: `${webUrl}/auth/callback` },
+      });
+      if (error) throw error;
+      setStage("code");
+    } catch (e: unknown) {
+      api.clientError("email_sign_in", errorCode(e), "step=send_code");
+      setError(emailSendMessage(e));
+    } finally {
+      end();
+    }
   }
 
   async function verifyCode() {
     Keyboard.dismiss();
-    setBusy(true);
-    setError("");
-    let { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "email" });
-    
-    // Fallback for magiclink or signup types if the project is configured differently
-    if (error && error.message.includes("Token has expired or is invalid")) {
-      const retry = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "magiclink" });
-      if (retry.error) {
-        const retry2 = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "signup" });
-        error = retry2.error || retry.error;
-      } else {
-        error = null;
-      }
-    }
+    if (!begin()) return;
+    try {
+      let { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "email" });
 
-    if (!error) await api.verify().catch(() => {});
-    setBusy(false);
-    if (error) setError("That code didn't work - check it and try again.");
+      // Fallback for magiclink or signup types if the project is configured differently
+      if (error && error.message.includes("Token has expired or is invalid")) {
+        const retry = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "magiclink" });
+        if (retry.error) {
+          const retry2 = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "signup" });
+          error = retry2.error || retry.error;
+        } else {
+          error = null;
+        }
+      }
+      if (error) throw error;
+      await api.verify().catch(() => {});
+    } catch (e: unknown) {
+      api.clientError("email_sign_in", errorCode(e), "step=verify_code");
+      setError(CODE_FAILED);
+    } finally {
+      end();
+    }
   }
 
   const input = {
@@ -262,8 +311,8 @@ export function SignIn({ shareIntent = false }: { shareIntent?: boolean }) {
       </TouchableOpacity>
 
       {stage === "code" && (
-        <TouchableOpacity onPress={() => setStage("email")}>
-          <Text style={{ color: t.txtM, textAlign: "center", fontSize: 13 }}>Different email</Text>
+        <TouchableOpacity onPress={() => { setStage("email"); setCode(""); setError(""); }}>
+          <Text style={{ color: t.txtM, textAlign: "center", fontSize: 13 }}>Change email or resend</Text>
         </TouchableOpacity>
       )}
     </KeyboardAvoidingView>
